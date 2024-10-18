@@ -10,7 +10,7 @@ export function LoginForm() {
 	return (
 		<div className="mx-auto max-w-sm space-y-6">
 			<div className="space-y-2 text-center">
-				<h1 className="text-3xl font-bold">Login</h1>
+				<h1 className="text-3xl font-bold"><span className="font-bold text-5xl text-green-400">Sign</span> In</h1>
 				<p className="text-gray-500 dark:text-gray-400">Enter your email or username below to login to your account</p>
 			</div>
 			<div className="space-y-4">
@@ -22,8 +22,8 @@ export function LoginForm() {
 					<Label htmlFor="password">Password</Label>
 					<Input id="password" type="password" required />
 				</div>
-				<Button type="submit" className="w-full">
-					Login
+				<Button type="submit" className="w-full font-bold">
+					Sign In
 				</Button>
 			</div>
 			<div className="space-y-2">
@@ -47,7 +47,7 @@ export function LoginForm() {
 			<div className="link flex items-center justify-center">
 				<span>
 					Don't have an account?
-					<Link href="/auth/sign-up" className="text-gray-300 text-sm">
+					<Link href="/auth/sign-up" className="text-green-300 text-sm">
 						Sign up
 					</Link>
 				</span>

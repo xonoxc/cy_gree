@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 export default function SignUp() {
 
 	return (
-		<div className="py-44 flex items-center justify-center">
+		<div className="py-44 ">
 			<RegistrationForm />
 		</div>
 	)

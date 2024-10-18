@@ -17,9 +17,10 @@ export default function RegistrationForm() {
 	}
 
 	return (
-		<div className="max-w-[50%]">
+		<div className="mx-auto max-w-md">
 			<CardHeader className="space-y-1">
-				<CardTitle className="text-2xl">Create an account</CardTitle>
+				<CardTitle className="text-2xl">
+					<span className="font-bold text-5xl text-green-400">Create</span> account</CardTitle>
 				<CardDescription>
 					Enter your email below to create your account
 				</CardDescription>
@@ -59,7 +60,7 @@ export default function RegistrationForm() {
 				</div>
 			</CardContent>
 			<CardFooter>
-				<Button className="w-full" onClick={onSubmit} disabled={isLoading}>
+				<Button className="w-full font-bold" onClick={onSubmit} disabled={isLoading}>
 					{isLoading ? (
 						<>
 							<Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -71,7 +72,7 @@ export default function RegistrationForm() {
 				</Button>
 			</CardFooter>
 			<div className="link flex items-center justify-center">
-				Already have an account? <Link href="/auth/sign-in" className='text-sm'>
+				Already have an account? <Link href="/auth/sign-in" className='text-sm text-green-300'>
 					Sign In
 				</Link>
 			</div>

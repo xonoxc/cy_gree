@@ -5,12 +5,11 @@ import JoinSection from "@/components/LandingPage/Join"
 import Header from "@/components/LandingPage/Header"
 import AboutSection from "@/components/LandingPage/AboutSection"
 
-
 export {
-	HeroSection,
-	FeaturesSection,
-	Footer,
-	JoinSection,
-	Header,
-	AboutSection,
+    HeroSection,
+    FeaturesSection,
+    Footer,
+    JoinSection,
+    Header,
+    AboutSection,
 }

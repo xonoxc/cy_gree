@@ -2,6 +2,7 @@
 
 #django
 /src/backend/env
+/src/backend/.env
 
 
 # dependencies

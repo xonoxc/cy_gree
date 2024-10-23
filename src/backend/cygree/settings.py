@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'ninja',
-    
+    'ninja_extra',
+    'ninja_jwt',
     'main',
 ]
 

@@ -1,11 +1,4 @@
-from django.contrib.auth.models import User
-from django.contrib.auth import authenticate
-from ninja import NinjaAPI, Schema
-from ninja_jwt.authentication import JWTAuth
-from django.http import JsonResponse
-from ninja_jwt.tokens import RefreshToken
-
-
+from .services import UserModelService
 from ninja_jwt.controller import NinjaJWTDefaultController
 from ninja_jwt.authentication import JWTAuth
 from django.contrib.auth.models import User
@@ -25,29 +18,11 @@ api = NinjaExtraAPI(title="CyGree")
 
 api.register_controllers(NinjaJWTDefaultController)
 
-class AuthSchema(Schema):
-    username: str
-    password: str
-
-@api.post('/register')
-def register(request, payload: AuthSchema):
-    if User.objects.filter(username=payload.username).exists():
-        return JsonResponse({"success": False, "error": "User already exists."})
-    user = User.objects.create_user(username=payload.username, password=payload.password)
-    return {"success": True, "user_id": user.id}
-
-@api.post('/login')
-def login(request, payload: AuthSchema):
-    user = authenticate(username=payload.username, password=payload.password)
-    if user:
-        refresh = RefreshToken.for_user(user)
-        return JsonResponse({'refresh': str(refresh), 'access': str(refresh.access_token)})
-    return JsonResponse({'error': 'Invalid credentials'}, status=400)
-
 #First create user with basic details
 #Password updation and other critical operations are performed on user model
 @api_controller("/user",tags=["User"])
 class UserModelController(ModelControllerBase):
+    service=UserModelService(model=User)
     model_config = ModelConfig(
         model = User,
         allowed_routes=['create',"find_one", "update", "patch", "delete"],

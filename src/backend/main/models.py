@@ -4,6 +4,7 @@ from django.utils import timezone
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    role = models.CharField(max_length=100, choices=[('Client', 'Client'), ('Agent', 'Agent')],default='Client')
     address = models.CharField(max_length=255, blank=True, null=True)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
     total_plastic_recycled = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)

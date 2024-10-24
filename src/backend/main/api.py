@@ -14,19 +14,37 @@ from main.models import UserProfile
 
 
 
-api = NinjaExtraAPI(title="CyGree")
+api = NinjaExtraAPI(title="CyGree",description="""
+  <p>Cygree is designed to transform the way we handle plastic waste. This API enables users to recycle plastics efficiently while earning valuable incentives.</p>
+  
+  <h3>Key Features:</h3>
+  <ul>
+    <li><strong>Track Plastic Waste:</strong> Users can log and track their plastic waste contributions effortlessly.</li>
+    <li><strong>Earn Incentives:</strong> For each plastic item recycled, users earn points redeemable for discounts, vouchers, or eco-friendly products.</li>
+    <li><strong>Real-Time Updates:</strong> Provide users with real-time updates on their recycling progress and incentive balances.</li>
+    <li><strong>Eco-Friendly Impact:</strong> Showcase the positive environmental impact of users' recycling efforts.</li>
+    <li><strong>Secure and Scalable:</strong> Built with robust security measures and scalable architecture to handle high volumes of data and interactions.</li>
+  </ul>
+  
+  <p>By integrating Cygree, businesses and developers can contribute to a greener planet while engaging users in a rewarding recycling journey. Together, we can reduce plastic waste and create a sustainable future.</p>
+""",
+                    )
 
 api.register_controllers(NinjaJWTDefaultController)
 
 #First create user with basic details
 #Password updation and other critical operations are performed on user model
+
 @api_controller("/user",tags=["User"])
 class UserModelController(ModelControllerBase):
     service=UserModelService(model=User)
     model_config = ModelConfig(
         model = User,
         allowed_routes=['create',"find_one", "update", "patch", "delete"],
-        schema_config=ModelSchemaConfig(include=["id","password","username","first_name","last_name","email"]),
+        
+        # schema_config=ModelSchemaConfig(include=["id","password","username","first_name","last_name","email","is_active","date_joined"]),
+        schema_config=ModelSchemaConfig(include=["id","password","username","first_name","last_name","email","is_active","date_joined"],
+                                        write_only_fields=["id","password"]),
     )
 api.register_controllers(UserModelController)
 

@@ -38,7 +38,7 @@ const Header = () => {
                 <div className="right flex items-center justify-center gap-3">
                     <ModeToggle />
                     <Button
-                        onClick={() => router.push("/auth/sign-in")}
+                        onClick={() => router.push("/sign-in")}
                         className="rounded-lg font-bold"
                     >
                         Sign In

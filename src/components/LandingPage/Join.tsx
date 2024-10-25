@@ -33,7 +33,7 @@ const JoinSection = () => {
             <Button
                 size="lg"
                 className="bg-green-600 hover:bg-green-700 font-bold"
-                onClick={() => router.push("/auth/sign-up")}
+                onClick={() => router.push("/sign-up")}
             >
                 Sign Up Now
             </Button>

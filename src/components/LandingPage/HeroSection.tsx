@@ -31,7 +31,7 @@ const HeroSection = () => {
                     <BoxReveal boxColor="green">
                         <RainbowButton
                             className="font-bold flex items-center justify-center gap-2"
-                            onClick={() => router.push("/auth/sign-up")}
+                            onClick={() => router.push("/sign-in")}
                         >
                             Get Started
                             <MoveRight size={14} />

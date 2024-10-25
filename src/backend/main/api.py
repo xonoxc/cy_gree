@@ -12,7 +12,9 @@ from ninja_extra import (
 )
 from main.models import UserProfile
 
-
+from django.contrib.auth import authenticate
+from ninja_jwt.tokens import RefreshToken
+from django.http import JsonResponse
 
 api = NinjaExtraAPI(title="CyGree",description="""
   <p>Cygree is designed to transform the way we handle plastic waste. This API enables users to recycle plastics efficiently while earning valuable incentives.</p>
@@ -35,12 +37,25 @@ api.register_controllers(NinjaJWTDefaultController)
 #First create user with basic details
 #Password updation and other critical operations are performed on user model
 
+@api.post('/login',tags=['Login'])
+def login(request, username,password):
+    user = authenticate(username=username, password=password)
+    profile=UserProfile.objects.get(user=user)
+    if user:
+        role="Admin" if profile.user.is_superuser else profile.user
+        refresh = RefreshToken.for_user(user)
+        return JsonResponse({'id':profile.user.id,
+                             'access': str(refresh.access_token),
+                             'refresh': str(refresh), 
+                             'role':role })
+    return JsonResponse({'error': 'Invalid credentials'}, status=400)
+
 @api_controller("/user",tags=["User"])
 class UserModelController(ModelControllerBase):
     service=UserModelService(model=User)
     model_config = ModelConfig(
         model = User,
-        allowed_routes=['create',"find_one", "update", "patch", "delete"],
+        allowed_routes=['create', "update", "patch", "delete"],
         
         # schema_config=ModelSchemaConfig(include=["id","password","username","first_name","last_name","email","is_active","date_joined"]),
         schema_config=ModelSchemaConfig(include=["id","password","username","first_name","last_name","email","is_active","date_joined"],

@@ -37,7 +37,7 @@ api.register_controllers(NinjaJWTDefaultController)
 #First create user with basic details
 #Password updation and other critical operations are performed on user model
 
-@api.post('/login',tags=['Login'])
+@api.post('/login',tags=['User'])
 def login(request, username,password):
     user = authenticate(username=username, password=password)
     profile=UserProfile.objects.get(user=user)

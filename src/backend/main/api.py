@@ -1,8 +1,8 @@
 from .services import UserModelService
+from .schema import *
 from ninja_jwt.controller import NinjaJWTDefaultController
 from ninja_jwt.authentication import JWTAuth
 from django.contrib.auth.models import User
-from ninja import Schema
 from ninja_extra import (
     ModelConfig,
     ModelControllerBase,
@@ -37,27 +37,38 @@ api.register_controllers(NinjaJWTDefaultController)
 #First create user with basic details
 #Password updation and other critical operations are performed on user model
 
-@api.post('/login',tags=['User'])
-def login(request, username,password):
-    user = authenticate(username=username, password=password)
-    profile=UserProfile.objects.get(user=user)
-    if user:
-        role="Admin" if profile.user.is_superuser else profile.user
-        refresh = RefreshToken.for_user(user)
-        return JsonResponse({'id':profile.user.id,
-                             'access': str(refresh.access_token),
-                             'refresh': str(refresh), 
-                             'role':role })
-    return JsonResponse({'error': 'Invalid credentials'}, status=400)
+@api.post('/user/login',tags=['Login'])
+def login(request, data: LoginSchema):
+        user = authenticate(username=data.username, password=data.password)
+        if user:
+            profile = UserProfile.objects.get(user=user)
+            role = "Admin" if user.is_superuser else profile.role
+            refresh = RefreshToken.for_user(user)
+            return JsonResponse({
+                'id': profile.user.id,
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
+                'role': role
+            })
+        return JsonResponse({'error': 'Invalid credentials'}, status=400)
 
-@api_controller("/user",tags=["User"])
+
+
+@api.post('/user/register',tags=['Register'],response=UserSchemaOut)
+def Register(request, data:UserSchemaIn):
+    user=User.objects.create_user(username=data.username,password=data.password,first_name=data.first_name
+                                  ,last_name=data.last_name)
+    profile=UserProfile.objects.create(user=user)
+    profile.save()
+    user.save()
+    return user
+
+@api_controller("/user",tags=["UserOperations"])
 class UserModelController(ModelControllerBase):
     service=UserModelService(model=User)
     model_config = ModelConfig(
         model = User,
-        allowed_routes=['create', "update", "patch", "delete"],
-        
-        # schema_config=ModelSchemaConfig(include=["id","password","username","first_name","last_name","email","is_active","date_joined"]),
+        allowed_routes=["update", "delete"],
         schema_config=ModelSchemaConfig(include=["id","password","username","first_name","last_name","email","is_active","date_joined"],
                                         write_only_fields=["id","password"]),
     )

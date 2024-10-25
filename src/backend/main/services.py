@@ -12,15 +12,7 @@ class UserModelService(ModelService):
         return instance
 
     def update(self, instance, schema, **kwargs):
-        data = schema.model_dump(by_alias=True)
-        if 'password' in data:
-            data['password'] = make_password(data['password'])
-        for attr, value in data.items():
-            setattr(instance, attr, value)
-        instance.save()
-        return instance
-    def patch(self, instance, schema, **kwargs):
-        data = schema.model_dump(exclude_unset=True)  # Only update fields that are provided
+        data = schema.model_dump(exclude_unset=True)
         if 'password' in data:
             data['password'] = make_password(data['password'])
         for attr, value in data.items():

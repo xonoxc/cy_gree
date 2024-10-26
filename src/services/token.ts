@@ -1,19 +1,14 @@
 import store from "@/store/token"
+import { fetchWithConfig } from "@/config/fetch.config"
 
 export const refreshTokens = async (refreshToken: string): Promise<boolean> => {
     try {
-        const response = await fetch(
-            `${process.env.NEXT_PUBLIC_SERVER_URL}/api/token/refresh`,
-            {
-                headers: {
-                    "content-type": "application/json",
-                },
-                method: "POST",
-                body: JSON.stringify({
-                    refresh: refreshToken,
-                }),
-            }
-        )
+        const response = await fetchWithConfig("/token/refresh", {
+            method: "POST",
+            body: JSON.stringify({
+                refresh: refreshToken,
+            }),
+        })
 
         if (response.status === 200) {
             const jsonResponse = await response.json()

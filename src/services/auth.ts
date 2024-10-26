@@ -1,3 +1,4 @@
+import { fetchWithConfig } from "@/config/fetch.config"
 import store, { ITokenStore } from "@/store/token"
 
 interface RegisterPlayload {
@@ -11,12 +12,9 @@ interface RegisterPlayload {
 type Roles = "Client" | "Agent"
 
 class Authentication {
-    private serverUri: string
     private authStore: ITokenStore
 
     constructor() {
-        this.serverUri = process.env.NEXT_PUBLIC_SERVER_URL! as string
-
         this.authStore = store.getState()
     }
 
@@ -25,16 +23,18 @@ class Authentication {
         password: string
     ): Promise<Roles | null> {
         try {
-            const resposne = await fetch(`${this.serverUri}/api/user/login`, {
-                headers: {
-                    "content-type": "application/json",
-                },
+            const resposne = await fetchWithConfig("/user/login", {
                 method: "POST",
                 body: JSON.stringify({
                     username,
                     password,
                 }),
             })
+
+            if (resposne.status === 400) {
+                console.log("error block executed")
+                throw new Error("Invalid email or password")
+            }
 
             if (resposne.status === 200) {
                 const json = await resposne.json()
@@ -60,22 +60,20 @@ class Authentication {
         last_name,
     }: RegisterPlayload): Promise<Roles | null> {
         try {
-            const resposne = await fetch(
-                `${this.serverUri}/api/user/register`,
-                {
-                    headers: {
-                        "content-type": "application/json",
-                    },
-                    method: "POST",
-                    body: JSON.stringify({
-                        username,
-                        password,
-                        email,
-                        first_name,
-                        last_name,
-                    }),
-                }
-            )
+            const resposne = await fetchWithConfig("/user/register", {
+                method: "POST",
+                body: JSON.stringify({
+                    username,
+                    password,
+                    email,
+                    first_name,
+                    last_name,
+                }),
+            })
+
+            if (resposne.status === 400) {
+                throw new Error("Invalid credentials")
+            }
 
             if (resposne.status === 201) {
                 return (await this.login(username, password)) as Roles
@@ -88,7 +86,7 @@ class Authentication {
     }
 
     public logout() {
-        localStorage.removeItem("auth")
+        this.authStore.removeTokens()
     }
 }
 

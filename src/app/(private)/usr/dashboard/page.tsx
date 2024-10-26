@@ -19,8 +19,8 @@ import {
 } from "@/components/ui/table"
 import { Edit, Save } from "lucide-react"
 import { ModeToggle } from "@/components/mode_toggle"
-import { auth } from "@/services/auth"
 import { useRouter } from "next/navigation"
+import { auth } from "@/services/auth"
 
 type Reward = {
     id: number
@@ -98,9 +98,9 @@ export default function UserDashboard() {
         )
     }
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
         auth.logout()
-        router.replace("/sign-in")
+        router.push("/sign-in")
     }
 
     return (

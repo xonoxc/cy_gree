@@ -272,16 +272,16 @@ export default function UserDashboard() {
                 </div>
 
                 <Tabs defaultValue="rewards" className="space-y-4">
-                    <TabsList>
+                    <TabsList className="border-black border-2 dark:border-0 dark:border-none">
                         <TabsTrigger
                             value="rewards"
-                            className="dark:text-gray-300 dark:data-[state=active]:bg-black dark:data-[state=active]:text-white"
+                            className="dark:text-gray-300 data-[state=active]:bg-black data-[state=active]:text-white"
                         >
                             Rewards
                         </TabsTrigger>
                         <TabsTrigger
                             value="history"
-                            className="dark:text-gray-300 dark:data-[state=active]:bg-black dark:data-[state=active]:text-white"
+                            className="dark:text-gray-300 data-[state=active]:bg-black data-[state=active]:text-white"
                         >
                             Collection History
                         </TabsTrigger>

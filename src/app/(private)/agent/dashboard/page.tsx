@@ -163,8 +163,6 @@ export default function RecyclingAgentDashboard() {
 
     return (
         <div className={`relative min-h-screen`}>
-            {/* Floating Sidebar */}
-
             {/* Main Content */}
             <main className="p-8 bg-gray-100 dark:bg-black min-h-screen">
                 <div className="flex justify-between items-center mb-6">

@@ -145,7 +145,7 @@ export default function RegistrationForm() {
 
                 <div className="grid">
                     <div className="grid gap-2">
-                        <Label htmlFor="first_name">Username</Label>
+                        <Label htmlFor="first_name">first name</Label>
                         <Input
                             id="first_name"
                             value={creds.first_name}
@@ -161,7 +161,7 @@ export default function RegistrationForm() {
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="last_name">Username</Label>
+                        <Label htmlFor="last_name">Last name</Label>
                         <Input
                             id="last_name"
                             value={creds.last_name}

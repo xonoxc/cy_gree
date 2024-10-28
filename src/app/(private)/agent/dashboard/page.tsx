@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
+import { useState } from "react"
+import { ModeToggle } from "@/components/mode_toggle"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
@@ -19,15 +19,10 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import {
-    User,
-    UserCheck,
-    Recycle,
-    Sun,
-    Moon,
-    Menu,
-    CircleX,
-} from "lucide-react"
+import { User, UserCheck, Recycle } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { auth } from "@/services/auth"
+import { useRouter } from "next/navigation"
 
 type UserMatch = {
     id: number
@@ -54,8 +49,6 @@ type UserCollection = {
 }
 
 export default function RecyclingAgentDashboard() {
-    const [darkMode, setDarkMode] = useState(false)
-    const [sidebarOpen, setSidebarOpen] = useState(false)
     const [userMatches, setUserMatches] = useState<UserMatch[]>([
         {
             id: 1,
@@ -128,13 +121,7 @@ export default function RecyclingAgentDashboard() {
         },
     ])
 
-    useEffect(() => {
-        if (darkMode) {
-            document.documentElement.classList.add("dark")
-        } else {
-            document.documentElement.classList.remove("dark")
-        }
-    }, [darkMode])
+    const router = useRouter()
 
     const updateUserMatchStatus = (
         id: number,
@@ -169,80 +156,25 @@ export default function RecyclingAgentDashboard() {
         )
     }
 
-    return (
-        <div className={`relative min-h-screen ${darkMode ? "dark" : ""}`}>
-            {/* Floating Sidebar */}
-            <aside
-                className={`fixed top-0 left-0 z-40 w-64 h-screen transition-transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} bg-white dark:bg-black shadow-md`}
-            >
-                <div className="p-4">
-                    <h2 className="text-2xl font-bold text-black dark:text-white">
-                        RecycleAgent
-                    </h2>
-                </div>
-                <nav className="mt-6">
-                    <a
-                        href="#"
-                        className="block py-2 px-4 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-black hover:text-black dark:hover:text-white"
-                    >
-                        Dashboard
-                    </a>
-                    <a
-                        href="#"
-                        className="block py-2 px-4 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-black hover:text-black dark:hover:text-white"
-                    >
-                        User Matches
-                    </a>
-                    <a
-                        href="#"
-                        className="block py-2 px-4 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-black hover:text-black dark:hover:text-white"
-                    >
-                        Handovers
-                    </a>
-                    <a
-                        href="#"
-                        className="block py-2 px-4 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-black hover:text-black dark:hover:text-white"
-                    >
-                        Collections
-                    </a>
-                </nav>
+    const handleLogout = () => {
+        auth.logout()
+        router.push("/sign-in")
+    }
 
-                <Button
-                    onClick={() => setSidebarOpen(false)}
-                    className="absolute top-4 right-4 bg-transparent dark:text-white text-black "
-                >
-                    <CircleX size={20} />
-                </Button>
-            </aside>
+    return (
+        <div className={`relative min-h-screen`}>
+            {/* Floating Sidebar */}
 
             {/* Main Content */}
             <main className="p-8 bg-gray-100 dark:bg-black min-h-screen">
                 <div className="flex justify-between items-center mb-6">
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setSidebarOpen(!sidebarOpen)}
-                        className="mr-2"
-                    >
-                        <Menu className="h-[1.2rem] w-[1.2rem]" />
-                        <span className="sr-only">Toggle sidebar</span>
-                    </Button>
                     <h1 className="text-3xl font-bold dark:text-white">
                         Recycling Agent Dashboard
                     </h1>
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setDarkMode(!darkMode)}
-                        className="rounded-full border-black dark:border-white"
-                    >
-                        {darkMode ? (
-                            <Sun className="h-[1.2rem] w-[1.2rem] text-white" />
-                        ) : (
-                            <Moon className="h-[1.2rem] w-[1.2rem]" />
-                        )}
-                        <span className="sr-only">Toggle theme</span>
-                    </Button>
+                    <ModeToggle />
+                    <div>
+                        <Button onClick={handleLogout}>Logout</Button>
+                    </div>
                 </div>
 
                 {/* Key Statistics */}
@@ -303,22 +235,22 @@ export default function RecyclingAgentDashboard() {
 
                 {/* Tabs for different sections */}
                 <Tabs defaultValue="matches" className="space-y-4">
-                    <TabsList>
+                    <TabsList className="border-black border-2 dark:border-0 dark:border-none">
                         <TabsTrigger
                             value="matches"
-                            className="dark:text-gray-300 dark:data-[state=active]:bg-black dark:data-[state=active]:text-white"
+                            className="dark:text-gray-300 data-[state=active]:bg-black data-[state=active]:text-white"
                         >
                             User Matches
                         </TabsTrigger>
                         <TabsTrigger
                             value="handovers"
-                            className="dark:text-gray-300 dark:data-[state=active]:bg-black dark:data-[state=active]:text-white"
+                            className="dark:text-gray-300 data-[state=active]:bg-black data-[state=active]:text-white"
                         >
                             Plastic Handovers
                         </TabsTrigger>
                         <TabsTrigger
                             value="collections"
-                            className="dark:text-gray-300 dark:data-[state=active]:bg-black dark:data-[state=active]:text-white"
+                            className="dark:text-gray-300 data-[state=active]:bg-black data-[state=active]:text-white"
                         >
                             User Collections
                         </TabsTrigger>

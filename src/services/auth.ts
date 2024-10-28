@@ -12,11 +12,7 @@ interface RegisterPlayload {
 type Roles = "Client" | "Agent"
 
 class Authentication {
-    private authStore: ITokenStore
-
-    constructor() {
-        this.authStore = store.getState()
-    }
+    private authStore = store
 
     public async login(
         username: string,
@@ -32,16 +28,15 @@ class Authentication {
             })
 
             if (resposne.status === 400) {
-                console.log("error block executed")
                 throw new Error("Invalid email or password")
             }
 
             if (resposne.status === 200) {
                 const json = await resposne.json()
 
-                this.authStore.setRole(json.role)
-                this.authStore.setRefreshToken(json.refresh)
-                this.authStore.setAccesstoken(json.access)
+                this.authStore.setState({ role: json.role })
+                this.authStore.setState({ refreshToken: json.refresh })
+                this.authStore.setState({ accessToken: json.access })
 
                 return json.role as Roles
             }
@@ -75,7 +70,7 @@ class Authentication {
                 throw new Error("Invalid credentials")
             }
 
-            if (resposne.status === 201) {
+            if (resposne.status === 200) {
                 return (await this.login(username, password)) as Roles
             }
 
@@ -86,7 +81,11 @@ class Authentication {
     }
 
     public logout() {
-        this.authStore.removeTokens()
+        this.authStore.setState({
+            accessToken: "",
+            refreshToken: "",
+            role: undefined,
+        })
     }
 }
 

@@ -52,7 +52,7 @@ export const fetchWithConfig = async (
       }
 
 	}else {
-				auth.logout()
+		auth.logout()
 	}
       return await fetch(`${BASE_URL}/api${endpoint}`, config)
     }

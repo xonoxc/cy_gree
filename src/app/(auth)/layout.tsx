@@ -24,7 +24,7 @@ export default function RootLayout({
     if (isLoading || (accessToken && role))
         return (
             <div className="h-screen w-screen flex items-center justify-center">
-                <Loader2 size={60} className="text-green-400 animate-spin" />
+                <Loader2 size={60} className="mr-2 h-10 w-10 animate-spin" />
             </div>
         )
 

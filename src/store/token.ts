@@ -8,11 +8,11 @@ export interface ITokenStore {
     accessToken: string
     refreshToken: string
     role: string
+    id: string
     hydrated: boolean
     setAccesstoken: (token: string) => void
     setRefreshToken: (token: string) => void
     setRole: (role: Roles) => void
-    removeTokens: () => void
     setHydrated(): void
 }
 
@@ -22,6 +22,7 @@ const useTokenStore = create<ITokenStore>()(
             accessToken: "",
             refreshToken: "",
             role: "",
+            id: "",
             hydrated: false,
             setHydrated(): void {
                 set({ hydrated: true })
@@ -34,9 +35,6 @@ const useTokenStore = create<ITokenStore>()(
             },
             setRole(role: Roles): void {
                 set({ role: role })
-            },
-            removeTokens() {
-                set(state => ({}, true))
             },
         })),
         {

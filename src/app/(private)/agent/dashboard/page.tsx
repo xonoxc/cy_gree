@@ -23,6 +23,7 @@ import { User, UserCheck, Recycle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { auth } from "@/services/auth"
 import { useRouter } from "next/navigation"
+import NotificationPopup from "@/components/notifications/notification-popup"
 
 type UserMatch = {
     id: number
@@ -169,9 +170,15 @@ export default function RecyclingAgentDashboard() {
                     <h1 className="text-3xl font-bold dark:text-white">
                         Recycling Agent Dashboard
                     </h1>
-                    <ModeToggle />
-                    <div>
-                        <Button onClick={handleLogout}>Logout</Button>
+                    <div className="flex gap-5">
+                        <NotificationPopup />
+                        <ModeToggle />
+                        <Button
+                            onClick={handleLogout}
+                            className="text-sm rounded-lg font-bold"
+                        >
+                            Logout
+                        </Button>
                     </div>
                 </div>
 
@@ -261,7 +268,7 @@ export default function RecyclingAgentDashboard() {
                         <Card className="dark:bg-black dark:border-gray-700">
                             <CardContent>
                                 <Table>
-                                    <TableHeader>
+                                    <TableHeader className="dark:bg-muted">
                                         <TableRow>
                                             <TableHead className="dark:text-gray-300">
                                                 User
@@ -338,7 +345,7 @@ export default function RecyclingAgentDashboard() {
                         <Card className="dark:bg-black dark:border-gray-700">
                             <CardContent>
                                 <Table>
-                                    <TableHeader>
+                                    <TableHeader className="dark:bg-muted rounded-md">
                                         <TableRow>
                                             <TableHead className="dark:text-gray-300">
                                                 User
@@ -416,7 +423,7 @@ export default function RecyclingAgentDashboard() {
                             <CardContent>
                                 <Table>
                                     <TableHeader>
-                                        <TableRow>
+                                        <TableRow className="dark:bg-muted">
                                             <TableHead className="dark:text-gray-300">
                                                 User
                                             </TableHead>

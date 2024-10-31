@@ -1,5 +1,5 @@
 import { fetchWithConfig } from "@/config/fetch.config"
-import store, { ITokenStore } from "@/store/token"
+import store from "@/store/token"
 
 interface RegisterPlayload {
     username: string
@@ -34,9 +34,12 @@ class Authentication {
             if (resposne.status === 200) {
                 const json = await resposne.json()
 
-                this.authStore.setState({ role: json.role })
-                this.authStore.setState({ refreshToken: json.refresh })
-                this.authStore.setState({ accessToken: json.access })
+                this.authStore.setState({
+                    role: json.role,
+                    accessToken: json.access,
+                    refreshToken: json.refresh,
+                    id: json.id,
+                })
 
                 return json.role as Roles
             }
@@ -85,6 +88,7 @@ class Authentication {
             accessToken: "",
             refreshToken: "",
             role: undefined,
+            id: undefined,
         })
     }
 }

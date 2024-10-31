@@ -13,8 +13,8 @@ export const refreshTokens = async (refreshToken: string): Promise<boolean> => {
         if (response.status === 200) {
             const jsonResponse = await response.json()
 
-            store.setState(state => (state.accessToken = jsonResponse.access))
-            store.setState(state => (state.refreshToken = jsonResponse.refresh))
+            store.setState({ accessToken: jsonResponse.access })
+            store.setState({ refreshToken: jsonResponse.refresh })
 
             return true
         }

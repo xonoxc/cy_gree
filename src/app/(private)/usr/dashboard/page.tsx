@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useState } from "react"
 import { Button } from "@/components/ui/button"
+import getRelativeTime from "@/utils/date"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -21,101 +22,101 @@ import { Edit, Save } from "lucide-react"
 import { ModeToggle } from "@/components/mode_toggle"
 import { useRouter } from "next/navigation"
 import { auth } from "@/services/auth"
+import { useClientstats } from "@/hooks/useClientstats"
+import NotificationPopup from "@/components/notifications/notification-popup"
+import { useToast } from "@/hooks/use-toast"
+import dynamic from "next/dynamic"
 
-type Reward = {
-    id: number
-    name: string
-    points: number
-    claimed: boolean
-}
-
-type PlasticCollection = {
-    id: number
-    date: string
-    amount: number
-    location: string
-}
+const CollectionForm = dynamic(
+    () => import("@/components/collection/collection-form"),
+    {
+        loading: () => <p>Loading...</p>,
+    }
+)
 
 export default function UserDashboard() {
     const [editing, setEditing] = useState(false)
-    const [userData, setUserData] = useState({
-        name: "Alice Johnson",
-        email: "alice@example.com",
-        phone: "+1 234 567 8901",
-        address: "123 Green Street, Eco City, EC 12345",
-    })
-    const [rewards, setRewards] = useState<Reward[]>([
-        {
-            id: 1,
-            name: "Eco-friendly Water Bottle",
-            points: 500,
-            claimed: false,
-        },
-        { id: 2, name: "Reusable Shopping Bag", points: 300, claimed: true },
-        { id: 3, name: "Plant a Tree", points: 1000, claimed: false },
-    ])
-    const [plasticCollections] = useState<PlasticCollection[]>([
-        {
-            id: 1,
-            date: "2023-05-15",
-            amount: 2.5,
-            location: "Local Recycling Center",
-        },
-        {
-            id: 2,
-            date: "2023-05-10",
-            amount: 1.8,
-            location: "Community Clean-up Event",
-        },
-        { id: 3, date: "2023-05-05", amount: 3.2, location: "Home Collection" },
-    ])
-
-    const totalPoints = 750
-    const totalCollected = plasticCollections.reduce(
-        (sum, collection) => sum + collection.amount,
-        0
-    )
+    const [avatar, setAvatar] = useState<File | null>(null)
+    const {
+        userData,
+        handleInputChange,
+        availableRewards,
+        pendingRequests,
+        unclaimedRequests,
+        collectedPlastic,
+        claimedRewards,
+        handelClaimReward,
+        fetchUserProfileData,
+        handleProfileUpdate,
+    } = useClientstats()
 
     const router = useRouter()
+    const { toast } = useToast()
 
-    const handleEditToggle = () => {
-        setEditing(!editing)
-        if (editing) {
-            console.log("Saving user data:", userData)
+    const handleEditToggle = async () => {
+        try {
+            if (editing) {
+                const result = await handleProfileUpdate(avatar as File)
+                if (result.status === 200) {
+                    toast({
+                        title: "changed saved successfully!",
+                    })
+                }
+            }
+        } catch (error: any) {
+            toast({
+                title: error.message || "Profile update failed",
+                variant: "destructive",
+            })
+        } finally {
+            await fetchUserProfileData()
+            setEditing(!editing)
         }
     }
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target
-        setUserData(prevData => ({ ...prevData, [name]: value }))
+    const handleAvtarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            setAvatar(e.target.files[0])
+        }
     }
 
-    const handleClaimReward = (id: number) => {
-        setRewards(
-            rewards.map(reward =>
-                reward.id === id ? { ...reward, claimed: true } : reward
-            )
-        )
+    const handleRewardsClaim = async (id: string, expense: number) => {
+        try {
+            await handelClaimReward(id, expense)
+            toast({
+                title: "Reward Claimed",
+            })
+        } catch (error: any) {
+            toast({
+                variant: "destructive",
+                title: error.message || "cannot claim reward",
+            })
+        }
     }
 
-    const handleLogout = async () => {
+    const handleLogout = useCallback(async () => {
         auth.logout()
         router.push("/sign-in")
-    }
+    }, [router])
 
     return (
         <div className="min-h-screen bg-gray-100 dark:bg-black">
             <div className="container mx-auto p-4">
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-3xl font-bold dark:text-white">
-                        User Dashboard
+                        <span className="dark:text-white text-black">Cy</span>
+                        <span className="text-green-300">Gree</span>
                     </h1>
 
-                    <div className="flex gap-2 items-center justify-center">
-                        <Button onClick={handleLogout} className="font-bold">
+                    <div className="flex gap-2 items-center justify-center w-1/3">
+                        <NotificationPopup />
+                        <ModeToggle />
+                        <Button
+                            onClick={handleLogout}
+                            className="font-bold rounded-lg"
+                        >
                             Logout
                         </Button>
-                        <ModeToggle />
                     </div>
                 </div>
 
@@ -140,24 +141,32 @@ export default function UserDashboard() {
                         </CardHeader>
                         <CardContent>
                             <div className="flex items-center space-x-4 mb-4">
-                                <Avatar className="h-20 w-20">
-                                    <AvatarImage
-                                        src="/placeholder-avatar.jpg"
-                                        alt={userData.name}
+                                {editing ? (
+                                    <Input
+                                        type="file"
+                                        className="w-1/3"
+                                        onChange={handleAvtarChange}
                                     />
-                                    <AvatarFallback>
-                                        {userData.name
-                                            .split(" ")
-                                            .map(n => n[0])
-                                            .join("")}
-                                    </AvatarFallback>
-                                </Avatar>
+                                ) : (
+                                    <Avatar className="h-20 w-20">
+                                        <AvatarImage
+                                            src={`${process.env.NEXT_PUBLIC_SERVER_URL! + userData.profile_pic}`}
+                                            alt={userData.name}
+                                        />
+                                        <AvatarFallback>
+                                            {userData.name
+                                                .split(" ")
+                                                .map(n => n[0])
+                                                .join("")}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                )}
                                 <div>
                                     <h2 className="text-2xl font-bold dark:text-white">
                                         {userData.name}
                                     </h2>
-                                    <p className="text-gray-500 dark:text-gray-400">
-                                        Eco Warrior
+                                    <p className="text-white bg-black dark:text-black dark:bg-white p-1 flex items-center justify-center  mt-3 text-xs rounded font-bold">
+                                        user
                                     </p>
                                 </div>
                             </div>
@@ -188,7 +197,7 @@ export default function UserDashboard() {
                                     <Input
                                         id="phone"
                                         name="phone"
-                                        value={userData.phone}
+                                        value={userData.phone_number}
                                         onChange={handleInputChange}
                                         disabled={!editing}
                                         className="dark:bg-black dark:text-white"
@@ -205,7 +214,7 @@ export default function UserDashboard() {
                                         id="address"
                                         name="address"
                                         value={userData.address}
-                                        onChange={handleInputChange}
+                                        onChange={e => handleInputChange(e)}
                                         disabled={!editing}
                                         className="dark:bg-black dark:text-white"
                                     />
@@ -228,11 +237,13 @@ export default function UserDashboard() {
                                             Total Points
                                         </span>
                                         <span className="text-sm font-medium dark:text-gray-300">
-                                            {totalPoints}
+                                            {userData.earned_points}
                                         </span>
                                     </div>
                                     <Progress
-                                        value={totalPoints / 20}
+                                        value={
+                                            Number(userData.earned_points) / 20
+                                        }
                                         className="h-2"
                                     />
                                 </div>
@@ -242,11 +253,15 @@ export default function UserDashboard() {
                                             Plastic Collected
                                         </span>
                                         <span className="text-sm font-medium dark:text-gray-300">
-                                            {totalCollected.toFixed(1)} kg
+                                            {userData.total_plastic_recycled} kg
                                         </span>
                                     </div>
                                     <Progress
-                                        value={totalCollected * 10}
+                                        value={
+                                            Number(
+                                                userData.total_plastic_recycled
+                                            ) * 10
+                                        }
                                         className="h-2"
                                     />
                                 </div>
@@ -269,6 +284,10 @@ export default function UserDashboard() {
                             </div>
                         </CardContent>
                     </Card>
+                </div>
+
+                <div className="w-full flex items-center justify-end">
+                    <CollectionForm />
                 </div>
 
                 <Tabs defaultValue="rewards" className="space-y-4">
@@ -296,7 +315,7 @@ export default function UserDashboard() {
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4">
-                                    {rewards.map(reward => (
+                                    {availableRewards.map(reward => (
                                         <div
                                             key={reward.id}
                                             className="flex items-center justify-between p-4 bg-white dark:bg-black rounded-lg shadow"
@@ -306,69 +325,83 @@ export default function UserDashboard() {
                                                     {reward.name}
                                                 </h3>
                                                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                    {reward.points} points
-                                                    required
+                                                    {reward.points_required}{" "}
+                                                    points required
                                                 </p>
                                             </div>
                                             <Button
                                                 onClick={() =>
-                                                    handleClaimReward(reward.id)
+                                                    handleRewardsClaim(
+                                                        String(reward.id),
+                                                        Number(
+                                                            reward.points_required
+                                                        )
+                                                    )
                                                 }
-                                                disabled={
-                                                    reward.claimed ||
-                                                    totalPoints < reward.points
-                                                }
-                                                className="dark:bg-green-600 dark:text-white dark:hover:bg-green-700"
                                             >
-                                                {reward.claimed
-                                                    ? "Claimed"
-                                                    : "Claim"}
+                                                Claim
                                             </Button>
                                         </div>
                                     ))}
                                 </div>
                             </CardContent>
                         </Card>
-                    </TabsContent>
 
-                    <TabsContent value="history">
-                        <Card className="dark:bg-black dark:border-gray-700">
+                        <Card className="dark:bg-black dark:border-gray-700 mt-12">
                             <CardHeader>
                                 <CardTitle className="text-2xl font-bold dark:text-white">
+                                    Claimed Rewards
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-4">
+                                    {claimedRewards.map(reward => (
+                                        <div
+                                            key={reward.id}
+                                            className="flex items-center justify-between p-4 bg-white dark:bg-black rounded-lg shadow"
+                                        >
+                                            <div>
+                                                <h3 className="text-lg font-semibold dark:text-white">
+                                                    {reward.title}
+                                                </h3>
+                                                <p className="text-sm text-gray-500 dark:text-gray-400 flex gap-2">
+                                                    <span>claimed</span>
+                                                    {getRelativeTime(
+                                                        reward.claimed_date
+                                                    )}
+                                                </p>
+                                            </div>
+                                            <Button disabled>Claimed</Button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                    <TabsContent value="history">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-2xl font-bold">
                                     Plastic Collection History
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead className="dark:text-gray-300">
-                                                Date
-                                            </TableHead>
-                                            <TableHead className="dark:text-gray-300">
-                                                Amount (kg)
-                                            </TableHead>
-                                            <TableHead className="dark:text-gray-300">
-                                                Location
-                                            </TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {plasticCollections.map(collection => (
-                                            <TableRow key={collection.id}>
-                                                <TableCell className="font-medium dark:text-gray-300">
-                                                    {collection.date}
-                                                </TableCell>
-                                                <TableCell className="dark:text-gray-300">
-                                                    {collection.amount}
-                                                </TableCell>
-                                                <TableCell className="dark:text-gray-300">
-                                                    {collection.location}
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
+                                <div className="space-y-8">
+                                    <CollectionHistoryTable
+                                        title="Unclaimed Requests"
+                                        data={unclaimedRequests}
+                                    />
+                                    <CollectionHistoryTable
+                                        title="Completed Requests"
+                                        data={collectedPlastic}
+                                        className="pt-4 border-t dark:border-gray-800"
+                                    />
+                                    <CollectionHistoryTable
+                                        title="Pending Requests"
+                                        data={pendingRequests}
+                                        className="pt-4 border-t dark:border-gray-800"
+                                    />
+                                </div>
                             </CardContent>
                         </Card>
                     </TabsContent>
@@ -377,3 +410,59 @@ export default function UserDashboard() {
         </div>
     )
 }
+
+const CollectionHistoryTable = ({
+    title,
+    data,
+    className,
+}: {
+    title: string
+    data: any[]
+    className?: string
+}) => (
+    <div className={`space-y-4 ${className}`}>
+        <h3 className="text-lg font-semibold text-gray-500 dark:text-gray-400">
+            {title}
+        </h3>
+        {data && data.length > 0 ? (
+            <div className="border rounded-lg overflow-hidden">
+                <Table>
+                    <TableHeader className="bg-gray-50 dark:bg-muted">
+                        <TableRow>
+                            <TableHead className="w-16 font-semibold">
+                                S.no.
+                            </TableHead>
+                            <TableHead className="font-semibold">
+                                Time
+                            </TableHead>
+                            <TableHead className="font-semibold">
+                                Amount (kg)
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {data.map((collection, index) => (
+                            <TableRow key={index}>
+                                <TableCell className="font-medium">
+                                    {index + 1}
+                                </TableCell>
+                                <TableCell>
+                                    {getRelativeTime(
+                                        collection.collection_date
+                                    )}
+                                </TableCell>
+                                <TableCell>
+                                    {collection.amount_collected}
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
+        ) : (
+            <div className="text-center py-6 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-muted rounded-lg">
+                No {title.toLowerCase()} found
+            </div>
+        )}
+    </div>
+)

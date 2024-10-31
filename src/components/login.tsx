@@ -38,7 +38,6 @@ export function LoginForm() {
                 )
             }
         } catch (error: any) {
-            console.log(error.message)
             toast({
                 variant: "destructive",
                 title: error.message || "something went wrong!!",

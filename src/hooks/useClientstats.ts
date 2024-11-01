@@ -10,6 +10,9 @@ interface IUserData {
     email: string
     address: string
     total_plastic_recycled: string
+    city: string
+    state: string
+    country: string
     earned_points: number
 }
 
@@ -30,6 +33,11 @@ interface IClaimedRewards {
     claimed_date: string
 }
 
+interface IUserbadge {
+    name: string
+    issue_date: string
+}
+
 export const useClientstats = () => {
     const [userData, setUserData] = useState<IUserData>({
         profile_pic: "",
@@ -38,10 +46,13 @@ export const useClientstats = () => {
         email: "",
         name: "",
         address: "",
+        city: "",
+        state: "",
+        country: "",
         total_plastic_recycled: "",
         earned_points: 0,
     })
-    const [userBadges, setUserBadges] = useState([])
+    const [userBadges, setUserBadges] = useState<IUserbadge[]>([])
     const [collectedPlastic, setCollectedPlastic] = useState<ICollection[]>([])
     const [unclaimedRequests, setUnclaimedRequests] = useState<ICollection[]>(
         []
@@ -71,6 +82,9 @@ export const useClientstats = () => {
                 phone_number: json.phone_number,
                 email: json.user.email,
                 address: json.address,
+                state: json.state,
+                country: json.country,
+                city: json.city,
                 profile_pic: json.profile_pic,
                 total_plastic_recycled: json.total_plastic_recycled,
                 earned_points: json.earned_points,
@@ -98,7 +112,7 @@ export const useClientstats = () => {
         )
         if (result.status === 200) {
             const json = await result.json()
-            setUserBadges(prev => ({ ...prev, json }))
+            setUserBadges(json)
         }
     }
 
@@ -147,34 +161,48 @@ export const useClientstats = () => {
         try {
             const formData = new FormData()
 
-            const data = {
-                ...userData,
+            if (file && file instanceof File) {
+                console.log("correct format")
+                formData.append("pic", file as File, file.name)
             }
 
-            formData.append("pic", file as File)
-            formData.append("data", JSON.stringify(data))
+            const userId = authStore.getState().id
 
-            const result = await fetchWithConfig(
-                `/profile/${authStore.getState().id}`,
-                {
-                    method: "POST",
-                    body: formData,
-                }
-            )
+            await updateEmailId(userId)
+
+            formData.append("data", JSON.stringify({ ...userData }))
+
+            const result = await fetchWithConfig(`/profile/${userId}`, {
+                method: "POST",
+                body: formData,
+            })
 
             if (result.status === 200) {
                 const json = await result.json()
-                setUserData(prev => ({
-                    ...prev,
-                    ...json.user,
-                }))
-                return result
+                console.log("jsonResponse", json)
+                return json
             } else {
                 const error = await result.json()
                 throw new Error(error.message || "Profile update failed")
             }
         } catch (error) {
             throw error
+        }
+    }
+
+    const updateEmailId = async (userId: string) => {
+        try {
+            const response = await fetchWithConfig(`/user/${userId}`, {
+                method: "PATCH",
+                body: JSON.stringify({ email: userData.email }),
+            })
+
+            if (response.status === 200) {
+                const jsonResponse = await response.json()
+                setUserData(prev => ({ ...prev, email: jsonResponse.email }))
+            }
+        } catch (error: any) {
+            throw new Error(error.message || "Error updating emailId")
         }
     }
 
@@ -195,7 +223,8 @@ export const useClientstats = () => {
                 }
             )
             if (response.status === 200) {
-                console.log("Form submitted successfully")
+                const jsonResponse = await response.json()
+                console.log("Form submitted successfully", jsonResponse)
 
                 return true
             }

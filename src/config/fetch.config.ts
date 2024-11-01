@@ -1,7 +1,8 @@
 const BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL as string
+
 import store from "@/store/token"
 import { refreshTokens } from "@/services/token"
-import { auth } from "@/services/auth";
+import { auth } from "@/services/auth"
 
 interface FetchOptions extends RequestInit {
   headers?: Record<string, string>
@@ -9,13 +10,11 @@ interface FetchOptions extends RequestInit {
 
 const defaultConfig: FetchOptions = {
   headers: {
-    'Content-Type': 'application/json',
     'Accept': 'application/json',
     'Authorization': `Bearer ${store.getState().accessToken}`,
   },
   credentials: "include",
 };
-
 
 export const fetchWithConfig = async (
   endpoint: string,
@@ -24,12 +23,19 @@ export const fetchWithConfig = async (
   let config: FetchOptions = {
     ...defaultConfig,
     ...options,
-    headers: {
-      ...defaultConfig.headers,
-      ...options.headers,
-      'Authorization': `Bearer ${store.getState().accessToken}`, 
-    },
   };
+
+  if (!(options.body instanceof FormData)) {
+    config.headers = {
+      'Content-Type': 'application/json',
+      ...config.headers,
+    }
+  }
+
+  config.headers = {
+    ...config.headers,
+    'Authorization': `Bearer ${store.getState().accessToken}`,
+  }
 
   if (!BASE_URL) {
     throw new Error("Please provide NEXT_PUBLIC_SERVER_URL in .env");
@@ -37,29 +43,34 @@ export const fetchWithConfig = async (
 
   try {
     const response = await fetch(`${BASE_URL}/api${endpoint}`, config);
-
+    
     if (response.status === 401) {
-			const refreshToken = store.getState().refreshToken
-			if(!refreshToken) auth.logout()
-
-            const refreshStatus = await refreshTokens(refreshToken);
-
-			if(refreshStatus){
-				
-      config.headers = {
-        ...config.headers,
-        'Authorization': `Bearer ${store.getState().accessToken}`,
+      const refreshToken = store.getState().refreshToken
+      if (!refreshToken) {
+        auth.logout()
+        throw new Error('No refresh token available')
       }
 
-	}else {
-		auth.logout()
-	}
-      return await fetch(`${BASE_URL}/api${endpoint}`, config)
+      const refreshStatus = await refreshTokens(refreshToken);
+      if (refreshStatus) {
+        config.headers = {
+          ...config.headers,
+          'Authorization': `Bearer ${store.getState().accessToken}`,
+        }
+        return await fetch(`${BASE_URL}/api${endpoint}`, config)
+      } else {
+        auth.logout()
+        throw new Error('Token refresh failed')
+      }
+    }
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || 'Request failed')
     }
 
     return response;
   } catch (error) {
-    console.error("Fetch request failed:", error)
     throw error
   }
 }

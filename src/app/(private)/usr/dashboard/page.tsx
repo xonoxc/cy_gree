@@ -39,6 +39,7 @@ export default function UserDashboard() {
     const [avatar, setAvatar] = useState<File | null>(null)
     const {
         userData,
+        userBadges,
         handleInputChange,
         availableRewards,
         pendingRequests,
@@ -46,7 +47,6 @@ export default function UserDashboard() {
         collectedPlastic,
         claimedRewards,
         handelClaimReward,
-        fetchUserProfileData,
         handleProfileUpdate,
     } = useClientstats()
 
@@ -69,7 +69,6 @@ export default function UserDashboard() {
                 variant: "destructive",
             })
         } finally {
-            await fetchUserProfileData()
             setEditing(!editing)
         }
     }
@@ -108,7 +107,7 @@ export default function UserDashboard() {
                         <span className="text-green-300">Gree</span>
                     </h1>
 
-                    <div className="flex gap-2 items-center justify-center w-1/3">
+                    <div className="flex gap-2 items-center justify-center">
                         <NotificationPopup />
                         <ModeToggle />
                         <Button
@@ -195,8 +194,10 @@ export default function UserDashboard() {
                                         Phone
                                     </Label>
                                     <Input
-                                        id="phone"
-                                        name="phone"
+                                        id="phone_number"
+                                        name="phone_number"
+                                        type="text"
+                                        maxLength={10}
                                         value={userData.phone_number}
                                         onChange={handleInputChange}
                                         disabled={!editing}
@@ -215,6 +216,57 @@ export default function UserDashboard() {
                                         name="address"
                                         value={userData.address}
                                         onChange={e => handleInputChange(e)}
+                                        disabled={!editing}
+                                        className="dark:bg-black dark:text-white"
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label
+                                        htmlFor="city"
+                                        className="dark:text-gray-300"
+                                    >
+                                        City
+                                    </Label>
+                                    <Input
+                                        id="city"
+                                        name="city"
+                                        value={userData.city}
+                                        onChange={handleInputChange}
+                                        disabled={!editing}
+                                        className="dark:bg-black dark:text-white"
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label
+                                        htmlFor="state"
+                                        className="dark:text-gray-300"
+                                    >
+                                        State
+                                    </Label>
+                                    <Input
+                                        id="state"
+                                        name="state"
+                                        value={userData.state}
+                                        onChange={handleInputChange}
+                                        disabled={!editing}
+                                        className="dark:bg-black dark:text-white"
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label
+                                        htmlFor="country"
+                                        className="dark:text-gray-300"
+                                    >
+                                        Country
+                                    </Label>
+                                    <Input
+                                        id="country"
+                                        name="country"
+                                        value={userData.country}
+                                        onChange={handleInputChange}
                                         disabled={!editing}
                                         className="dark:bg-black dark:text-white"
                                     />
@@ -269,16 +321,22 @@ export default function UserDashboard() {
                                     <h3 className="text-lg font-semibold mb-2 dark:text-white">
                                         Badges Earned
                                     </h3>
-                                    <div className="flex space-x-2">
-                                        <Badge variant="secondary">
-                                            Recycling Rookie
-                                        </Badge>
-                                        <Badge variant="secondary">
-                                            Plastic Warrior
-                                        </Badge>
-                                        <Badge variant="secondary">
-                                            Eco Champion
-                                        </Badge>
+
+                                    <div className="flex flex-wrap gap-2">
+                                        {userBadges?.length > 0 ? (
+                                            userBadges.map((badge, index) => (
+                                                <Badge
+                                                    key={index}
+                                                    variant="secondary"
+                                                >
+                                                    {badge.name}
+                                                </Badge>
+                                            ))
+                                        ) : (
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                No badges earned yet
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -315,9 +373,9 @@ export default function UserDashboard() {
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4">
-                                    {availableRewards.map(reward => (
+                                    {availableRewards.map((reward, index) => (
                                         <div
-                                            key={reward.id}
+                                            key={index}
                                             className="flex items-center justify-between p-4 bg-white dark:bg-black rounded-lg shadow"
                                         >
                                             <div>
@@ -355,9 +413,9 @@ export default function UserDashboard() {
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4">
-                                    {claimedRewards.map(reward => (
+                                    {claimedRewards.map((reward, index) => (
                                         <div
-                                            key={reward.id}
+                                            key={index}
                                             className="flex items-center justify-between p-4 bg-white dark:bg-black rounded-lg shadow"
                                         >
                                             <div>

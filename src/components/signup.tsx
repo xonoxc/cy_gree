@@ -185,7 +185,7 @@ export default function RegistrationForm() {
                 >
                     {isLoading ? (
                         <>
-                            <Loader2 className="mr-2 h-10 w-10 animate-spin" />
+                            <Loader2 className="mr-2 animate-spin" />
                             Signing up...
                         </>
                     ) : (

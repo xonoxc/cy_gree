@@ -28,7 +28,10 @@ class Authentication {
             })
 
             if (resposne.status === 400) {
-                throw new Error("Invalid email or password")
+                const errorData = await resposne.json()
+                throw new Error(
+                    errorData.message || "Invalid username or password"
+                )
             }
 
             if (resposne.status === 200) {

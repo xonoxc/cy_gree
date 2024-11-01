@@ -41,7 +41,7 @@ export function LoginForm() {
             toast({
                 variant: "destructive",
                 title: error.message || "something went wrong!!",
-                description: "please try again later",
+                description: "please check your credentials",
             })
         } finally {
             setLoading(false)

@@ -26,14 +26,25 @@ export const useNotifications = (userId: string) => {
                 setNotifications(prevNotifications =>
                     prevNotifications.filter(noti => noti.id !== id)
                 )
+                await fetchInitialNotifications()
             }
         } catch (error) {
             console.error("erorr while updating notifications", error)
         }
     }
 
-    const markAllAsRead = () => {
-        console.log("marked all as read")
+    const markAllAsRead = async () => {
+        const response = await fetchWithConfig(
+            `/notifications/${userId}/read/all`,
+            {
+                method: "PATCH",
+            }
+        )
+
+        if (response.status === 200) {
+            setNotifications([])
+            await fetchInitialNotifications()
+        }
     }
 
     const fetchInitialNotifications = async () => {

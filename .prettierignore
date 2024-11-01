@@ -18,7 +18,6 @@ public/
 
 # Ignore configuration files
 **/*.config.js
-**/*.config.ts
 
 # Ignore generated files (e.g., GraphQL codegen output)
 **/__generated__/

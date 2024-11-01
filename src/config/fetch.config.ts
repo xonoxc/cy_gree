@@ -5,72 +5,72 @@ import { refreshTokens } from "@/services/token"
 import { auth } from "@/services/auth"
 
 interface FetchOptions extends RequestInit {
-  headers?: Record<string, string>
+    headers?: Record<string, string>
 }
 
 const defaultConfig: FetchOptions = {
-  headers: {
-    'Accept': 'application/json',
-    'Authorization': `Bearer ${store.getState().accessToken}`,
-  },
-  credentials: "include",
-};
+    headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${store.getState().accessToken}`,
+    },
+    credentials: "include",
+}
 
 export const fetchWithConfig = async (
-  endpoint: string,
-  options: FetchOptions = {}
+    endpoint: string,
+    options: FetchOptions = {}
 ): Promise<Response> => {
-  let config: FetchOptions = {
-    ...defaultConfig,
-    ...options,
-  };
-
-  if (!(options.body instanceof FormData)) {
-    config.headers = {
-      'Content-Type': 'application/json',
-      ...config.headers,
+    let config: FetchOptions = {
+        ...defaultConfig,
+        ...options,
     }
-  }
 
-  config.headers = {
-    ...config.headers,
-    'Authorization': `Bearer ${store.getState().accessToken}`,
-  }
-
-  if (!BASE_URL) {
-    throw new Error("Please provide NEXT_PUBLIC_SERVER_URL in .env");
-  }
-
-  try {
-    const response = await fetch(`${BASE_URL}/api${endpoint}`, config);
-    
-    if (response.status === 401) {
-      const refreshToken = store.getState().refreshToken
-      if (!refreshToken) {
-        auth.logout()
-        throw new Error('No refresh token available')
-      }
-
-      const refreshStatus = await refreshTokens(refreshToken);
-      if (refreshStatus) {
+    if (!(options.body instanceof FormData)) {
         config.headers = {
-          ...config.headers,
-          'Authorization': `Bearer ${store.getState().accessToken}`,
+            "Content-Type": "application/json",
+            ...config.headers,
         }
-        return await fetch(`${BASE_URL}/api${endpoint}`, config)
-      } else {
-        auth.logout()
-        throw new Error('Token refresh failed')
-      }
     }
 
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.message || 'Request failed')
+    config.headers = {
+        ...config.headers,
+        Authorization: `Bearer ${store.getState().accessToken}`,
     }
 
-    return response;
-  } catch (error) {
-    throw error
-  }
+    if (!BASE_URL) {
+        throw new Error("Please provide NEXT_PUBLIC_SERVER_URL in .env")
+    }
+
+    try {
+        const response = await fetch(`${BASE_URL}/api${endpoint}`, config)
+
+        if (response.status === 401) {
+            const refreshToken = store.getState().refreshToken
+            if (!refreshToken) {
+                auth.logout()
+                throw new Error("No refresh token available")
+            }
+
+            const refreshStatus = await refreshTokens(refreshToken)
+            if (refreshStatus) {
+                config.headers = {
+                    ...config.headers,
+                    Authorization: `Bearer ${store.getState().accessToken}`,
+                }
+                return await fetch(`${BASE_URL}/api${endpoint}`, config)
+            } else {
+                auth.logout()
+                throw new Error("Token refresh failed")
+            }
+        }
+
+        if (!response.ok) {
+            const error = await response.json()
+            throw new Error(error.message || "Request failed")
+        }
+
+        return response
+    } catch (error) {
+        throw error
+    }
 }

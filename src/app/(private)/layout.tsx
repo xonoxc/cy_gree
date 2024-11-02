@@ -1,4 +1,5 @@
 "use client"
+import AIChatbot from "@/components/Ai/chatbox"
 import { refreshTokens } from "@/services/token"
 import useTokenStore from "@/store/token"
 import { Loader2 } from "lucide-react"
@@ -44,5 +45,10 @@ export default function RootLayout({
         )
     }
 
-    return <div>{children}</div>
+    return (
+        <div>
+            {children}
+            <AIChatbot />
+        </div>
+    )
 }

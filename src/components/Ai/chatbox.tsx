@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -11,15 +11,21 @@ import {
     CardTitle,
 } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { MessageCircle, Send, X, Moon, Sun } from "lucide-react"
+import { MessageCircle, Send, X } from "lucide-react"
+import { ModeToggle } from "@/components/mode_toggle"
+
+interface Message {
+    role: "user" | "assistant"
+    content: string
+}
 
 export default function AIChatbot() {
-    const [isOpen, setIsOpen] = useState(false)
-    const [messages, setMessages] = useState<
-        { role: "user" | "ai"; content: string }[]
-    >([])
+    const [messages, setMessages] = useState<Message[]>([])
     const [input, setInput] = useState("")
-    const [isDarkMode, setIsDarkMode] = useState(false)
+    const [isLoading, setIsLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+    const [isOpen, setIsOpen] = useState(false)
+    const messagesEndRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         if (isOpen) {
@@ -32,22 +38,85 @@ export default function AIChatbot() {
         }
     }, [isOpen])
 
-    const handleSend = () => {
-        if (input.trim()) {
-            setMessages([...messages, { role: "user", content: input }])
-            // Simulate AI response
-            setTimeout(() => {
-                setMessages(prev => [
-                    ...prev,
-                    { role: "ai", content: "This is a simulated AI response." },
-                ])
-            }, 1000)
-            setInput("")
-        }
-    }
+    const scrollToButton = () =>
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
 
-    const toggleDarkMode = () => {
-        setIsDarkMode(!isDarkMode)
+    useEffect(() => {
+        scrollToButton()
+    }, [messages, isLoading])
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!input.trim()) return
+
+        const userMessage: Message = { role: "user", content: input }
+        setMessages(prev => [...prev, userMessage])
+        setInput("")
+        setIsLoading(true)
+        setError(null)
+
+        try {
+            const response = await fetch("/ai/chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    messages: [...messages, userMessage],
+                }),
+            })
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`)
+            }
+
+            const reader = response.body?.getReader()
+            if (!reader) throw new Error("No reader available")
+
+            let assistantMessage = ""
+            setMessages(prev => [...prev, { role: "assistant", content: "" }])
+
+            while (true) {
+                const { done, value } = await reader.read()
+                if (done) break
+
+                const chunk = new TextDecoder().decode(value)
+                const lines = chunk
+                    .split("\n")
+                    .filter(line => line.trim() !== "")
+
+                for (const line of lines) {
+                    if (line.startsWith("data: ")) {
+                        const data = line.slice(5)
+                        if (data === "[DONE]") continue
+
+                        try {
+                            const parsed = JSON.parse(data)
+                            const content =
+                                parsed.choices[0]?.delta?.content || ""
+                            if (content) {
+                                assistantMessage += content
+                                setMessages(prev => {
+                                    const newMessages = [...prev]
+                                    newMessages[newMessages.length - 1] = {
+                                        role: "assistant",
+                                        content: assistantMessage,
+                                    }
+                                    return newMessages
+                                })
+                            }
+                        } catch (e) {
+                            console.error("Pasre chunk error:", e)
+                        }
+                    }
+                }
+            }
+        } catch (err: any) {
+            setError(err.message)
+            console.error("Chat error:", err)
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     return (
@@ -58,7 +127,7 @@ export default function AIChatbot() {
                     aria-hidden="true"
                 />
             )}
-            <div className={`${isDarkMode ? "dark" : ""}`}>
+            <div>
                 {!isOpen && (
                     <div className="fixed bottom-4 right-4 z-50">
                         <Button
@@ -77,18 +146,7 @@ export default function AIChatbot() {
                                     AI Chat
                                 </CardTitle>
                                 <div className="flex space-x-2">
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 px-0"
-                                        onClick={toggleDarkMode}
-                                    >
-                                        {isDarkMode ? (
-                                            <Sun size={16} />
-                                        ) : (
-                                            <Moon size={16} />
-                                        )}
-                                    </Button>
+                                    <ModeToggle />
                                     <Button
                                         variant="ghost"
                                         size="icon"
@@ -99,6 +157,9 @@ export default function AIChatbot() {
                                     </Button>
                                 </div>
                             </CardHeader>
+                            <div className="w-full flex items-center justify-center text-red-500">
+                                {error && error}
+                            </div>
                             <CardContent className="flex-grow overflow-auto py-4 px-4">
                                 {messages.map((message, index) => (
                                     <div
@@ -113,13 +174,15 @@ export default function AIChatbot() {
                                             >
                                                 <AvatarImage
                                                     src={
-                                                        message.role === "ai"
+                                                        message.role ===
+                                                        "assistant"
                                                             ? "/placeholder.svg?height=32&width=32"
                                                             : undefined
                                                     }
                                                 />
                                                 <AvatarFallback>
-                                                    {message.role === "ai"
+                                                    {message.role ===
+                                                    "assistant"
                                                         ? "AI"
                                                         : "You"}
                                                 </AvatarFallback>
@@ -136,13 +199,27 @@ export default function AIChatbot() {
                                         </div>
                                     </div>
                                 ))}
+                                {isLoading && (
+                                    <div className="flex justify-start mb-4">
+                                        <div className="flex flex-row items-start space-x-2">
+                                            <Avatar className="w-8 h-8 mr-2">
+                                                <AvatarImage src="/placeholder.svg?height=32&width=32" />
+                                                <AvatarFallback>
+                                                    AI
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <div className="p-3 rounded-lg max-w-[70%] bg-muted">
+                                                <div className="animate-pulse">
+                                                    <div className="h-4 w-4 bg-gray-300 rounded-full" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </CardContent>
                             <CardFooter>
                                 <form
-                                    onSubmit={e => {
-                                        e.preventDefault()
-                                        handleSend()
-                                    }}
+                                    onSubmit={handleSubmit}
                                     className="flex w-full items-center space-x-2"
                                 >
                                     <Input
@@ -152,7 +229,11 @@ export default function AIChatbot() {
                                         onChange={e => setInput(e.target.value)}
                                         className="flex-grow"
                                     />
-                                    <Button type="submit" size="icon">
+                                    <Button
+                                        type="submit"
+                                        size="icon"
+                                        disabled={isLoading}
+                                    >
                                         <Send className="h-4 w-4" />
                                     </Button>
                                 </form>
@@ -161,6 +242,7 @@ export default function AIChatbot() {
                     </div>
                 )}
             </div>
+            <div ref={messagesEndRef} />
         </>
     )
 }

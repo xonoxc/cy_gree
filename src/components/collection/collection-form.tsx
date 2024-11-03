@@ -61,7 +61,7 @@ export default function PlasticCollectionDrawerForm() {
             <DrawerTrigger asChild>
                 <Button
                     variant="outline"
-                    className="dark:bg-white dark:text-black font-bold"
+                    className="dark:bg-white dark:text-black font-bold mb-5"
                 >
                     <Plus className="mr-2" size={15} />
                     Add Collection

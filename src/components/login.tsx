@@ -49,7 +49,7 @@ export function LoginForm() {
     }
 
     return (
-        <div className="mx-auto max-w-sm space-y-6">
+        <div className="mx-auto max-w-[90%] md:max-w-sm space-y-6">
             <div className="space-y-2 text-center">
                 <h1 className="text-3xl font-bold">
                     <span className="font-bold text-5xl text-green-400">

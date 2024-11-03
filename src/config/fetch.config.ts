@@ -20,7 +20,7 @@ export const fetchWithConfig = async (
     endpoint: string,
     options: FetchOptions = {}
 ): Promise<Response> => {
-    let config: FetchOptions = {
+    const config: FetchOptions = {
         ...defaultConfig,
         ...options,
     }

@@ -81,13 +81,16 @@ export default function PlasticCollectionDrawerForm() {
                                 id="amount_collected"
                                 name="amount_collected"
                                 value={amount_collected}
-                                type="decimal"
+                                type="text"
                                 min={0.0}
-                                defaultValue={0.0}
                                 inputMode="decimal"
-                                onChange={e =>
-                                    setAmountCollected(Number(e.target.value))
-                                }
+                                onChange={e => {
+                                    const value = e.target.value
+                                    const regex = /^\d*\.?\d{0,2}$/
+                                    if (regex.test(value)) {
+                                        setAmountCollected(value)
+                                    }
+                                }}
                                 required
                                 className="dark:bg-muted"
                             />

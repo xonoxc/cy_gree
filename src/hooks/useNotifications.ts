@@ -75,6 +75,23 @@ export const useNotifications = (userId: string) => {
         }
     }
 
+    const sendNotification = async (userId: string) => {
+        try {
+            const response = await fetchWithConfig(
+                `/notifications/${userId}/send`
+            )
+
+            if (response.status === 200) {
+                return true
+            }
+
+            return false
+        } catch (error) {
+            console.error("Error while sending notification", error)
+            return false
+        }
+    }
+
     useEffect(() => {
         ;(async () => {
             await fetchInitialNotifications()
@@ -87,5 +104,6 @@ export const useNotifications = (userId: string) => {
         notifications,
         unreadCount,
         loading,
+        sendNotification,
     }
 }

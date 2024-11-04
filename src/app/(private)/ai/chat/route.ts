@@ -35,7 +35,6 @@ export async function POST(req: NextRequest) {
             }
         )
 
-        // Check if the response is not ok
         if (!response.ok) {
             const errorData = await response.json()
             console.error("API Error:", errorData)

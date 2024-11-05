@@ -17,7 +17,7 @@ interface IUserData {
 }
 
 interface ICollection {
-    amount_collected: number
+    amount_collected: string
     collection_date: string
 }
 
@@ -207,7 +207,7 @@ export const useClientstats = () => {
     }
 
     const handleCollectionCreate = async (
-        amount_collected: number,
+        amount_collected: string,
         pic?: File | null
     ) => {
         const formDataToSend = new FormData()

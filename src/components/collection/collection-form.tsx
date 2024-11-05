@@ -16,7 +16,7 @@ import { Plus } from "lucide-react"
 
 export default function PlasticCollectionDrawerForm() {
     const [open, setOpen] = useState(false)
-    const [amount_collected, setAmountCollected] = useState<number>(0.0)
+    const [amount_collected, setAmountCollected] = useState<string>("")
     const [picture, setPicture] = useState<File | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const { toast } = useToast()
@@ -43,7 +43,7 @@ export default function PlasticCollectionDrawerForm() {
                     title: "Collection Created Successfully!",
                 })
                 setOpen(false)
-                setAmountCollected(0.0)
+                setAmountCollected("0.0")
                 setPicture(null)
             }
         } catch (error: any) {

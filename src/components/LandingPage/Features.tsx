@@ -17,7 +17,12 @@ const features = [
             "Monitor your plastic waste reduction efforts with our easy-to-use tracking system.",
         href: "/",
         cta: "Learn more",
-        background: <img className="absolute -right-20 -top-20 opacity-60" />,
+        background: (
+            <img
+                className="absolute -right-20 -top-20 opacity-60"
+                alt="image"
+            />
+        ),
         className: "lg:row-start-1 lg:row-end-4 lg:col-start-2 lg:col-end-3",
     },
     {
@@ -27,7 +32,12 @@ const features = [
             "Earn gift coupons and special offers as you reach collection milestones.",
         href: "/",
         cta: "Learn more",
-        background: <img className="absolute -right-20 -top-20 opacity-60" />,
+        background: (
+            <img
+                className="absolute -right-20 -top-20 opacity-60"
+                alt="image"
+            />
+        ),
         className: "lg:col-start-1 lg:col-end-2 lg:row-start-1 lg:row-end-3",
     },
     {
@@ -37,7 +47,12 @@ const features = [
             "Earn and trade our unique cryptocurrency based on your recycling efforts.",
         href: "/",
         cta: "Learn more",
-        background: <img className="absolute -right-20 -top-20 opacity-60" />,
+        background: (
+            <img
+                className="absolute -right-20 -top-20 opacity-60"
+                alt="image"
+            />
+        ),
         className: "lg:col-start-1 lg:col-end-2 lg:row-start-3 lg:row-end-4",
     },
     {
@@ -47,7 +62,12 @@ const features = [
             "Track your environmental impact and rewards in real-time.",
         href: "/",
         cta: "Learn more",
-        background: <img className="absolute -right-20 -top-20 opacity-60" />,
+        background: (
+            <img
+                className="absolute -right-20 -top-20 opacity-60"
+                alt="image"
+            />
+        ),
         className: "lg:col-start-3 lg:col-end-3 lg:row-start-1 lg:row-end-2",
     },
     {
@@ -57,7 +77,12 @@ const features = [
             "Connect with recycling agents and contribute to worldwide sustainability efforts.",
         href: "/",
         cta: "Learn more",
-        background: <img className="absolute -right-20 -top-20 opacity-60" />,
+        background: (
+            <img
+                className="absolute -right-20 -top-20 opacity-60"
+                alt="image"
+            />
+        ),
         className: "lg:col-start-3 lg:col-end-3 lg:row-start-2 lg:row-end-4",
     },
     {
@@ -66,7 +91,12 @@ const features = [
         description:
             "See the tangible effects of your contributions to a cleaner planet.",
         href: "/",
-        background: <img className="absolute -right-20 -top-20 opacity-60" />,
+        background: (
+            <img
+                className="absolute -right-20 -top-20 opacity-60"
+                alt="image"
+            />
+        ),
         className: "lg:col-start-2 lg:col-end-3 lg:row-start-4 lg:row-end-5",
     },
 
@@ -77,7 +107,12 @@ const features = [
             "Get detailed insights on your recycling patterns and progress over time.",
         href: "/",
         cta: "Learn more",
-        background: <img className="absolute -right-20 -top-20 opacity-60" />,
+        background: (
+            <img
+                className="absolute -right-20 -top-20 opacity-60"
+                alt="image"
+            />
+        ),
         className: "lg:col-start-1 lg:col-end-2 lg:row-start-4 lg:row-end-5",
     },
 ]

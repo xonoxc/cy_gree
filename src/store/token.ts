@@ -10,10 +10,12 @@ export interface ITokenStore {
     role: string
     id: string
     hydrated: boolean
+    csrf: string
     setAccesstoken: (token: string) => void
     setRefreshToken: (token: string) => void
     setRole: (role: Roles) => void
     setHydrated(): void
+    setCsrftoken(token: string): void
 }
 
 const useTokenStore = create<ITokenStore>()(
@@ -22,6 +24,7 @@ const useTokenStore = create<ITokenStore>()(
             accessToken: "",
             refreshToken: "",
             role: "",
+            csrf: "",
             id: "",
             hydrated: false,
             setHydrated(): void {
@@ -35,6 +38,9 @@ const useTokenStore = create<ITokenStore>()(
             },
             setRole(role: Roles): void {
                 set({ role: role })
+            },
+            setCsrftoken(token: string) {
+                set({ csrf: token })
             },
         })),
         {

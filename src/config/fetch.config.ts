@@ -17,8 +17,6 @@ const defaultConfig: FetchOptions = {
     credentials: "include",
 }
 
-let csrfToken: string | null = null
-
 const fetchCsrfToken = async () => {
     try {
         const response = await fetch(`${BASE_URL}/api/set-csrf-token/`, {
@@ -27,7 +25,7 @@ const fetchCsrfToken = async () => {
         })
         if (response.ok) {
             const data = await response.json()
-            csrfToken = data.csrfToken
+            store.setState({ csrf: data.csrftoken })
         } else {
             throw new Error("Failed to fetch CSRF token")
         }
@@ -45,10 +43,12 @@ export const fetchWithConfig = async (
         ...options,
     }
 
-    if (csrfToken) {
+    const csrftoken = store.getState().csrf
+
+    if (csrftoken) {
         config.headers = {
             ...config.headers,
-            "X-CSRFToken": csrfToken,
+            "X-CSRFToken": csrftoken,
         }
     }
 
@@ -69,7 +69,7 @@ export const fetchWithConfig = async (
     }
 
     try {
-        if (!csrfToken) {
+        if (!csrftoken) {
             await fetchCsrfToken()
         }
 

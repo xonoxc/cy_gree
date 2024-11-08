@@ -13,8 +13,27 @@ const defaultConfig: FetchOptions = {
         Accept: "application/json",
         Authorization: `Bearer ${store.getState().accessToken}`,
     },
-    mode:"cors",
-    credentials:"include"
+    mode: "cors",
+    credentials: "include",
+}
+
+let csrfToken: string | null = null
+
+const fetchCsrfToken = async () => {
+    try {
+        const response = await fetch(`${BASE_URL}/api/set-csrf-token/`, {
+            method: "GET",
+            credentials: "include",
+        })
+        if (response.ok) {
+            const data = await response.json()
+            csrfToken = data.csrfToken
+        } else {
+            throw new Error("Failed to fetch CSRF token")
+        }
+    } catch (error) {
+        console.error("Error fetching CSRF token:", error)
+    }
 }
 
 export const fetchWithConfig = async (
@@ -24,6 +43,13 @@ export const fetchWithConfig = async (
     const config: FetchOptions = {
         ...defaultConfig,
         ...options,
+    }
+
+    if (csrfToken) {
+        config.headers = {
+            ...config.headers,
+            "X-CSRFToken": csrfToken,
+        }
     }
 
     if (!(options.body instanceof FormData)) {
@@ -43,6 +69,10 @@ export const fetchWithConfig = async (
     }
 
     try {
+        if (!csrfToken) {
+            await fetchCsrfToken()
+        }
+
         const response = await fetch(`${BASE_URL}/api${endpoint}`, config)
 
         if (response.status === 401) {

@@ -1,4 +1,7 @@
-1. CyGree
+# CyGree
+
+- Application to support plastic waste management and collection in a modern and simple way.
+
 
 ## Getting Started
 

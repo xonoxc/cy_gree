@@ -18,20 +18,11 @@ Initial Steps to get started with CyGree
 
 ```
 
-# For Backend Application
 
-```bash
-  
-   # In project root 
-   npm install
-   # run the development server 
-   npm run dev
-
-```
 ## Backend Link 
 Backend Repo for this repository [https://github.com/Pallavrai/CyGree-Backend](https://github.com/Pallavrai/CyGree-Backend).
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:8000](http://localhost:8000) with your browser to see the result.
 
 
 ## Technologies Used

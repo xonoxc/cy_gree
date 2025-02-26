@@ -1,3 +1,5 @@
+"use client"
+
 import { DotPattern } from "@/components/Animated"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"

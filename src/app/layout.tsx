@@ -1,17 +1,14 @@
-import { Metadata } from "next"
+"use client"
+
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
+import { SessionProvider } from "next-auth/react"
 import localFont from "next/font/local"
 import "./globals.css"
 
 const sfpro = localFont({
     src: "../../public/fonts/sf-pro-display_regular.woff2",
 })
-
-export const metadata: Metadata = {
-    title: "cyGree",
-    description: "platform for waste managment",
-}
 
 export default function RootLayout({
     children,
@@ -21,10 +18,12 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body className={`${sfpro.className} antialiased`}>
-                <ThemeProvider attribute="class" defaultTheme="dark">
-                    {children}
-                </ThemeProvider>
-                <Toaster />
+                <SessionProvider>
+                    <ThemeProvider attribute="class" defaultTheme="dark">
+                        {children}
+                    </ThemeProvider>
+                    <Toaster />
+                </SessionProvider>
             </body>
         </html>
     )

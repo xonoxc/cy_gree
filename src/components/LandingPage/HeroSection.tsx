@@ -1,3 +1,5 @@
+"use client"
+
 import { motion } from "framer-motion"
 import { RainbowButton } from "@/components/Animated"
 import { BoxReveal } from "@/components/Animated"

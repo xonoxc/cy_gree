@@ -1,3 +1,5 @@
+"use client"
+
 import Image from "next/image"
 import { GridPattern } from "@/components/Animated"
 import { cn } from "@/lib/utils"

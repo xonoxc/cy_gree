@@ -44,7 +44,14 @@ export default function RegistrationForm() {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(creds),
+                method: "POST",
+                body: JSON.stringify({
+                    username: creds.username,
+                    email: creds.email,
+                    password: creds.password,
+                    firstName: creds.first_name,
+                    lastName: creds.last_name,
+                }),
             })
 
             if (authenticationResponse.status === 201) {

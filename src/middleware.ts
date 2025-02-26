@@ -4,7 +4,7 @@ import { getToken } from "next-auth/jwt"
 export { default } from "next-auth/middleware"
 
 const publicRoutes = ["/", "/sign-in", "/sign-up"]
-const privateRoutes = ["/usr/dashboard", "/usr/dashboard", "/api/ai/chat"]
+const privateRoutes = ["/usr/dashboard", "/agent/dashboard", "/api/ai/chat"]
 
 export async function middleware(request: NextRequest) {
     const token = await getToken({
@@ -17,12 +17,15 @@ export async function middleware(request: NextRequest) {
 
     if (token && role && publicRoutes.includes(pathName)) {
         return NextResponse.redirect(
-            `/${role === "Client" ? "usr" : "agent"}/dashboard`
+            new URL(
+                `/${role === "Client" ? "usr" : "agent"}/dashboard`,
+                request.url
+            )
         )
     }
 
     if (!token && privateRoutes.includes(pathName)) {
-        return NextResponse.redirect("/sign-in")
+        return NextResponse.redirect(new URL("/sign-in", request.url))
     }
 }
 

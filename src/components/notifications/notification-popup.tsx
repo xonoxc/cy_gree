@@ -9,16 +9,16 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover"
 import { useNotifications } from "@/hooks/useNotifications"
-import useTokenStore from "@/store/token"
 import getRelativeTime from "@/utils/date"
+import { useSession } from "next-auth/react"
 
 export default function NotificationPopup() {
     const [open, setOpen] = useState(false)
 
-    const { id: userId } = useTokenStore()
+    const { data: session } = useSession()
 
     const { unreadCount, markAllAsRead, markAsRead, notifications, loading } =
-        useNotifications(userId)
+        useNotifications(session?.user.id as string)
 
     return (
         <Popover open={open} onOpenChange={setOpen}>

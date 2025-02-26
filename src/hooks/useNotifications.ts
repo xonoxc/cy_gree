@@ -1,5 +1,4 @@
-import { fetchWithConfig } from "@/config/fetch.config"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 
 interface Notification {
     id: string
@@ -14,10 +13,10 @@ export const useNotifications = (userId: string) => {
 
     const unreadCount = notifications.filter(noti => !noti.is_read).length
 
-    const markAsRead = async (id: string) => {
+    const markAsRead = useCallback(async (id: string) => {
         try {
             setLoading(true)
-            const statusResponse = await fetchWithConfig(
+            const statusResponse = await fetch(
                 `/notifications/${userId}/read?notification_id=${id}`,
                 {
                     method: "PATCH",
@@ -35,17 +34,14 @@ export const useNotifications = (userId: string) => {
         } finally {
             setLoading(false)
         }
-    }
+    }, [])
 
-    const markAllAsRead = async () => {
+    const markAllAsRead = useCallback(async () => {
         try {
             setLoading(true)
-            const response = await fetchWithConfig(
-                `/notifications/${userId}/read/all`,
-                {
-                    method: "PATCH",
-                }
-            )
+            const response = await fetch(`/notifications/${userId}/read/all`, {
+                method: "PATCH",
+            })
 
             if (response.status === 200) {
                 setNotifications([])
@@ -56,12 +52,12 @@ export const useNotifications = (userId: string) => {
         } finally {
             setLoading(false)
         }
-    }
+    }, [])
 
-    const fetchInitialNotifications = async () => {
+    const fetchInitialNotifications = useCallback(async () => {
         try {
             setLoading(true)
-            const response = await fetchWithConfig(`/notifications/${userId}`)
+            const response = await fetch(`/notifications/${userId}`)
 
             if (response.status === 200) {
                 const jsonResponse = await response.json()
@@ -73,13 +69,11 @@ export const useNotifications = (userId: string) => {
         } finally {
             setLoading(false)
         }
-    }
+    }, [])
 
-    const sendNotification = async (userId: string) => {
+    const sendNotification = useCallback(async (userId: string) => {
         try {
-            const response = await fetchWithConfig(
-                `/notifications/${userId}/send`
-            )
+            const response = await fetch(`/notifications/${userId}/send`)
 
             if (response.status === 200) {
                 return true
@@ -90,7 +84,7 @@ export const useNotifications = (userId: string) => {
             console.error("Error while sending notification", error)
             return false
         }
-    }
+    }, [])
 
     useEffect(() => {
         ;(async () => {

@@ -1,6 +1,5 @@
-import { fetchWithConfig } from "@/config/fetch.config"
-import { useEffect, useState } from "react"
-import authStore from "@/store/token"
+import { useSession } from "next-auth/react"
+import { useCallback, useEffect, useState } from "react"
 
 interface IUserData {
     profile_pic: string
@@ -64,13 +63,12 @@ export const useClientstats = () => {
     >([])
     const [claimedRewards, setClaimedRewards] = useState<IClaimedRewards[]>([])
 
+    const { data: session } = useSession()
+
     const fetchUserProfileData = async () => {
-        const response = await fetchWithConfig(
-            `/profile/${authStore.getState().id}`,
-            {
-                method: "GET",
-            }
-        )
+        const response = await fetch(`/profile/${session?.user.id}`, {
+            method: "GET",
+        })
 
         if (response.status === 200) {
             const json = await response.json()
@@ -93,9 +91,7 @@ export const useClientstats = () => {
     }
 
     const fetchCollectionHistory = async () => {
-        const response = await fetchWithConfig(
-            `/client/${authStore.getState().id}/history`
-        )
+        const response = await fetch(`/client/${session?.user.id}/history`)
 
         if (response.status === 200) {
             const jsonResponse = await response.json()
@@ -107,9 +103,7 @@ export const useClientstats = () => {
     }
 
     const fetchUserBadges = async () => {
-        const result = await fetchWithConfig(
-            `/client/${authStore.getState().id}/badges`
-        )
+        const result = await fetch(`/client/${session?.user.id}/badges`)
         if (result.status === 200) {
             const json = await result.json()
             setUserBadges(json)
@@ -117,16 +111,14 @@ export const useClientstats = () => {
     }
 
     const fetchAvailableRewards = async () => {
-        const result = await fetchWithConfig(
-            `/client/${authStore.getState().id}/rewards`
-        )
+        const result = await fetch(`/client/${session?.user.id}/rewards`)
         const jsonResponse = await result.json()
         setAvailableRewards(jsonResponse)
     }
 
     const fetchClaimedRewards = async () => {
-        const result = await fetchWithConfig(
-            `/client/${authStore.getState().id}/rewards/history`
+        const result = await fetch(
+            `/client/${session?.user.id}/rewards/history`
         )
 
         if (result.status === 200) {
@@ -136,8 +128,8 @@ export const useClientstats = () => {
     }
 
     const handelClaimReward = async (rewardId: string, expense: number) => {
-        const result = await fetchWithConfig(
-            `/client/${authStore.getState().id}/rewards/${rewardId}/claim`,
+        const result = await fetch(
+            `/client/${session?.user.id}/rewards/${rewardId}/claim`,
             {
                 method: "POST",
             }
@@ -166,13 +158,13 @@ export const useClientstats = () => {
                 formData.append("pic", file as File, file.name)
             }
 
-            const userId = authStore.getState().id
+            const userId = session?.user.id
 
-            await updateEmailId(userId)
+            await updateEmailId(session?.user.id as string)
 
             formData.append("data", JSON.stringify({ ...userData }))
 
-            const result = await fetchWithConfig(`/profile/${userId}`, {
+            const result = await fetch(`/profile/${userId}`, {
                 method: "POST",
                 body: formData,
             })
@@ -192,7 +184,7 @@ export const useClientstats = () => {
 
     const updateEmailId = async (userId: string) => {
         try {
-            const response = await fetchWithConfig(`/user/${userId}`, {
+            const response = await fetch(`/user/${userId}`, {
                 method: "PATCH",
                 body: JSON.stringify({ email: userData.email }),
             })
@@ -206,33 +198,33 @@ export const useClientstats = () => {
         }
     }
 
-    const handleCollectionCreate = async (
-        amount_collected: string,
-        pic?: File | null
-    ) => {
-        const formDataToSend = new FormData()
+    const handleCollectionCreate = useCallback(
+        async (amount_collected: string, pic?: File | null) => {
+            const formDataToSend = new FormData()
 
-        formDataToSend.append("pic", pic as File)
+            formDataToSend.append("pic", pic as File)
 
-        try {
-            const response = await fetchWithConfig(
-                `/client/${authStore.getState().id}/collection?amount_collected=${encodeURIComponent(amount_collected)}`,
-                {
-                    method: "POST",
-                    body: formDataToSend,
+            try {
+                const response = await fetch(
+                    `/client/${session?.user.id}/collection?amount_collected=${encodeURIComponent(amount_collected)}`,
+                    {
+                        method: "POST",
+                        body: formDataToSend,
+                    }
+                )
+                if (response.status === 200) {
+                    const jsonResponse = await response.json()
+                    console.log("Form submitted successfully", jsonResponse)
+
+                    return true
                 }
-            )
-            if (response.status === 200) {
-                const jsonResponse = await response.json()
-                console.log("Form submitted successfully", jsonResponse)
-
-                return true
+                return false
+            } catch (error) {
+                throw error
             }
-            return false
-        } catch (error) {
-            throw error
-        }
-    }
+        },
+        []
+    )
 
     useEffect(() => {
         fetchUserProfileData()

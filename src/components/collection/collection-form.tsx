@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useCallback, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -22,39 +22,42 @@ export default function PlasticCollectionDrawerForm() {
     const { toast } = useToast()
     const { handleCollectionCreate } = useClientstats()
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!amount_collected || !picture) {
-            toast({
-                title: "Please fill in all required fields",
-                variant: "destructive",
-            })
-            return
-        }
-
-        setIsSubmitting(true)
-        try {
-            const created = await handleCollectionCreate(
-                amount_collected,
-                picture
-            )
-            if (created) {
+    const handleSubmit = useCallback(
+        async (e: React.FormEvent) => {
+            e.preventDefault()
+            if (!amount_collected || !picture) {
                 toast({
-                    title: "Collection Created Successfully!",
+                    title: "Please fill in all required fields",
+                    variant: "destructive",
                 })
-                setOpen(false)
-                setAmountCollected("0.0")
-                setPicture(null)
+                return
             }
-        } catch (error: any) {
-            toast({
-                title: error.message || "Error creating collection",
-                variant: "destructive",
-            })
-        } finally {
-            setIsSubmitting(false)
-        }
-    }
+
+            setIsSubmitting(true)
+            try {
+                const created = await handleCollectionCreate(
+                    amount_collected,
+                    picture
+                )
+                if (created) {
+                    toast({
+                        title: "Collection Created Successfully!",
+                    })
+                    setOpen(false)
+                    setAmountCollected("0.0")
+                    setPicture(null)
+                }
+            } catch (error: any) {
+                toast({
+                    title: error.message || "Error creating collection",
+                    variant: "destructive",
+                })
+            } finally {
+                setIsSubmitting(false)
+            }
+        },
+        [amount_collected, picture, handleCollectionCreate, toast]
+    )
 
     return (
         <Drawer open={open} onOpenChange={setOpen}>

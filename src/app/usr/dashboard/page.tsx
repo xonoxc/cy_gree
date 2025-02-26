@@ -21,11 +21,11 @@ import {
 import { Edit, Save } from "lucide-react"
 import { ModeToggle } from "@/components/mode_toggle"
 import { useRouter } from "next/navigation"
-import { auth } from "@/services/auth"
 import { useClientstats } from "@/hooks/useClientstats"
 import NotificationPopup from "@/components/notifications/notification-popup"
 import { useToast } from "@/hooks/use-toast"
 import dynamic from "next/dynamic"
+import { signOut } from "next-auth/react"
 
 const CollectionForm = dynamic(
     () => import("@/components/collection/collection-form"),
@@ -53,7 +53,7 @@ export default function UserDashboard() {
     const router = useRouter()
     const { toast } = useToast()
 
-    const handleEditToggle = async () => {
+    const handleEditToggle = useCallback(async () => {
         try {
             if (editing) {
                 const result = await handleProfileUpdate(avatar as File)
@@ -71,30 +71,36 @@ export default function UserDashboard() {
         } finally {
             setEditing(!editing)
         }
-    }
+    }, [editing, avatar])
 
-    const handleAvtarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files) {
-            setAvatar(e.target.files[0])
-        }
-    }
+    const handleAvtarChange = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            if (e.target.files) {
+                setAvatar(e.target.files[0])
+            }
+        },
+        []
+    )
 
-    const handleRewardsClaim = async (id: string, expense: number) => {
-        try {
-            await handelClaimReward(id, expense)
-            toast({
-                title: "Reward Claimed",
-            })
-        } catch (error: any) {
-            toast({
-                variant: "destructive",
-                title: error.message || "cannot claim reward",
-            })
-        }
-    }
+    const handleRewardsClaim = useCallback(
+        async (id: string, expense: number) => {
+            try {
+                await handelClaimReward(id, expense)
+                toast({
+                    title: "Reward Claimed",
+                })
+            } catch (error: any) {
+                toast({
+                    variant: "destructive",
+                    title: error.message || "cannot claim reward",
+                })
+            }
+        },
+        []
+    )
 
     const handleLogout = useCallback(async () => {
-        auth.logout()
+        await signOut()
         router.push("/sign-in")
     }, [router])
 

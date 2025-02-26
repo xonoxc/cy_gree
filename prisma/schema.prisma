@@ -1,0 +1,163 @@
+// main system prisma schema file
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id       Int          @id @default(autoincrement())
+    username String       @unique
+    email    String       @unique
+    password String
+    name     String
+    profile  UserProfile?
+}
+
+model UserProfile {
+    id                   Int     @id @default(autoincrement())
+    userId               Int     @unique
+    user                 User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    profilePic           String  @default("")
+    role                 Role    @default(Client)
+    address              String?
+    city                 String?
+    state                State?
+    country              String  @default("India")
+    phoneNumber          String? @db.VarChar(10)
+    totalPlasticRecycled Decimal @default(0.00) @db.Decimal(20, 2)
+    earnedPoints         Decimal @default(0.00) @db.Decimal(20, 2)
+
+    plasticCollections  PlasticCollection[]
+    rewards             Reward[]
+    badges              Badge[]
+    notifications       Notification[]
+    toUserNotifications Notification[]      @relation("ToUserNotifications")
+}
+
+enum Role {
+    Client
+    Agent
+}
+
+enum State {
+    Andhra_Pradesh
+    Arunachal_Pradesh
+    Assam
+    Bihar
+    Chhattisgarh
+    Goa
+    Gujarat
+    Haryana
+    Himachal_Pradesh
+    Jharkhand
+    Karnataka
+    Kerala
+    Madhya_Pradesh
+    Maharashtra
+    Manipur
+    Meghalaya
+    Mizoram
+    Nagaland
+    Odisha
+    Punjab
+    Rajasthan
+    Sikkim
+    Tamil_Nadu
+    Telangana
+    Tripura
+    Uttar_Pradesh
+    Uttarakhand
+    West_Bengal
+    Andaman_and_Nicobar_Islands
+    Chandigarh
+    Dadra_and_Nagar_Haveli_and_Daman_and_Diu
+    Lakshadweep
+    Delhi
+    Puducherry
+    Ladakh
+    Jammu_and_Kashmir
+}
+
+model PlasticCollection {
+    id        Int         @id @default(autoincrement())
+    userId    Int
+    user      UserProfile @relation(fields: [userId], references: [id])
+    imagePath String
+    amount    Decimal     @db.Decimal(20, 2)
+    status    Status      @default(Pending)
+    claimedBy Int?
+    createdAt DateTime    @default(now())
+    updatedAt DateTime    @updatedAt
+}
+
+enum Status {
+    Pending
+    Claimed
+    Collected
+}
+
+model ListReward {
+    id             Int        @id @default(autoincrement())
+    title          String?    @db.VarChar(100)
+    pointsRequired Decimal    @db.Decimal(30, 2)
+    issuedDate     DateTime   @default(now())
+    rewardType     RewardType
+
+    rewards Reward[]
+}
+
+enum RewardType {
+    Gift_Coupon
+    Cash
+    Offer
+}
+
+model Reward {
+    id          Int         @id @default(autoincrement())
+    userId      Int
+    user        UserProfile @relation(fields: [userId], references: [id])
+    rewardId    Int
+    reward      ListReward  @relation(fields: [rewardId], references: [id])
+    claimedDate DateTime    @default(now())
+
+    @@unique([userId, rewardId])
+}
+
+model Badge {
+    id         Int         @id @default(autoincrement())
+    userId     Int
+    user       UserProfile @relation(fields: [userId], references: [id])
+    name       BadgeType   @default(Recycler)
+    issuedDate DateTime    @default(now())
+}
+
+enum BadgeType {
+    Recycler
+    Eco_Warrior
+    Green_Ambassador
+    Sustainability_Hero
+}
+
+model Notification {
+    id               Int             @id @default(autoincrement())
+    userId           Int
+    user             UserProfile     @relation(fields: [userId], references: [id])
+    toUserId         Int?
+    toUser           UserProfile?    @relation("ToUserNotifications", fields: [toUserId], references: [id])
+    message          String
+    importanceLevel  ImportanceLevel @default(Low)
+    notificationDate DateTime        @default(now())
+    isRead           Boolean         @default(false)
+
+    @@index([importanceLevel, notificationDate(sort: Desc)])
+}
+
+enum ImportanceLevel {
+    Low
+    Medium
+    High
+}

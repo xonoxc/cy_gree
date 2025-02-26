@@ -13,9 +13,9 @@ import {
 } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
 import Link from "next/link"
-import { auth } from "@/services/auth"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
+import { signIn } from "next-auth/react"
 
 interface RegistrationCreds {
     username: string
@@ -40,16 +40,35 @@ export default function RegistrationForm() {
     const onSubmit = async () => {
         setIsLoading(true)
         try {
-            const role = await auth.register({ ...creds })
+            const authenticationResponse = await fetch("/api/auth/register", {
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(creds),
+            })
 
-            if (role) {
+            if (authenticationResponse.status === 201) {
                 toast({
                     title: "Account created successfully!",
                     description: "youre being redirected",
                 })
-                router.replace(
-                    `/${role === "Client" ? "usr" : "agent"}/dashboard`
-                )
+
+                const result = await signIn("credentials", {
+                    username: creds.username,
+                    password: creds.password,
+                    redirect: false,
+                })
+                if (result?.error) {
+                    toast({
+                        title: result.error,
+                        variant: "destructive",
+                    })
+                } else {
+                    toast({
+                        title: "Login Successful",
+                    })
+                    router.refresh()
+                }
             }
         } catch (error: any) {
             toast({

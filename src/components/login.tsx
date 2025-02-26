@@ -3,7 +3,7 @@
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { auth } from "@/services/auth"
+import { signIn } from "next-auth/react"
 import { Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
@@ -27,15 +27,21 @@ export function LoginForm() {
     const handleSubmission = async () => {
         setLoading(true)
         try {
-            const role = await auth.login(creds.username, creds.password)
-            if (role) {
+            const result = await signIn("credentials", {
+                username: creds.username,
+                password: creds.password,
+                redirect: false,
+            })
+            if (result?.error) {
                 toast({
-                    title: "Login Success!",
-                    description: "youre being redirected",
+                    title: result.error,
+                    variant: "destructive",
                 })
-                router.replace(
-                    `/${role === "Client" ? "usr" : "agent"}/dashboard`
-                )
+            } else {
+                toast({
+                    title: "Login Successful",
+                })
+                router.refresh()
             }
         } catch (error: any) {
             toast({

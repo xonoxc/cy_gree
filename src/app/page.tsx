@@ -1,6 +1,3 @@
-"use client"
-
-import { useState, useEffect } from "react"
 import {
     Header,
     Footer,
@@ -9,16 +6,15 @@ import {
     FeaturesSection,
     JoinSection,
 } from "@/components/LandingPage"
+import { Metadata } from "next"
+
+export const metadata: Metadata = {
+    title: "Home | cyGree",
+    description:
+        "cyGree is a platform that facicliated the process of plastic waste management a breeze",
+}
 
 export default function Home() {
-    const [mounted, setMounted] = useState(false)
-
-    useEffect(() => {
-        setMounted(true)
-    }, [])
-
-    if (!mounted) return null
-
     return (
         <div className="min-h-screen dark:bg-black bg-white text-white overflow-x-hidden">
             <Header />

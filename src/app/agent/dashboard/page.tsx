@@ -14,12 +14,12 @@ import {
 } from "@/components/ui/table"
 import { User, UserCheck, Recycle } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { auth } from "@/services/auth"
 import { useRouter } from "next/navigation"
 import NotificationPopup from "@/components/notifications/notification-popup"
 import useTokenStore from "@/store/token"
 import getRelativeTime from "@/utils/date"
 import { useToast } from "@/hooks/use-toast"
+import { signOut } from "next-auth/react"
 
 export default function RecyclingAgentDashboard() {
     const router = useRouter()
@@ -68,8 +68,8 @@ export default function RecyclingAgentDashboard() {
         }
     }
 
-    const handleLogout = () => {
-        auth.logout()
+    const handleLogout = async () => {
+        await signOut()
         router.push("/sign-in")
     }
 

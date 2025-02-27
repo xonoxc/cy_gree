@@ -1,5 +1,14 @@
 import { z } from "zod"
 
+/*
+ *  validation of fields as uuid
+ */
+export const idValidationSchema = z.string().uuid()
+
+/*
+ *
+ *   username validation
+ */
 const usernameValidationSchema = z
     .string()
     .regex(/^[a-zA-Z0-9_]+$/, {
@@ -8,6 +17,10 @@ const usernameValidationSchema = z
     .min(3, { message: "Username must be at least 3 characters long." })
     .max(10, { message: "Username must be at most 10 characters long." })
 
+/*
+ *
+ *   username validation
+ */
 const registerUserCredValidationSchema = z.object({
     username: usernameValidationSchema,
     email: z.string().email({ message: "Invalid email address." }),
@@ -20,6 +33,10 @@ const registerUserCredValidationSchema = z.object({
     password: z.string(),
 })
 
+/*
+ *
+ * credentials for validation of login request
+ */
 const loginUserSchemaValidation = z.object({
     username: usernameValidationSchema,
     password: z
@@ -27,4 +44,31 @@ const loginUserSchemaValidation = z.object({
         .min(5, { message: "Password must be at least 5 characters long." }),
 })
 
-export { registerUserCredValidationSchema, loginUserSchemaValidation }
+/*
+ *  credentails for updating user details
+ */
+
+const userUpdateValidationSchema = z.object({
+    username: usernameValidationSchema.optional(),
+    email: z.string().email({ message: "Invalid email address." }).optional(),
+    firstName: z
+        .string()
+        .min(3, {
+            message: "First name must be at minimum 3 characters long.",
+        })
+        .optional(),
+    lastName: z
+        .string()
+        .min(3, {
+            message: "First name must be at minimum 3 characters long.",
+        })
+        .optional(),
+    isActive: z.boolean().optional(),
+    password: z.string().optional(),
+})
+
+export {
+    registerUserCredValidationSchema,
+    loginUserSchemaValidation,
+    userUpdateValidationSchema,
+}

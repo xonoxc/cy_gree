@@ -18,19 +18,21 @@ CREATE TYPE "ImportanceLevel" AS ENUM ('Low', 'Medium', 'High');
 
 -- CreateTable
 CREATE TABLE "User" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "username" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "password" TEXT NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
     "name" TEXT NOT NULL,
+    "joinedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "UserProfile" (
-    "id" SERIAL NOT NULL,
-    "userId" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
     "profilePic" TEXT NOT NULL DEFAULT '',
     "role" "Role" NOT NULL DEFAULT 'Client',
     "address" TEXT,
@@ -46,8 +48,8 @@ CREATE TABLE "UserProfile" (
 
 -- CreateTable
 CREATE TABLE "PlasticCollection" (
-    "id" SERIAL NOT NULL,
-    "userId" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
     "imagePath" TEXT NOT NULL,
     "amount" DECIMAL(20,2) NOT NULL,
     "status" "Status" NOT NULL DEFAULT 'Pending',
@@ -60,7 +62,7 @@ CREATE TABLE "PlasticCollection" (
 
 -- CreateTable
 CREATE TABLE "ListReward" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "title" VARCHAR(100),
     "pointsRequired" DECIMAL(30,2) NOT NULL,
     "issuedDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -71,9 +73,9 @@ CREATE TABLE "ListReward" (
 
 -- CreateTable
 CREATE TABLE "Reward" (
-    "id" SERIAL NOT NULL,
-    "userId" INTEGER NOT NULL,
-    "rewardId" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "rewardId" TEXT NOT NULL,
     "claimedDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Reward_pkey" PRIMARY KEY ("id")
@@ -81,8 +83,8 @@ CREATE TABLE "Reward" (
 
 -- CreateTable
 CREATE TABLE "Badge" (
-    "id" SERIAL NOT NULL,
-    "userId" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
     "name" "BadgeType" NOT NULL DEFAULT 'Recycler',
     "issuedDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -91,9 +93,9 @@ CREATE TABLE "Badge" (
 
 -- CreateTable
 CREATE TABLE "Notification" (
-    "id" SERIAL NOT NULL,
-    "userId" INTEGER NOT NULL,
-    "toUserId" INTEGER,
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "toUserId" TEXT,
     "message" TEXT NOT NULL,
     "importanceLevel" "ImportanceLevel" NOT NULL DEFAULT 'Low',
     "notificationDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -7,8 +7,6 @@ export async function POST(request: NextRequest) {
     try {
         const credentails = await request.json()
 
-        console.log("credentails", credentails)
-
         const validationResult =
             registerUserCredValidationSchema.safeParse(credentails)
 
@@ -52,10 +50,10 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        const transactionResult = await prisma.$transaction(async prisma => {
+        const transactionResult = await prisma.$transaction(async txn => {
             const hashedPassword = await bcrypt.hash(password, 10)
 
-            const userCreationResponse = await prisma.user.create({
+            const userCreationResponse = await txn.user.create({
                 data: {
                     email: email,
                     username: username,

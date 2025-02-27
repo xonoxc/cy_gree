@@ -9,17 +9,20 @@ datasource db {
 }
 
 model User {
-    id       Int          @id @default(autoincrement())
+    id       String       @id @default(uuid())
     username String       @unique
     email    String       @unique
     password String
+    isActive Boolean      @default(true)
     name     String
     profile  UserProfile?
+
+    joinedAt DateTime @default(now())
 }
 
 model UserProfile {
-    id                   Int     @id @default(autoincrement())
-    userId               Int     @unique
+    id                   String  @id @default(uuid())
+    userId               String  @unique
     user                 User    @relation(fields: [userId], references: [id], onDelete: Cascade)
     profilePic           String  @default("")
     role                 Role    @default(Client)
@@ -83,8 +86,8 @@ enum State {
 }
 
 model PlasticCollection {
-    id        Int         @id @default(autoincrement())
-    userId    Int
+    id        String      @id @default(uuid())
+    userId    String
     user      UserProfile @relation(fields: [userId], references: [id])
     imagePath String
     amount    Decimal     @db.Decimal(20, 2)
@@ -101,7 +104,7 @@ enum Status {
 }
 
 model ListReward {
-    id             Int        @id @default(autoincrement())
+    id             String     @id @default(uuid())
     title          String?    @db.VarChar(100)
     pointsRequired Decimal    @db.Decimal(30, 2)
     issuedDate     DateTime   @default(now())
@@ -117,10 +120,10 @@ enum RewardType {
 }
 
 model Reward {
-    id          Int         @id @default(autoincrement())
-    userId      Int
+    id          String      @id @default(uuid())
+    userId      String
     user        UserProfile @relation(fields: [userId], references: [id])
-    rewardId    Int
+    rewardId    String
     reward      ListReward  @relation(fields: [rewardId], references: [id])
     claimedDate DateTime    @default(now())
 
@@ -128,8 +131,8 @@ model Reward {
 }
 
 model Badge {
-    id         Int         @id @default(autoincrement())
-    userId     Int
+    id         String      @id @default(uuid())
+    userId     String
     user       UserProfile @relation(fields: [userId], references: [id])
     name       BadgeType   @default(Recycler)
     issuedDate DateTime    @default(now())
@@ -143,10 +146,10 @@ enum BadgeType {
 }
 
 model Notification {
-    id               Int             @id @default(autoincrement())
-    userId           Int
+    id               String          @id @default(uuid())
+    userId           String
     user             UserProfile     @relation(fields: [userId], references: [id])
-    toUserId         Int?
+    toUserId         String?
     toUser           UserProfile?    @relation("ToUserNotifications", fields: [toUserId], references: [id])
     message          String
     importanceLevel  ImportanceLevel @default(Low)

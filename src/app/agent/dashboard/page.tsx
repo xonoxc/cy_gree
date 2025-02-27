@@ -16,14 +16,14 @@ import { User, UserCheck, Recycle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import NotificationPopup from "@/components/notifications/notification-popup"
-import useTokenStore from "@/store/token"
 import getRelativeTime from "@/utils/date"
 import { useToast } from "@/hooks/use-toast"
-import { signOut } from "next-auth/react"
+import { signOut, useSession } from "next-auth/react"
+import { useCallback } from "react"
 
 export default function RecyclingAgentDashboard() {
     const router = useRouter()
-    const { id: agentId } = useTokenStore()
+    const { data: session } = useSession()
     const { toast } = useToast()
 
     const {
@@ -32,7 +32,7 @@ export default function RecyclingAgentDashboard() {
         updateRequestStatus,
         totalWasteCollected,
         acceptCollectionRequest,
-    } = useAgent(agentId)
+    } = useAgent(session?.user.id as string)
 
     const handleAcceptRequestClick = async (collectionId: string) => {
         try {
@@ -51,7 +51,7 @@ export default function RecyclingAgentDashboard() {
         }
     }
 
-    const handleClaimBtnClick = async (id: string) => {
+    const handleClaimBtnClick = useCallback(async (id: string) => {
         try {
             await updateRequestStatus(id)
 
@@ -66,12 +66,12 @@ export default function RecyclingAgentDashboard() {
                 description: "Please try again later",
             })
         }
-    }
+    }, [])
 
-    const handleLogout = async () => {
+    const handleLogout = useCallback(async () => {
         await signOut()
         router.push("/sign-in")
-    }
+    }, [])
 
     return (
         <div className={`relative min-h-screen`}>

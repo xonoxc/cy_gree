@@ -92,7 +92,7 @@ model PlasticCollection {
     imagePath String
     amount    Decimal     @db.Decimal(20, 2)
     status    Status      @default(Pending)
-    claimedBy Int?
+    claimedBy String?     @default("")
     createdAt DateTime    @default(now())
     updatedAt DateTime    @updatedAt
 }

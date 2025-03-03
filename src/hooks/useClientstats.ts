@@ -199,17 +199,16 @@ export const useClientstats = () => {
     }
 
     const handleCollectionCreate = useCallback(
-        async (amount_collected: string, pic?: File | null) => {
-            const formDataToSend = new FormData()
-
-            formDataToSend.append("pic", pic as File)
-
+        async (amount_collected: string, pic?: string | null) => {
             try {
                 const response = await fetch(
-                    `/client/${session?.user.id}/collection?amount_collected=${encodeURIComponent(amount_collected)}`,
+                    `/client/${session?.user.id}/collection`,
                     {
                         method: "POST",
-                        body: formDataToSend,
+                        body: JSON.stringify({
+                            amount_collected,
+                            pic,
+                        }),
                     }
                 )
                 if (response.status === 200) {

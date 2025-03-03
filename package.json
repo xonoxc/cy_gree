@@ -35,6 +35,8 @@
         "cy_gree": ".",
         "date-fns": "^4.1.0",
         "framer-motion": "^11.11.9",
+        "imagekit": "^6.0.0",
+        "imagekitio-next": "^1.0.1",
         "immer": "^10.1.1",
         "lucide-react": "^0.453.0",
         "next": "14.2.15",

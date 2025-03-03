@@ -17,7 +17,7 @@ import { Plus } from "lucide-react"
 export default function PlasticCollectionDrawerForm() {
     const [open, setOpen] = useState(false)
     const [amount_collected, setAmountCollected] = useState<string>("")
-    const [picture, setPicture] = useState<File | null>(null)
+    const [picture, setPicture] = useState<string | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const { toast } = useToast()
     const { handleCollectionCreate } = useClientstats()
@@ -103,12 +103,9 @@ export default function PlasticCollectionDrawerForm() {
                             <Input
                                 id="pic"
                                 name="pic"
-                                type="file"
+                                type="text"
                                 accept="image/*"
-                                onChange={e =>
-                                    e.target.files &&
-                                    setPicture(e.target.files[0])
-                                }
+                                onChange={e => setPicture(e.target.value)}
                                 required
                                 className="dark:bg-muted"
                             />

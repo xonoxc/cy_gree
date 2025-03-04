@@ -5,6 +5,8 @@ import { z } from "zod"
  */
 export const idValidationSchema = z.string().uuid()
 
+export const multipleIdValidationSchema = z.array(idValidationSchema)
+
 /*
  *
  *   username validation

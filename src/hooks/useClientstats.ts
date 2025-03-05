@@ -1,4 +1,3 @@
-import { useSession } from "next-auth/react"
 import { useCallback, useEffect, useState } from "react"
 
 interface IUserData {
@@ -37,7 +36,7 @@ interface IUserbadge {
     issue_date: string
 }
 
-export const useClientstats = () => {
+export const useClientstats = (userId: string | undefined) => {
     const [userData, setUserData] = useState<IUserData>({
         profile_pic: "",
         user: -1,
@@ -63,10 +62,8 @@ export const useClientstats = () => {
     >([])
     const [claimedRewards, setClaimedRewards] = useState<IClaimedRewards[]>([])
 
-    const { data: session } = useSession()
-
-    const fetchUserProfileData = async () => {
-        const response = await fetch(`/profile/${session?.user.id}`, {
+    const fetchUserProfileData = useCallback(async () => {
+        const response = await fetch(`/api/profile/${userId}`, {
             method: "GET",
         })
 
@@ -88,10 +85,10 @@ export const useClientstats = () => {
                 earned_points: json.earned_points,
             }))
         }
-    }
+    }, [userId])
 
-    const fetchCollectionHistory = async () => {
-        const response = await fetch(`/client/${session?.user.id}/history`)
+    const fetchCollectionHistory = useCallback(async () => {
+        const response = await fetch(`/api/client/${userId}/history`)
 
         if (response.status === 200) {
             const jsonResponse = await response.json()
@@ -100,109 +97,120 @@ export const useClientstats = () => {
             setUnclaimedRequests(jsonResponse.unclaimed_requests || [])
             setPendingRequests(jsonResponse.pending_requests || [])
         }
-    }
+    }, [userId])
 
-    const fetchUserBadges = async () => {
-        const result = await fetch(`/client/${session?.user.id}/badges`)
+    const fetchUserBadges = useCallback(async () => {
+        const result = await fetch(`/api/client/${userId}/badges`)
         if (result.status === 200) {
             const json = await result.json()
             setUserBadges(json)
         }
-    }
+    }, [userId])
 
-    const fetchAvailableRewards = async () => {
-        const result = await fetch(`/client/${session?.user.id}/rewards`)
+    const fetchAvailableRewards = useCallback(async () => {
+        const result = await fetch(`/api/client/${userId}/rewards`)
         const jsonResponse = await result.json()
         setAvailableRewards(jsonResponse)
-    }
+    }, [userId])
 
-    const fetchClaimedRewards = async () => {
-        const result = await fetch(
-            `/client/${session?.user.id}/rewards/history`
-        )
+    const fetchClaimedRewards = useCallback(async () => {
+        const result = await fetch(`/api/client/${userId}/rewards/history`)
 
         if (result.status === 200) {
             const jsonResponse = await result.json()
             setClaimedRewards(jsonResponse)
         }
-    }
+    }, [userId])
 
-    const handelClaimReward = async (rewardId: string, expense: number) => {
-        const result = await fetch(
-            `/client/${session?.user.id}/rewards/${rewardId}/claim`,
-            {
-                method: "POST",
-            }
-        )
-        if (result.status === 200) {
-            await fetchAvailableRewards()
-            await fetchClaimedRewards()
-            setUserData(prev => ({
-                ...prev,
-                earned_points: prev.earned_points - expense,
-            }))
-        }
-    }
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target
-        setUserData(prevData => ({ ...prevData, [name]: value }))
-    }
-
-    const handleProfileUpdate = async (file?: File | Blob | undefined) => {
-        try {
-            const formData = new FormData()
-
-            if (file && file instanceof File) {
-                console.log("correct format")
-                formData.append("pic", file as File, file.name)
-            }
-
-            const userId = session?.user.id
-
-            await updateEmailId(session?.user.id as string)
-
-            formData.append("data", JSON.stringify({ ...userData }))
-
-            const result = await fetch(`/profile/${userId}`, {
-                method: "POST",
-                body: formData,
-            })
-
+    const handelClaimReward = useCallback(
+        async (rewardId: string, expense: number) => {
+            const result = await fetch(
+                `/api/client/${userId}/rewards/${rewardId}/claim`,
+                {
+                    method: "POST",
+                }
+            )
             if (result.status === 200) {
-                const json = await result.json()
-                console.log("jsonResponse", json)
-                return json
-            } else {
-                const error = await result.json()
-                throw new Error(error.message || "Profile update failed")
+                await fetchAvailableRewards()
+                await fetchClaimedRewards()
+                setUserData(prev => ({
+                    ...prev,
+                    earned_points: prev.earned_points - expense,
+                }))
             }
-        } catch (error) {
-            throw error
-        }
-    }
+        },
+        []
+    )
 
-    const updateEmailId = async (userId: string) => {
-        try {
-            const response = await fetch(`/user/${userId}`, {
-                method: "PATCH",
-                body: JSON.stringify({ email: userData.email }),
-            })
+    const handleInputChange = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            const { name, value } = e.target
+            setUserData(prevData => ({ ...prevData, [name]: value }))
+        },
+        []
+    )
 
-            if (response.status === 200) {
-                const jsonResponse = await response.json()
-                setUserData(prev => ({ ...prev, email: jsonResponse.email }))
+    const handleProfileUpdate = useCallback(
+        async (file?: File | Blob | undefined) => {
+            try {
+                const formData = new FormData()
+
+                if (file && file instanceof File) {
+                    console.log("correct format")
+                    formData.append("pic", file as File, file.name)
+                }
+
+                await updateEmailId(userId as string)
+
+                formData.append("data", JSON.stringify({ ...userData }))
+
+                const result = await fetch(`/api/profile/${userId}`, {
+                    method: "POST",
+                    body: formData,
+                })
+
+                if (result.status === 200) {
+                    const json = await result.json()
+                    console.log("jsonResponse", json)
+                    return json
+                } else {
+                    const error = await result.json()
+                    throw new Error(error.message || "Profile update failed")
+                }
+            } catch (error) {
+                throw error
             }
-        } catch (error: any) {
-            throw new Error(error.message || "Error updating emailId")
-        }
-    }
+        },
+        [userId]
+    )
+
+    const updateEmailId = useCallback(
+        async (userId: string) => {
+            try {
+                const response = await fetch(`/api/user/${userId}`, {
+                    method: "PATCH",
+                    body: JSON.stringify({ email: userData.email }),
+                })
+
+                if (response.status === 200) {
+                    const jsonResponse = await response.json()
+                    setUserData(prev => ({
+                        ...prev,
+                        email: jsonResponse.email,
+                    }))
+                }
+            } catch (error: any) {
+                throw new Error(error.message || "Error updating emailId")
+            }
+        },
+        [userId]
+    )
 
     const handleCollectionCreate = useCallback(
         async (amount_collected: string, pic?: string | null) => {
             try {
                 const response = await fetch(
-                    `/client/${session?.user.id}/collection`,
+                    `/api/client/${userId}/collection`,
                     {
                         method: "POST",
                         body: JSON.stringify({
@@ -226,12 +234,13 @@ export const useClientstats = () => {
     )
 
     useEffect(() => {
+        if (userId) return
         fetchUserProfileData()
         fetchUserBadges()
         fetchCollectionHistory()
         fetchAvailableRewards()
         fetchClaimedRewards()
-    }, [])
+    }, [userId])
 
     return {
         userData,

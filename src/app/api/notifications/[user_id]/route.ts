@@ -5,6 +5,7 @@ import { NextResponse } from "next/server"
 
 export async function GET({ params }: { params: { user_id: string } }) {
     await checkAuth()
+    console.log("auth check pass")
     try {
         const { user_id: userId } = params
 
@@ -16,11 +17,15 @@ export async function GET({ params }: { params: { user_id: string } }) {
             )
         }
 
+        console.log("userId", userId)
+
         const userNotifications = await prisma.notification.findMany({
             where: {
                 toUserId: userId,
             },
         })
+
+        console.log("userNotifications", userNotifications)
 
         if (!userNotifications) {
             return NextResponse.json(

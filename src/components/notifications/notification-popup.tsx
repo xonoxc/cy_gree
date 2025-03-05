@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Bell, Check, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -18,7 +18,7 @@ export default function NotificationPopup() {
     const { data: session } = useSession()
 
     const { unreadCount, markAllAsRead, markAsRead, notifications, loading } =
-        useNotifications(session?.user.id as string)
+        useNotifications(session?.user?.id as string)
 
     return (
         <Popover open={open} onOpenChange={setOpen}>

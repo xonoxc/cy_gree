@@ -1,5 +1,6 @@
 "use client"
 
+import { useSession } from "next-auth/react"
 import { useCallback, useState } from "react"
 import { Button } from "@/components/ui/button"
 import getRelativeTime from "@/utils/date"
@@ -37,6 +38,7 @@ const CollectionForm = dynamic(
 export default function UserDashboard() {
     const [editing, setEditing] = useState(false)
     const [avatar, setAvatar] = useState<File | null>(null)
+    const { data: session } = useSession()
     const {
         userData,
         userBadges,
@@ -48,7 +50,7 @@ export default function UserDashboard() {
         claimedRewards,
         handelClaimReward,
         handleProfileUpdate,
-    } = useClientstats()
+    } = useClientstats(session?.user?.id)
 
     const router = useRouter()
     const { toast } = useToast()

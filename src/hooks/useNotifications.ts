@@ -8,56 +8,16 @@ interface Notification {
 }
 
 export const useNotifications = (userId: string) => {
-    const [notifications, setNotifications] = useState<Notification[]>([])
+    const [notifications, setNotifications] = useState<Notification[] | []>([])
     const [loading, setLoading] = useState<boolean>(false)
 
     const unreadCount = notifications.filter(noti => !noti.is_read).length
 
-    const markAsRead = useCallback(async (id: string) => {
-        try {
-            setLoading(true)
-            const statusResponse = await fetch(
-                `/notifications/${userId}/read?notification_id=${id}`,
-                {
-                    method: "PATCH",
-                }
-            )
-
-            if (statusResponse.status === 200) {
-                setNotifications(prevNotifications =>
-                    prevNotifications.filter(noti => noti.id !== id)
-                )
-                await fetchInitialNotifications()
-            }
-        } catch (error) {
-            console.error("erorr while updating notifications", error)
-        } finally {
-            setLoading(false)
-        }
-    }, [])
-
-    const markAllAsRead = useCallback(async () => {
-        try {
-            setLoading(true)
-            const response = await fetch(`/notifications/${userId}/read/all`, {
-                method: "PATCH",
-            })
-
-            if (response.status === 200) {
-                setNotifications([])
-                await fetchInitialNotifications()
-            }
-        } catch (error) {
-            console.log("error while updating notifications", error)
-        } finally {
-            setLoading(false)
-        }
-    }, [])
-
     const fetchInitialNotifications = useCallback(async () => {
+        if (!userId) return
         try {
             setLoading(true)
-            const response = await fetch(`/notifications/${userId}`)
+            const response = await fetch(`/api/notifications/${userId}`)
 
             if (response.status === 200) {
                 const jsonResponse = await response.json()
@@ -69,11 +29,63 @@ export const useNotifications = (userId: string) => {
         } finally {
             setLoading(false)
         }
-    }, [])
+    }, [userId])
 
-    const sendNotification = useCallback(async (userId: string) => {
+    const markAsRead = useCallback(
+        async (id: string) => {
+            if (!userId) return
+            try {
+                setLoading(true)
+                const statusResponse = await fetch(
+                    `/api/notifications/${userId}/read?notification_id=${id}`,
+                    {
+                        method: "PATCH",
+                    }
+                )
+
+                if (statusResponse.status === 200) {
+                    setNotifications(prevNotifications =>
+                        prevNotifications.filter(noti => noti.id !== id)
+                    )
+                    await fetchInitialNotifications()
+                }
+            } catch (error) {
+                console.error("erorr while updating notifications", error)
+            } finally {
+                setLoading(false)
+            }
+        },
+        [userId]
+    )
+
+    const markAllAsRead = useCallback(async () => {
+        if (!userId) return
         try {
-            const response = await fetch(`/notifications/${userId}/send`)
+            setLoading(true)
+            const response = await fetch(
+                `/api/notifications/${userId}/read/all`,
+                {
+                    method: "PATCH",
+                }
+            )
+
+            if (response.status === 200) {
+                setNotifications([])
+                await fetchInitialNotifications()
+            }
+        } catch (error) {
+            console.log("error while updating notifications", error)
+        } finally {
+            setLoading(false)
+        }
+    }, [userId])
+
+    const sendNotification = useCallback(async () => {
+        if (!userId) return
+        try {
+            const response = await fetch(`/api/notifications/${userId}/send`)
+
+            console.log("response", response)
 
             if (response.status === 200) {
                 return true
@@ -84,13 +96,13 @@ export const useNotifications = (userId: string) => {
             console.error("Error while sending notification", error)
             return false
         }
-    }, [])
+    }, [userId])
 
     useEffect(() => {
         ;(async () => {
             await fetchInitialNotifications()
         })()
-    }, [])
+    }, [userId])
 
     return {
         markAsRead,

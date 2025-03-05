@@ -1,4 +1,5 @@
 import prisma from "@/config/prisma/prisma.client"
+import { checkAuth } from "@/utils/check.auth"
 import { logErrors } from "@/utils/errors/errorLogs"
 import { NextRequest, NextResponse } from "next/server"
 
@@ -6,6 +7,7 @@ export async function PATCH(
     request: NextRequest,
     { params }: { params: { user_id: string } }
 ) {
+    await checkAuth()
     try {
         const { user_id: userId } = params
         const collectionId = request.nextUrl.searchParams.get("collection_id")

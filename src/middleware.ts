@@ -4,7 +4,7 @@ import { getToken } from "next-auth/jwt"
 export { default } from "next-auth/middleware"
 
 const publicRoutes = ["/", "/sign-in", "/sign-up"]
-const privateRoutes = ["/usr/dashboard", "/agent/dashboard", "/api/ai/chat"]
+const privateRoutes = ["/usr/dashboard", "/agent/dashboard"]
 
 export async function middleware(request: NextRequest) {
     const token = await getToken({

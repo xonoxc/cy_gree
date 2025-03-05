@@ -1,4 +1,5 @@
 import prisma from "@/config/prisma/prisma.client"
+import { checkAuth } from "@/utils/check.auth"
 import { logErrors } from "@/utils/errors/errorLogs"
 import { multipleIdValidationSchema } from "@/utils/validation/user"
 import { NextRequest, NextResponse } from "next/server"
@@ -7,6 +8,7 @@ export async function POST(
     _: NextRequest,
     { params }: { params: { user_id: string; reward_id: string } }
 ) {
+    await checkAuth()
     try {
         const { user_id: userId, reward_id: rewardId } = params
 

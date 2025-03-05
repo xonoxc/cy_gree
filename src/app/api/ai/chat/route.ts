@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createGroq } from "@ai-sdk/groq"
 import { streamText } from "ai"
+import { checkAuth } from "@/utils/check.auth"
 
 export const runtime = "edge"
 
@@ -9,6 +10,7 @@ const groq = createGroq({
 })
 
 export async function POST(req: NextRequest) {
+    await checkAuth()
     try {
         const { messages } = await req.json()
 

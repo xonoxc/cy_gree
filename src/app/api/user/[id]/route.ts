@@ -4,11 +4,13 @@ import {
 } from "@/utils/validation/user"
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/config/prisma/prisma.client"
+import { checkAuth } from "@/utils/check.auth"
 
 export async function PATCH(
     request: NextRequest,
     { params }: { params: { id: string } }
 ) {
+    await checkAuth()
     try {
         const { id } = params
         const body = await request.json()
@@ -82,6 +84,7 @@ export async function PATCH(
         )
     }
 }
+
 export async function DELETE(
     _: NextRequest,
     { params }: { params: { id: string } }

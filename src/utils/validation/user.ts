@@ -69,8 +69,29 @@ const userUpdateValidationSchema = z.object({
     password: z.string().optional(),
 })
 
+/*
+ *  credentails for updating profile details
+ *
+ */
+
+const updateProfileSchema = z.object({
+    profilePic: z.string().trim().optional(),
+    role: z.enum(["Client", "Admin", "Collector"]).optional(),
+    address: z.string().trim().max(255).optional().nullable(),
+    phoneNumber: z
+        .string()
+        .trim()
+        .regex(/^\d{10}$/, "Invalid phone number")
+        .optional()
+        .nullable(),
+    state: z.string().trim().optional().nullable(),
+    city: z.string().trim().optional().nullable(),
+    country: z.string().trim().optional(),
+})
+
 export {
     registerUserCredValidationSchema,
     loginUserSchemaValidation,
     userUpdateValidationSchema,
+    updateProfileSchema,
 }

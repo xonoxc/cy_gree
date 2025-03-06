@@ -53,8 +53,6 @@ export async function POST(request: NextRequest) {
         const transactionResult = await prisma.$transaction(async txn => {
             const hashedPassword = await bcrypt.hash(password, 10)
 
-            console.log("hashed password", hashedPassword)
-
             const userCreationResponse = await txn.user.create({
                 data: {
                     email: email,

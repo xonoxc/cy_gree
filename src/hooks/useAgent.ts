@@ -11,7 +11,7 @@ interface IRequestsCollection {
     completed_requests: IRequests[]
 }
 
-export const useAgent = (agentId: string) => {
+export const useAgent = (agentId: string | undefined) => {
     const [requests, setPendingRequests] = useState<IRequestsCollection>({
         pending_requests: [],
         completed_requests: [],
@@ -25,7 +25,7 @@ export const useAgent = (agentId: string) => {
 
     const fetchAgentRequests = useCallback(async () => {
         try {
-            const response = await fetch(`/agent/${agentId}/history`)
+            const response = await fetch(`/api/agent/${agentId}/history`)
             if (response.status === 200) {
                 const jsonResponse = await response.json()
                 setPendingRequests(jsonResponse)
@@ -33,26 +33,36 @@ export const useAgent = (agentId: string) => {
         } catch (error) {
             throw error || "Error fetching agent requests"
         }
-    }, [])
+    }, [agentId])
 
-    const updateRequestStatus = useCallback(async (collectionId: string) => {
-        const requestToMove = matches.find(req => req.id === collectionId)
-        if (!requestToMove) return
+    const updateRequestStatus = useCallback(
+        async (collectionId: string) => {
+            const requestToMove = matches.find(req => req.id === collectionId)
+            if (!requestToMove) return
 
-        setMatches(prev => prev.filter(req => req.id !== collectionId))
-        setPendingRequests(prev => ({
-            ...prev,
-            pending_requests: [...prev.pending_requests, requestToMove],
-        }))
+            setMatches(prev => prev.filter(req => req.id !== collectionId))
+            setPendingRequests(prev => ({
+                ...prev,
+                pending_requests: [...prev.pending_requests, requestToMove],
+            }))
 
-        try {
-            const response = await fetch(
-                `/agent/${agentId}/claim?collection_id=${collectionId}`,
-                {
-                    method: "POST",
+            try {
+                const response = await fetch(
+                    `/api/agent/${agentId}/claim?collection_id=${collectionId}`,
+                    {
+                        method: "POST",
+                    }
+                )
+                if (response.status !== 200) {
+                    setPendingRequests(prev => ({
+                        ...prev,
+                        pending_requests: prev.pending_requests.filter(
+                            req => req.id !== collectionId
+                        ),
+                    }))
+                    setMatches(prev => [...prev, requestToMove])
                 }
-            )
-            if (response.status !== 200) {
+            } catch (error) {
                 setPendingRequests(prev => ({
                     ...prev,
                     pending_requests: prev.pending_requests.filter(
@@ -60,23 +70,16 @@ export const useAgent = (agentId: string) => {
                     ),
                 }))
                 setMatches(prev => [...prev, requestToMove])
+                console.error("error updating request status", error)
+                return false
             }
-        } catch (error) {
-            setPendingRequests(prev => ({
-                ...prev,
-                pending_requests: prev.pending_requests.filter(
-                    req => req.id !== collectionId
-                ),
-            }))
-            setMatches(prev => [...prev, requestToMove])
-            console.error("error updating request status", error)
-            return false
-        }
-    }, [])
+        },
+        [agentId]
+    )
 
     const listCollections = useCallback(async () => {
         try {
-            const result = await fetch(`/agent/${agentId}/requests`, {
+            const result = await fetch(`/api/agent/${agentId}/requests`, {
                 method: "GET",
             })
             if (result.status === 200) {
@@ -107,7 +110,7 @@ export const useAgent = (agentId: string) => {
 
             try {
                 const response = await fetch(
-                    `/agent/${agentId}/collect?collection_id=${collectionId}`,
+                    `/api/agent/${agentId}/collect?collection_id=${collectionId}`,
                     {
                         method: "PATCH",
                     }
@@ -137,10 +140,11 @@ export const useAgent = (agentId: string) => {
                 throw error
             }
         },
-        []
+        [agentId]
     )
 
     useEffect(() => {
+        if (!agentId) return
         fetchAgentRequests()
         listCollections()
     }, [])

@@ -56,7 +56,6 @@ export const useClientstats = (userId: string | undefined) => {
         []
     )
     const [pendingRequests, setPendingRequests] = useState<any[]>([])
-
     const [availableRewards, setAvailableRewards] = useState<
         IAvailableRewards[] | []
     >([])
@@ -156,7 +155,6 @@ export const useClientstats = (userId: string | undefined) => {
                 const formData = new FormData()
 
                 if (file && file instanceof File) {
-                    console.log("correct format")
                     formData.append("pic", file as File, file.name)
                 }
 
@@ -171,7 +169,6 @@ export const useClientstats = (userId: string | undefined) => {
 
                 if (result.status === 200) {
                     const json = await result.json()
-                    console.log("jsonResponse", json)
                     return json
                 } else {
                     const error = await result.json()
@@ -234,7 +231,7 @@ export const useClientstats = (userId: string | undefined) => {
     )
 
     useEffect(() => {
-        if (userId) return
+        if (!userId) return
         fetchUserProfileData()
         fetchUserBadges()
         fetchCollectionHistory()

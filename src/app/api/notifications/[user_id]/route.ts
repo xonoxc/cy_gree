@@ -1,11 +1,13 @@
 import prisma from "@/config/prisma/prisma.client"
 import { checkAuth } from "@/utils/check.auth"
 import { idValidationSchema } from "@/utils/validation/user"
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 
-export async function GET({ params }: { params: { user_id: string } }) {
+export async function GET(
+    _: NextRequest,
+    { params }: { params: { user_id: string } }
+) {
     await checkAuth()
-    console.log("auth check pass")
     try {
         const { user_id: userId } = params
 
@@ -17,15 +19,11 @@ export async function GET({ params }: { params: { user_id: string } }) {
             )
         }
 
-        console.log("userId", userId)
-
         const userNotifications = await prisma.notification.findMany({
             where: {
                 toUserId: userId,
             },
         })
-
-        console.log("userNotifications", userNotifications)
 
         if (!userNotifications) {
             return NextResponse.json(

@@ -4,9 +4,12 @@ import {
     idValidationSchema,
     updateProfileSchema,
 } from "@/utils/validation/user"
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 
-export async function GET({ params }: { params: { user_id: string } }) {
+export async function GET(
+    _: NextRequest,
+    { params }: { params: { user_id: string } }
+) {
     await checkAuth()
     try {
         const { user_id: userId } = params
@@ -105,12 +108,4 @@ export async function PATCH(
             { status: 500 }
         )
     }
-}
-
-export const config = {
-    api: {
-        bodyParser: {
-            sizeLimit: "1mb",
-        },
-    },
 }

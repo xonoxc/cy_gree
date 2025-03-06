@@ -7,7 +7,7 @@ interface Notification {
     is_read: boolean
 }
 
-export const useNotifications = (userId: string) => {
+export const useNotifications = (userId: string | undefined) => {
     const [notifications, setNotifications] = useState<Notification[] | []>([])
     const [loading, setLoading] = useState<boolean>(false)
 
@@ -84,8 +84,6 @@ export const useNotifications = (userId: string) => {
         if (!userId) return
         try {
             const response = await fetch(`/api/notifications/${userId}/send`)
-
-            console.log("response", response)
 
             if (response.status === 200) {
                 return true

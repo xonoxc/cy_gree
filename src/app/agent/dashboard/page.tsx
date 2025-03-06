@@ -12,7 +12,18 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { User, UserCheck, Recycle } from "lucide-react"
+import {
+    BarChart3,
+    ClipboardCheck,
+    Home,
+    LogOut,
+    Recycle,
+    Settings,
+    Trash2,
+    User,
+    UserCheck,
+    Users,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import NotificationPopup from "@/components/notifications/notification-popup"
@@ -20,6 +31,21 @@ import getRelativeTime from "@/utils/date"
 import { useToast } from "@/hooks/use-toast"
 import { signOut, useSession } from "next-auth/react"
 import { useCallback } from "react"
+import {
+    Sidebar,
+    SidebarContent,
+    SidebarFooter,
+    SidebarHeader,
+    SidebarInset,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+    SidebarProvider,
+    SidebarTrigger,
+} from "@/components/ui/sidebar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Progress } from "@/components/ui/progress"
 
 export default function RecyclingAgentDashboard() {
     const router = useRouter()
@@ -39,8 +65,9 @@ export default function RecyclingAgentDashboard() {
             await acceptCollectionRequest(collectionId)
 
             toast({
-                title: "Reward Granted",
-                description: "request has been updated",
+                title: "Request Approved",
+                description:
+                    "Collection request has been approved successfully",
             })
         } catch (error: any) {
             toast({
@@ -51,325 +78,509 @@ export default function RecyclingAgentDashboard() {
         }
     }
 
-    const handleClaimBtnClick = useCallback(async (id: string) => {
-        try {
-            await updateRequestStatus(id)
+    const handleClaimBtnClick = useCallback(
+        async (id: string) => {
+            try {
+                await updateRequestStatus(id)
 
-            toast({
-                title: "Reward Claimed",
-                description: "request has been updated",
-            })
-        } catch (error: any) {
-            toast({
-                variant: "destructive",
-                title: error.message || "Request not claimed",
-                description: "Please try again later",
-            })
-        }
-    }, [])
+                toast({
+                    title: "Reward Claimed",
+                    description: "Request has been updated successfully",
+                })
+            } catch (error: any) {
+                toast({
+                    variant: "destructive",
+                    title: error.message || "Request not claimed",
+                    description: "Please try again later",
+                })
+            }
+        },
+        [updateRequestStatus, toast]
+    )
 
     const handleLogout = useCallback(async () => {
         await signOut()
         router.push("/sign-in")
-    }, [])
+    }, [router])
+
+    // Calculate completion percentage for progress bar
+    const totalRequests =
+        (requests.pending_requests?.length || 0) +
+        (requests.completed_requests?.length || 0)
+    const completionPercentage =
+        totalRequests > 0
+            ? ((requests.completed_requests?.length || 0) / totalRequests) * 100
+            : 0
 
     return (
-        <div className={`relative min-h-screen`}>
-            {/* Main Content */}
-            <main className="p-8 bg-gray-100 dark:bg-black min-h-screen">
-                <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-3xl font-bold dark:text-white">
-                        Recycling Agent Dashboard
-                    </h1>
-                    <div className="flex gap-5">
-                        <NotificationPopup />
-                        <ModeToggle />
+        <SidebarProvider>
+            <Sidebar className="border-r">
+                <SidebarHeader className="border-b px-6 py-3">
+                    <div className="flex items-center gap-2">
+                        <Recycle className="h-6 w-6 text-primary" />
+                        <div className="font-semibold text-xl">EcoCollect</div>
+                    </div>
+                </SidebarHeader>
+                <SidebarContent>
+                    <SidebarMenu>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton asChild isActive>
+                                <a href="#">
+                                    <Home />
+                                    <span>Dashboard</span>
+                                </a>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton asChild>
+                                <a href="#">
+                                    <Users />
+                                    <span>User Matches</span>
+                                </a>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton asChild>
+                                <a href="#">
+                                    <ClipboardCheck />
+                                    <span>Pending Requests</span>
+                                    {requests.pending_requests?.length > 0 && (
+                                        <Badge
+                                            variant="destructive"
+                                            className="ml-auto"
+                                        >
+                                            {requests.pending_requests?.length}
+                                        </Badge>
+                                    )}
+                                </a>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton asChild>
+                                <a href="#">
+                                    <Trash2 />
+                                    <span>Waste Collections</span>
+                                </a>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton asChild>
+                                <a href="#">
+                                    <BarChart3 />
+                                    <span>Analytics</span>
+                                </a>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton asChild>
+                                <a href="#">
+                                    <Settings />
+                                    <span>Settings</span>
+                                </a>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                </SidebarContent>
+                <SidebarFooter className="border-t p-4">
+                    <div className="flex items-center gap-3">
+                        <Avatar>
+                            <AvatarImage src={session?.user?.image || ""} />
+                            <AvatarFallback>
+                                {session?.user?.name?.charAt(0) || "A"}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col">
+                            <span className="text-sm font-medium">
+                                {session?.user?.name || "Agent"}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                                {session?.user?.email || "agent@example.com"}
+                            </span>
+                        </div>
                         <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={handleLogout}
-                            className="text-sm rounded-lg font-bold"
+                            className="ml-auto"
+                            title="Logout"
                         >
-                            Logout
+                            <LogOut className="h-4 w-4" />
                         </Button>
                     </div>
-                </div>
-
-                {/* Key Statistics */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <Card className="dark:bg-black dark:border-gray-700">
-                        <CardHeader className="flex flex-row flex-wrap items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium dark:text-gray-200">
-                                Pending Requests
-                            </CardTitle>
-                            <User className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold dark:text-white">
-                                {requests.pending_requests?.length}
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card className="dark:bg-black dark:border-gray-700">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium dark:text-gray-200">
-                                Completed Requests
-                            </CardTitle>
-                            <UserCheck className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold dark:text-white">
-                                {requests.completed_requests?.length}
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card className="dark:bg-black dark:border-gray-700">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium dark:text-gray-200">
-                                Total Waste Collected (kg)
-                            </CardTitle>
-                            <Recycle className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold dark:text-white">
-                                {totalWasteCollected.toFixed(2)}
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* Tabs for different sections */}
-                <Tabs defaultValue="handovers" className="space-y-4">
-                    <TabsList className="border-black border-2 dark:border-0 md:w-full flex items-center justify-around dark:border-none">
-                        <TabsTrigger
-                            value="matches"
-                            className="dark:text-gray-300 data-[state=active]:bg-black data-[state=active]:text-white"
-                        >
-                            User Matches
-                        </TabsTrigger>
-                        <TabsTrigger
-                            value="handovers"
-                            className="dark:text-gray-300 data-[state=active]:bg-black data-[state=active]:text-white"
-                        >
-                            Pending Requests
-                        </TabsTrigger>
-                        <TabsTrigger
-                            value="collections"
-                            className="dark:text-gray-300 data-[state=active]:bg-black data-[state=active]:text-white"
-                        >
-                            Completed Requests
-                        </TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="matches" className="space-y-4">
-                        <h2 className="text-2xl font-bold dark:text-white">
-                            User Matches
-                        </h2>
-                        <Card className="dark:bg-black dark:border-gray-700">
+                </SidebarFooter>
+            </Sidebar>
+            <SidebarInset>
+                <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-6">
+                    <SidebarTrigger />
+                    <h1 className="text-xl font-semibold">
+                        Recycling Agent Dashboard
+                    </h1>
+                    <div className="ml-auto flex items-center gap-4">
+                        <NotificationPopup />
+                        <ModeToggle />
+                    </div>
+                </header>
+                <main className="flex-1 p-6">
+                    {/* Key Statistics */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                                <CardTitle className="text-sm font-medium">
+                                    Pending Requests
+                                </CardTitle>
+                                <User className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
                             <CardContent>
-                                {matches?.length === 0 ? (
-                                    <span className="fallback w-full flex items-center justify-center mt-10">
-                                        No user matches
-                                    </span>
-                                ) : (
-                                    <Table>
-                                        <TableHeader className="dark:bg-muted rounded-md">
-                                            <TableRow>
-                                                <TableHead className="dark:text-gray-300">
-                                                    S.no
-                                                </TableHead>
-                                                <TableHead className="dark:text-gray-300">
-                                                    Waste Amount (kg)
-                                                </TableHead>
-                                                <TableHead className="dark:text-gray-300">
-                                                    Date
-                                                </TableHead>
-                                                <TableHead className="dark:text-gray-300">
-                                                    Status
-                                                </TableHead>
-                                                <TableHead className="dark:text-gray-300">
-                                                    Action
-                                                </TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {matches?.map((handover, index) => (
-                                                <TableRow key={handover.id}>
-                                                    <TableCell className="font-medium dark:text-gray-300">
-                                                        {index + 1}
-                                                    </TableCell>
-                                                    <TableCell className="dark:text-gray-300">
-                                                        {
-                                                            handover.amount_collected
-                                                        }
-                                                    </TableCell>
-                                                    <TableCell className="dark:text-gray-300">
-                                                        {getRelativeTime(
-                                                            handover.collection_date
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell className="dark:text-gray-300">
-                                                        Requested
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Button
-                                                            onClick={() =>
-                                                                handleClaimBtnClick(
-                                                                    handover.id
-                                                                )
-                                                            }
-                                                        >
-                                                            claim
-                                                        </Button>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                )}
+                                <div className="text-2xl font-bold">
+                                    {requests.pending_requests?.length || 0}
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    Awaiting your approval
+                                </p>
                             </CardContent>
                         </Card>
-                    </TabsContent>
-
-                    <TabsContent value="handovers" className="space-y-4">
-                        <h2 className="text-2xl font-bold dark:text-white">
-                            Pending Requests
-                        </h2>
-                        <Card className="dark:bg-black dark:border-gray-700">
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                                <CardTitle className="text-sm font-medium">
+                                    Completed Requests
+                                </CardTitle>
+                                <UserCheck className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
                             <CardContent>
-                                {requests.pending_requests?.length === 0 ? (
-                                    <span className="fallback w-full flex items-center justify-center mt-10">
-                                        No pending requests
+                                <div className="text-2xl font-bold">
+                                    {requests.completed_requests?.length || 0}
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    Successfully processed
+                                </p>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                                <CardTitle className="text-sm font-medium">
+                                    Total Waste Collected
+                                </CardTitle>
+                                <Recycle className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">
+                                    {totalWasteCollected.toFixed(2)} kg
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    Environmental impact
+                                </p>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* Progress Overview */}
+                    <Card className="mb-8">
+                        <CardHeader>
+                            <CardTitle>Collection Progress</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm font-medium">
+                                        Completion Rate
                                     </span>
-                                ) : (
-                                    <Table>
-                                        <TableHeader className="dark:bg-muted rounded-md">
-                                            <TableRow>
-                                                <TableHead className="dark:text-gray-300">
-                                                    S.no
-                                                </TableHead>
-                                                <TableHead className="dark:text-gray-300">
-                                                    Waste Amount (kg)
-                                                </TableHead>
-                                                <TableHead className="dark:text-gray-300">
-                                                    Date
-                                                </TableHead>
-                                                <TableHead className="dark:text-gray-300">
-                                                    Status
-                                                </TableHead>
-                                                <TableHead className="dark:text-gray-300">
-                                                    Action
-                                                </TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {requests.pending_requests?.map(
-                                                (handover, index) => (
-                                                    <TableRow key={handover.id}>
-                                                        <TableCell className="font-medium dark:text-gray-300">
-                                                            {index + 1}
-                                                        </TableCell>
-                                                        <TableCell className="dark:text-gray-300">
-                                                            {
-                                                                handover.amount_collected
-                                                            }
-                                                        </TableCell>
-                                                        <TableCell className="dark:text-gray-300">
-                                                            {getRelativeTime(
-                                                                handover.collection_date
-                                                            )}
-                                                        </TableCell>
-                                                        <TableCell className="dark:text-gray-300">
-                                                            {"pending"}
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <Button
-                                                                onClick={() =>
-                                                                    handleAcceptRequestClick(
-                                                                        handover.id
-                                                                    )
+                                    <span className="text-sm font-medium">
+                                        {Math.round(completionPercentage)}%
+                                    </span>
+                                </div>
+                                <Progress
+                                    value={completionPercentage}
+                                    className="h-2"
+                                />
+                                <p className="text-xs text-muted-foreground mt-2">
+                                    {requests.completed_requests?.length || 0}{" "}
+                                    of {totalRequests} requests completed
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Tabs for different sections */}
+                    <Tabs defaultValue="handovers" className="space-y-6">
+                        <TabsList className="grid w-full grid-cols-3">
+                            <TabsTrigger value="matches">
+                                User Matches
+                            </TabsTrigger>
+                            <TabsTrigger value="handovers">
+                                Pending Requests
+                            </TabsTrigger>
+                            <TabsTrigger value="collections">
+                                Completed Requests
+                            </TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="matches" className="space-y-4">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>User Matches</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    {matches?.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center py-8 text-center">
+                                            <Users className="h-12 w-12 text-muted-foreground mb-4" />
+                                            <h3 className="text-lg font-medium">
+                                                No User Matches
+                                            </h3>
+                                            <p className="text-sm text-muted-foreground mt-1">
+                                                You don't have any user matches
+                                                at the moment.
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="rounded-md border">
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableHead>
+                                                            S.No
+                                                        </TableHead>
+                                                        <TableHead>
+                                                            Waste Amount (kg)
+                                                        </TableHead>
+                                                        <TableHead>
+                                                            Date
+                                                        </TableHead>
+                                                        <TableHead>
+                                                            Status
+                                                        </TableHead>
+                                                        <TableHead>
+                                                            Action
+                                                        </TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {matches?.map(
+                                                        (handover, index) => (
+                                                            <TableRow
+                                                                key={
+                                                                    handover.id
                                                                 }
                                                             >
-                                                                Approve
-                                                            </Button>
-                                                        </TableCell>
-                                                    </TableRow>
-                                                )
-                                            )}
-                                        </TableBody>
-                                    </Table>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
+                                                                <TableCell className="font-medium">
+                                                                    {index + 1}
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    {
+                                                                        handover.amount_collected
+                                                                    }
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    {getRelativeTime(
+                                                                        handover.collection_date
+                                                                    )}
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    <Badge variant="outline">
+                                                                        Requested
+                                                                    </Badge>
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        onClick={() =>
+                                                                            handleClaimBtnClick(
+                                                                                handover.id
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        Claim
+                                                                    </Button>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        )
+                                                    )}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
 
-                    <TabsContent value="collections" className="space-y-4">
-                        <h2 className="text-2xl font-bold dark:text-white">
-                            User Collections
-                        </h2>
-                        <Card className="dark:bg-black dark:border-gray-700">
-                            <CardContent>
-                                {requests.completed_requests.length === 0 ? (
-                                    <span className="fallback w-full flex items-center justify-center mt-10">
-                                        No completed requests yet
-                                    </span>
-                                ) : (
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow className="dark:bg-muted">
-                                                <TableHead className="dark:text-gray-300">
-                                                    User
-                                                </TableHead>
-                                                <TableHead className="dark:text-gray-300">
-                                                    Total Collected (kg)
-                                                </TableHead>
-                                                <TableHead className="dark:text-gray-300">
-                                                    Last Collection
-                                                </TableHead>
-                                                <TableHead className="dark:text-gray-300">
-                                                    Status
-                                                </TableHead>
-                                                <TableHead className="dark:text-gray-300">
-                                                    Action
-                                                </TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {requests.completed_requests.map(
-                                                (collection, index) => (
-                                                    <TableRow
-                                                        key={collection.id}
-                                                    >
-                                                        <TableCell className="font-medium dark:text-gray-300">
-                                                            {index + 1}
-                                                        </TableCell>
-                                                        <TableCell className="dark:text-gray-300">
-                                                            {
-                                                                collection.amount_collected
-                                                            }
-                                                        </TableCell>
-                                                        <TableCell className="dark:text-gray-300">
-                                                            {getRelativeTime(
-                                                                collection.collection_date
-                                                            )}
-                                                        </TableCell>
-                                                        <TableCell className="dark:text-gray-300">
-                                                            completed
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <Button disabled>
-                                                                Approved
-                                                            </Button>
-                                                        </TableCell>
+                        <TabsContent value="handovers" className="space-y-4">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Pending Requests</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    {requests.pending_requests?.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center py-8 text-center">
+                                            <ClipboardCheck className="h-12 w-12 text-muted-foreground mb-4" />
+                                            <h3 className="text-lg font-medium">
+                                                No Pending Requests
+                                            </h3>
+                                            <p className="text-sm text-muted-foreground mt-1">
+                                                You don't have any pending
+                                                requests at the moment.
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="rounded-md border">
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableHead>
+                                                            S.No
+                                                        </TableHead>
+                                                        <TableHead>
+                                                            Waste Amount (kg)
+                                                        </TableHead>
+                                                        <TableHead>
+                                                            Date
+                                                        </TableHead>
+                                                        <TableHead>
+                                                            Status
+                                                        </TableHead>
+                                                        <TableHead>
+                                                            Action
+                                                        </TableHead>
                                                     </TableRow>
-                                                )
-                                            )}
-                                        </TableBody>
-                                    </Table>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-                </Tabs>
-            </main>
-        </div>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {requests.pending_requests?.map(
+                                                        (handover, index) => (
+                                                            <TableRow
+                                                                key={
+                                                                    handover.id
+                                                                }
+                                                            >
+                                                                <TableCell className="font-medium">
+                                                                    {index + 1}
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    {
+                                                                        handover.amount_collected
+                                                                    }
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    {getRelativeTime(
+                                                                        handover.collection_date
+                                                                    )}
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    <Badge variant="secondary">
+                                                                        Pending
+                                                                    </Badge>
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        onClick={() =>
+                                                                            handleAcceptRequestClick(
+                                                                                handover.id
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        Approve
+                                                                    </Button>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        )
+                                                    )}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+
+                        <TabsContent value="collections" className="space-y-4">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Completed Requests</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    {requests.completed_requests.length ===
+                                    0 ? (
+                                        <div className="flex flex-col items-center justify-center py-8 text-center">
+                                            <Trash2 className="h-12 w-12 text-muted-foreground mb-4" />
+                                            <h3 className="text-lg font-medium">
+                                                No Completed Requests
+                                            </h3>
+                                            <p className="text-sm text-muted-foreground mt-1">
+                                                You haven't completed any
+                                                requests yet.
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="rounded-md border">
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableHead>
+                                                            S.No
+                                                        </TableHead>
+                                                        <TableHead>
+                                                            Total Collected (kg)
+                                                        </TableHead>
+                                                        <TableHead>
+                                                            Last Collection
+                                                        </TableHead>
+                                                        <TableHead>
+                                                            Status
+                                                        </TableHead>
+                                                        <TableHead>
+                                                            Action
+                                                        </TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {requests.completed_requests.map(
+                                                        (collection, index) => (
+                                                            <TableRow
+                                                                key={
+                                                                    collection.id
+                                                                }
+                                                            >
+                                                                <TableCell className="font-medium">
+                                                                    {index + 1}
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    {
+                                                                        collection.amount_collected
+                                                                    }
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    {getRelativeTime(
+                                                                        collection.collection_date
+                                                                    )}
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    <Badge
+                                                                        variant="default"
+                                                                        className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+                                                                    >
+                                                                        Completed
+                                                                    </Badge>
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        disabled
+                                                                    >
+                                                                        Approved
+                                                                    </Button>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        )
+                                                    )}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                    </Tabs>
+                </main>
+            </SidebarInset>
+        </SidebarProvider>
     )
 }

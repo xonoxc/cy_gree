@@ -1,11 +1,19 @@
 "use client"
 
+import type React from "react"
+
 import { useSession } from "next-auth/react"
 import { useCallback, useState } from "react"
 import { Button } from "@/components/ui/button"
 import getRelativeTime from "@/utils/date"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -19,7 +27,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { Edit, Save } from "lucide-react"
+import { Award, Edit, Gift, History, LogOut, Recycle, Save } from "lucide-react"
 import { ModeToggle } from "@/components/mode_toggle"
 import { useRouter } from "next/navigation"
 import { useClientstats } from "@/hooks/useClientstats"
@@ -27,6 +35,7 @@ import NotificationPopup from "@/components/notifications/notification-popup"
 import { useToast } from "@/hooks/use-toast"
 import dynamic from "next/dynamic"
 import { signOut } from "next-auth/react"
+import { Separator } from "@/components/ui/separator"
 
 const CollectionForm = dynamic(
     () => import("@/components/collection/collection-form"),
@@ -61,7 +70,8 @@ export default function UserDashboard() {
                 const result = await handleProfileUpdate(avatar as File)
                 if (result.status === 200) {
                     toast({
-                        title: "changed saved successfully!",
+                        title: "Changes saved successfully!",
+                        description: "Your profile has been updated.",
                     })
                 }
             }
@@ -73,7 +83,7 @@ export default function UserDashboard() {
         } finally {
             setEditing(!editing)
         }
-    }, [editing, avatar])
+    }, [editing, avatar, handleProfileUpdate, toast])
 
     const handleAvtarChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,15 +100,17 @@ export default function UserDashboard() {
                 await handelClaimReward(id, expense)
                 toast({
                     title: "Reward Claimed",
+                    description: "You have successfully claimed this reward!",
                 })
             } catch (error: any) {
                 toast({
                     variant: "destructive",
-                    title: error.message || "cannot claim reward",
+                    title: error.message || "Cannot claim reward",
+                    description: "Please try again later.",
                 })
             }
         },
-        []
+        [handelClaimReward, toast]
     )
 
     const handleLogout = useCallback(async () => {
@@ -106,54 +118,139 @@ export default function UserDashboard() {
         router.push("/sign-in")
     }, [router])
 
+    // Calculate percentages for progress bars
+    const pointsPercentage = Math.min(
+        (userData.earned_points / 2000) * 100,
+        100
+    )
+    const plasticPercentage = Math.min(
+        (+userData.total_plastic_recycled / 10) * 100,
+        100
+    )
+
     return (
-        <div className="min-h-screen bg-gray-100 dark:bg-black">
-            <div className="container mx-auto p-4">
-                <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-3xl font-bold dark:text-white">
-                        <span className="dark:text-white text-black">Cy</span>
-                        <span className="text-green-300">Gree</span>
-                    </h1>
-
-                    <div className="flex gap-2 items-center justify-center">
-                        <NotificationPopup />
-                        <ModeToggle />
-                        <Button
-                            onClick={handleLogout}
-                            className="font-bold rounded-lg"
-                        >
-                            Logout
-                        </Button>
-                    </div>
+        <div className="flex flex-col min-h-screen">
+            <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-6">
+                <h1 className="text-xl font-semibold">User Dashboard</h1>
+                <div className="ml-auto flex items-center gap-4">
+                    <NotificationPopup />
+                    <ModeToggle />
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleLogout}
+                        title="Logout"
+                    >
+                        <LogOut className="h-4 w-4" />
+                    </Button>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                    <Card className="md:col-span-2 dark:bg-black dark:border-gray-700">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-2xl font-bold dark:text-white">
-                                Profile Information
+            </header>
+            <main className="flex-1 p-6">
+                {/* Summary Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-sm font-medium">
+                                Total Points
                             </CardTitle>
-                            <Button
-                                onClick={handleEditToggle}
-                                variant="ghost"
-                                size="sm"
-                            >
-                                {editing ? (
-                                    <Save className="mr-2 h-4 w-4" />
-                                ) : (
-                                    <Edit className="mr-2 h-4 w-4" />
-                                )}
-                                {editing ? "Save" : "Edit"}
-                            </Button>
+                            <Award className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="flex items-center space-x-4 mb-4">
+                            <div className="text-2xl font-bold">
+                                {userData.earned_points}
+                            </div>
+                            <Progress
+                                value={pointsPercentage}
+                                className="h-2 mt-2"
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">
+                                {userData.earned_points} points earned so far
+                            </p>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-sm font-medium">
+                                Plastic Collected
+                            </CardTitle>
+                            <Recycle className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">
+                                {userData.total_plastic_recycled} kg
+                            </div>
+                            <Progress
+                                value={plasticPercentage}
+                                className="h-2 mt-2"
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">
+                                Great job! Keep recycling
+                            </p>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-sm font-medium">
+                                Badges Earned
+                            </CardTitle>
+                            <Award className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">
+                                {userBadges?.length || 0}
+                            </div>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                                {userBadges?.length > 0 ? (
+                                    userBadges
+                                        .slice(0, 3)
+                                        .map((badge, index) => (
+                                            <Badge
+                                                key={index}
+                                                variant="secondary"
+                                            >
+                                                {badge.name}
+                                            </Badge>
+                                        ))
+                                ) : (
+                                    <p className="text-sm text-muted-foreground">
+                                        No badges earned yet
+                                    </p>
+                                )}
+                                {userBadges?.length > 3 && (
+                                    <Badge variant="outline">
+                                        +{userBadges.length - 3} more
+                                    </Badge>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                <div className="flex justify-end mb-6">
+                    <CollectionForm />
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    <Card className="lg:col-span-2">
+                        <CardHeader>
+                            <CardTitle>Profile Information</CardTitle>
+                            <CardDescription>
+                                Manage your personal information
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex items-center space-x-4 mb-6">
                                 {editing ? (
-                                    <Input
-                                        type="file"
-                                        className="w-1/3"
-                                        onChange={handleAvtarChange}
-                                    />
+                                    <div className="space-y-2">
+                                        <Label htmlFor="avatar">
+                                            Profile Picture
+                                        </Label>
+                                        <Input
+                                            id="avatar"
+                                            type="file"
+                                            onChange={handleAvtarChange}
+                                        />
+                                    </div>
                                 ) : (
                                     <Avatar className="h-20 w-20">
                                         <AvatarImage
@@ -169,38 +266,47 @@ export default function UserDashboard() {
                                     </Avatar>
                                 )}
                                 <div>
-                                    <h2 className="text-2xl font-bold dark:text-white">
+                                    <h2 className="text-2xl font-bold">
                                         {userData.name}
                                     </h2>
-                                    <p className="text-white bg-black dark:text-black dark:bg-white p-1 flex items-center justify-center  mt-3 text-xs rounded font-bold">
-                                        user
-                                    </p>
+                                    <Badge variant="outline" className="mt-1">
+                                        User
+                                    </Badge>
                                 </div>
+
+                                <Button
+                                    onClick={handleEditToggle}
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-1/8 ml-2 bg-white text-black font-bold"
+                                >
+                                    {editing ? (
+                                        <>
+                                            <Save className="mr-2 h-4 w-4" />
+                                            Save
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Edit className="mr-2 h-4 w-4" />
+                                            Edit
+                                        </>
+                                    )}
+                                </Button>
                             </div>
-                            <div className="space-y-4">
-                                <div>
-                                    <Label
-                                        htmlFor="email"
-                                        className="dark:text-gray-300"
-                                    >
-                                        Email
-                                    </Label>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="email">Email</Label>
                                     <Input
                                         id="email"
                                         name="email"
                                         value={userData.email}
                                         onChange={handleInputChange}
                                         disabled={!editing}
-                                        className="dark:bg-black dark:text-white"
                                     />
                                 </div>
-                                <div>
-                                    <Label
-                                        htmlFor="phone"
-                                        className="dark:text-gray-300"
-                                    >
-                                        Phone
-                                    </Label>
+                                <div className="space-y-2">
+                                    <Label htmlFor="phone_number">Phone</Label>
                                     <Input
                                         id="phone_number"
                                         name="phone_number"
@@ -209,247 +315,308 @@ export default function UserDashboard() {
                                         value={userData.phone_number}
                                         onChange={handleInputChange}
                                         disabled={!editing}
-                                        className="dark:bg-black dark:text-white"
                                     />
                                 </div>
-                                <div>
-                                    <Label
-                                        htmlFor="address"
-                                        className="dark:text-gray-300"
-                                    >
-                                        Address
-                                    </Label>
+                                <div className="space-y-2">
+                                    <Label htmlFor="address">Address</Label>
                                     <Input
                                         id="address"
                                         name="address"
                                         value={userData.address}
-                                        onChange={e => handleInputChange(e)}
+                                        onChange={handleInputChange}
                                         disabled={!editing}
-                                        className="dark:bg-black dark:text-white"
                                     />
                                 </div>
-
-                                <div>
-                                    <Label
-                                        htmlFor="city"
-                                        className="dark:text-gray-300"
-                                    >
-                                        City
-                                    </Label>
+                                <div className="space-y-2">
+                                    <Label htmlFor="city">City</Label>
                                     <Input
                                         id="city"
                                         name="city"
                                         value={userData.city}
                                         onChange={handleInputChange}
                                         disabled={!editing}
-                                        className="dark:bg-black dark:text-white"
                                     />
                                 </div>
-
-                                <div>
-                                    <Label
-                                        htmlFor="state"
-                                        className="dark:text-gray-300"
-                                    >
-                                        State
-                                    </Label>
+                                <div className="space-y-2">
+                                    <Label htmlFor="state">State</Label>
                                     <Input
                                         id="state"
                                         name="state"
                                         value={userData.state}
                                         onChange={handleInputChange}
                                         disabled={!editing}
-                                        className="dark:bg-black dark:text-white"
                                     />
                                 </div>
-
-                                <div>
-                                    <Label
-                                        htmlFor="country"
-                                        className="dark:text-gray-300"
-                                    >
-                                        Country
-                                    </Label>
+                                <div className="space-y-2">
+                                    <Label htmlFor="country">Country</Label>
                                     <Input
                                         id="country"
                                         name="country"
                                         value={userData.country}
                                         onChange={handleInputChange}
                                         disabled={!editing}
-                                        className="dark:bg-black dark:text-white"
                                     />
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="dark:bg-black dark:border-gray-700">
+                    <Card>
                         <CardHeader>
-                            <CardTitle className="text-xl font-bold dark:text-white">
-                                Eco Stats
-                            </CardTitle>
+                            <CardTitle>Collection Summary</CardTitle>
+                            <CardDescription>
+                                Your recycling activity
+                            </CardDescription>
                         </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                <div>
-                                    <div className="flex justify-between mb-1">
-                                        <span className="text-sm font-medium dark:text-gray-300">
-                                            Total Points
-                                        </span>
-                                        <span className="text-sm font-medium dark:text-gray-300">
-                                            {userData.earned_points}
-                                        </span>
-                                    </div>
-                                    <Progress
-                                        value={
-                                            Number(userData.earned_points) / 20
-                                        }
-                                        className="h-2"
-                                    />
+                        <CardContent className="space-y-6">
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <span className="text-sm">Pending</span>
+                                    <span className="text-sm font-medium">
+                                        {pendingRequests.length}
+                                    </span>
                                 </div>
-                                <div>
-                                    <div className="flex justify-between mb-1">
-                                        <span className="text-sm font-medium dark:text-gray-300">
-                                            Plastic Collected
-                                        </span>
-                                        <span className="text-sm font-medium dark:text-gray-300">
-                                            {userData.total_plastic_recycled} kg
-                                        </span>
-                                    </div>
-                                    <Progress
-                                        value={
-                                            Number(
-                                                userData.total_plastic_recycled
-                                            ) * 10
-                                        }
-                                        className="h-2"
-                                    />
+                                <Progress
+                                    value={
+                                        (pendingRequests.length /
+                                            (pendingRequests.length +
+                                                collectedPlastic.length +
+                                                unclaimedRequests.length ||
+                                                1)) *
+                                        100
+                                    }
+                                    className="h-1.5"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <span className="text-sm">Unclaimed</span>
+                                    <span className="text-sm font-medium">
+                                        {unclaimedRequests.length}
+                                    </span>
                                 </div>
-                                <div className="pt-4">
-                                    <h3 className="text-lg font-semibold mb-2 dark:text-white">
-                                        Badges Earned
-                                    </h3>
-
-                                    <div className="flex flex-wrap gap-2">
-                                        {userBadges?.length > 0 ? (
-                                            userBadges.map((badge, index) => (
-                                                <Badge
-                                                    key={index}
-                                                    variant="secondary"
-                                                >
-                                                    {badge.name}
-                                                </Badge>
-                                            ))
-                                        ) : (
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                No badges earned yet
-                                            </p>
-                                        )}
-                                    </div>
+                                <Progress
+                                    value={
+                                        (unclaimedRequests.length /
+                                            (pendingRequests.length +
+                                                collectedPlastic.length +
+                                                unclaimedRequests.length ||
+                                                1)) *
+                                        100
+                                    }
+                                    className="h-1.5"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <span className="text-sm">Completed</span>
+                                    <span className="text-sm font-medium">
+                                        {collectedPlastic.length}
+                                    </span>
                                 </div>
+                                <Progress
+                                    value={
+                                        (collectedPlastic.length /
+                                            (pendingRequests.length +
+                                                collectedPlastic.length +
+                                                unclaimedRequests.length ||
+                                                1)) *
+                                        100
+                                    }
+                                    className="h-1.5"
+                                />
+                            </div>
+                            <Separator />
+                            <div>
+                                <h3 className="text-sm font-medium mb-2">
+                                    Recent Activity
+                                </h3>
+                                {[
+                                    ...collectedPlastic,
+                                    ...pendingRequests,
+                                    ...unclaimedRequests,
+                                ]
+                                    .sort(
+                                        (a, b) =>
+                                            new Date(
+                                                b.collection_date
+                                            ).getTime() -
+                                            new Date(
+                                                a.collection_date
+                                            ).getTime()
+                                    )
+                                    .slice(0, 3)
+                                    .map((item, index) => (
+                                        <div
+                                            key={index}
+                                            className="flex justify-between items-center py-2 text-sm"
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <History className="h-4 w-4 text-muted-foreground" />
+                                                <span>
+                                                    {item.amount_collected} kg
+                                                    collected
+                                                </span>
+                                            </div>
+                                            <span className="text-xs text-muted-foreground">
+                                                {getRelativeTime(
+                                                    item.collection_date
+                                                )}
+                                            </span>
+                                        </div>
+                                    ))}
                             </div>
                         </CardContent>
                     </Card>
-                </div>
-
-                <div className="w-full flex items-center justify-end">
-                    <CollectionForm />
                 </div>
 
                 <Tabs defaultValue="rewards" className="space-y-4">
-                    <TabsList className="border-black border-2 dark:border-0 dark:border-none">
-                        <TabsTrigger
-                            value="rewards"
-                            className="dark:text-gray-300 data-[state=active]:bg-black data-[state=active]:text-white"
-                        >
+                    <TabsList className="w-full">
+                        <TabsTrigger value="rewards" className="flex-1">
+                            <Gift className="h-4 w-4 mr-2" />
                             Rewards
                         </TabsTrigger>
-                        <TabsTrigger
-                            value="history"
-                            className="dark:text-gray-300 data-[state=active]:bg-black data-[state=active]:text-white"
-                        >
+                        <TabsTrigger value="history" className="flex-1">
+                            <History className="h-4 w-4 mr-2" />
                             Collection History
                         </TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="rewards">
-                        <Card className="dark:bg-black dark:border-gray-700">
-                            <CardHeader>
-                                <CardTitle className="text-2xl font-bold dark:text-white">
-                                    Available Rewards
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-4">
-                                    {availableRewards.map((reward, index) => (
-                                        <div
-                                            key={index}
-                                            className="flex items-center justify-between p-4 bg-white dark:bg-black rounded-lg shadow"
-                                        >
-                                            <div>
-                                                <h3 className="text-lg font-semibold dark:text-white">
-                                                    {reward.name}
-                                                </h3>
-                                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                    {reward.points_required}{" "}
-                                                    points required
-                                                </p>
-                                            </div>
-                                            <Button
-                                                onClick={() =>
-                                                    handleRewardsClaim(
-                                                        String(reward.id),
-                                                        Number(
-                                                            reward.points_required
-                                                        )
-                                                    )
-                                                }
-                                            >
-                                                Claim
-                                            </Button>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Available Rewards</CardTitle>
+                                    <CardDescription>
+                                        Rewards you can claim with your points
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    {availableRewards.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center py-8 text-center">
+                                            <Gift className="h-12 w-12 text-muted-foreground mb-4" />
+                                            <h3 className="text-lg font-medium">
+                                                No Available Rewards
+                                            </h3>
+                                            <p className="text-sm text-muted-foreground mt-1">
+                                                Check back later for new rewards
+                                            </p>
                                         </div>
-                                    ))}
-                                </div>
-                            </CardContent>
-                        </Card>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {availableRewards.map(
+                                                (reward, index) => (
+                                                    <div
+                                                        key={index}
+                                                        className="flex items-center justify-between p-4 rounded-lg border"
+                                                    >
+                                                        <div>
+                                                            <h3 className="font-medium">
+                                                                {reward.name}
+                                                            </h3>
+                                                            <div className="flex items-center mt-1">
+                                                                <Award className="h-4 w-4 text-amber-500 mr-1" />
+                                                                <p className="text-sm text-muted-foreground">
+                                                                    {
+                                                                        reward.points_required
+                                                                    }{" "}
+                                                                    points
+                                                                    required
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <Button
+                                                            onClick={() =>
+                                                                handleRewardsClaim(
+                                                                    String(
+                                                                        reward.id
+                                                                    ),
+                                                                    Number(
+                                                                        reward.points_required
+                                                                    )
+                                                                )
+                                                            }
+                                                            disabled={
+                                                                userData.earned_points <
+                                                                reward.points_required
+                                                            }
+                                                        >
+                                                            Claim
+                                                        </Button>
+                                                    </div>
+                                                )
+                                            )}
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
 
-                        <Card className="dark:bg-black dark:border-gray-700 mt-12">
-                            <CardHeader>
-                                <CardTitle className="text-2xl font-bold dark:text-white">
-                                    Claimed Rewards
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-4">
-                                    {claimedRewards.map((reward, index) => (
-                                        <div
-                                            key={index}
-                                            className="flex items-center justify-between p-4 bg-white dark:bg-black rounded-lg shadow"
-                                        >
-                                            <div>
-                                                <h3 className="text-lg font-semibold dark:text-white">
-                                                    {reward.reward.title}
-                                                </h3>
-                                                <p className="text-sm text-gray-500 dark:text-gray-400 flex gap-2">
-                                                    <span>claimed</span>
-                                                    {getRelativeTime(
-                                                        reward.claimedDate
-                                                    )}
-                                                </p>
-                                            </div>
-                                            <Button disabled>Claimed</Button>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Claimed Rewards</CardTitle>
+                                    <CardDescription>
+                                        Rewards you have already claimed
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    {claimedRewards.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center py-8 text-center">
+                                            <Award className="h-12 w-12 text-muted-foreground mb-4" />
+                                            <h3 className="text-lg font-medium">
+                                                No Claimed Rewards
+                                            </h3>
+                                            <p className="text-sm text-muted-foreground mt-1">
+                                                Claim rewards to see them here
+                                            </p>
                                         </div>
-                                    ))}
-                                </div>
-                            </CardContent>
-                        </Card>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {claimedRewards.map(
+                                                (reward, index) => (
+                                                    <div
+                                                        key={index}
+                                                        className="flex items-center justify-between p-4 rounded-lg border"
+                                                    >
+                                                        <div>
+                                                            <h3 className="font-medium">
+                                                                {
+                                                                    reward
+                                                                        .reward
+                                                                        .title
+                                                                }
+                                                            </h3>
+                                                            <div className="flex items-center mt-1">
+                                                                <History className="h-4 w-4 text-muted-foreground mr-1" />
+                                                                <p className="text-sm text-muted-foreground">
+                                                                    Claimed{" "}
+                                                                    {getRelativeTime(
+                                                                        reward.claimedDate
+                                                                    )}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <Badge variant="outline">
+                                                            Claimed
+                                                        </Badge>
+                                                    </div>
+                                                )
+                                            )}
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </div>
                     </TabsContent>
+
                     <TabsContent value="history">
                         <Card>
                             <CardHeader>
-                                <CardTitle className="text-2xl font-bold">
+                                <CardTitle>
                                     Plastic Collection History
                                 </CardTitle>
+                                <CardDescription>
+                                    Track your recycling journey
+                                </CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-8">
@@ -460,19 +627,19 @@ export default function UserDashboard() {
                                     <CollectionHistoryTable
                                         title="Completed Requests"
                                         data={collectedPlastic}
-                                        className="pt-4 border-t dark:border-gray-800"
+                                        className="pt-4 border-t"
                                     />
                                     <CollectionHistoryTable
                                         title="Pending Requests"
                                         data={pendingRequests}
-                                        className="pt-4 border-t dark:border-gray-800"
+                                        className="pt-4 border-t"
                                     />
                                 </div>
                             </CardContent>
                         </Card>
                     </TabsContent>
                 </Tabs>
-            </div>
+            </main>
         </div>
     )
 }
@@ -487,22 +654,26 @@ const CollectionHistoryTable = ({
     className?: string
 }) => (
     <div className={`space-y-4 ${className}`}>
-        <h3 className="text-lg font-semibold text-gray-500 dark:text-gray-400">
-            {title}
-        </h3>
+        <div className="flex items-center">
+            <h3 className="text-lg font-medium">{title}</h3>
+            <Badge variant="outline" className="ml-2">
+                {data.length}
+            </Badge>
+        </div>
         {data && data.length > 0 ? (
-            <div className="border rounded-lg overflow-hidden">
+            <div className="rounded-lg border overflow-hidden">
                 <Table>
-                    <TableHeader className="bg-gray-50 dark:bg-muted">
+                    <TableHeader>
                         <TableRow>
-                            <TableHead className="w-16 font-semibold">
-                                S.no.
+                            <TableHead className="w-16 font-medium">
+                                S.No
                             </TableHead>
-                            <TableHead className="font-semibold">
-                                Time
-                            </TableHead>
-                            <TableHead className="font-semibold">
+                            <TableHead className="font-medium">Time</TableHead>
+                            <TableHead className="font-medium">
                                 Amount (kg)
+                            </TableHead>
+                            <TableHead className="font-medium">
+                                Status
                             </TableHead>
                         </TableRow>
                     </TableHeader>
@@ -520,14 +691,38 @@ const CollectionHistoryTable = ({
                                 <TableCell>
                                     {collection.amount_collected}
                                 </TableCell>
+                                <TableCell>
+                                    <Badge
+                                        variant={
+                                            title === "Completed Requests"
+                                                ? "default"
+                                                : title === "Pending Requests"
+                                                  ? "secondary"
+                                                  : "outline"
+                                        }
+                                        className={
+                                            title === "Completed Requests"
+                                                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+                                                : ""
+                                        }
+                                    >
+                                        {title === "Completed Requests"
+                                            ? "Completed"
+                                            : title === "Pending Requests"
+                                              ? "Pending"
+                                              : "Unclaimed"}
+                                    </Badge>
+                                </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
                 </Table>
             </div>
         ) : (
-            <div className="text-center py-6 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-muted rounded-lg">
-                No {title.toLowerCase()} found
+            <div className="flex flex-col items-center justify-center py-6 text-center rounded-lg border bg-muted/20">
+                <p className="text-muted-foreground">
+                    No {title.toLowerCase()} found
+                </p>
             </div>
         )}
     </div>

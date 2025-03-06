@@ -1,26 +1,32 @@
+"use client"
+
 import { useCallback, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
-    Drawer,
-    DrawerContent,
-    DrawerHeader,
-    DrawerTitle,
-    DrawerTrigger,
-} from "@/components/ui/drawer"
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useClientstats } from "@/hooks/useClientstats"
 import { useToast } from "@/hooks/use-toast"
 import { Plus } from "lucide-react"
+import { useSession } from "next-auth/react"
 
-export default function PlasticCollectionDrawerForm() {
+export default function PlasticCollectionModalForm() {
     const [open, setOpen] = useState(false)
     const [amount_collected, setAmountCollected] = useState<string>("")
     const [picture, setPicture] = useState<string | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const { toast } = useToast()
-    const { handleCollectionCreate } = useClientstats()
+
+    const { data: session } = useSession()
+
+    const { handleCollectionCreate } = useClientstats(session?.user?.id)
 
     const handleSubmit = useCallback(
         async (e: React.FormEvent) => {
@@ -60,8 +66,8 @@ export default function PlasticCollectionDrawerForm() {
     )
 
     return (
-        <Drawer open={open} onOpenChange={setOpen}>
-            <DrawerTrigger asChild>
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
                 <Button
                     variant="outline"
                     className="dark:bg-white dark:text-black font-bold mb-5"
@@ -69,14 +75,16 @@ export default function PlasticCollectionDrawerForm() {
                     <Plus className="mr-2" size={15} />
                     Add Collection
                 </Button>
-            </DrawerTrigger>
-            <DrawerContent className="flex flex-col items-center justify-start p-4">
-                <DrawerHeader className="text-center">
-                    <DrawerTitle>Create New Collection</DrawerTitle>
-                </DrawerHeader>
-                <ScrollArea className="h-[80vh] w-full max-w-md">
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px] p-6">
+                <DialogHeader>
+                    <DialogTitle className="text-center">
+                        Create New Collection
+                    </DialogTitle>
+                </DialogHeader>
+                <ScrollArea className="max-h-[60vh] w-full">
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="space-y-2">
+                        <div className="space-y-2 w-2/3">
                             <Label htmlFor="amount_collected">
                                 Amount Collected (kg) *
                             </Label>
@@ -95,7 +103,7 @@ export default function PlasticCollectionDrawerForm() {
                                     }
                                 }}
                                 required
-                                className="dark:bg-muted"
+                                className="dark:bg-muted w-full"
                             />
                         </div>
                         <div className="space-y-2">
@@ -119,7 +127,7 @@ export default function PlasticCollectionDrawerForm() {
                         </Button>
                     </form>
                 </ScrollArea>
-            </DrawerContent>
-        </Drawer>
+            </DialogContent>
+        </Dialog>
     )
 }

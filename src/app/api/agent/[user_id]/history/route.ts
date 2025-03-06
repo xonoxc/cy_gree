@@ -64,5 +64,7 @@ export async function GET({ params }: { params: { user_id: string } }) {
             },
             { status: 500 }
         )
+    } finally {
+        await prisma.$disconnect()
     }
 }

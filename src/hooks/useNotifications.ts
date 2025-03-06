@@ -20,9 +20,11 @@ export const useNotifications = (userId: string | undefined) => {
             const response = await fetch(`/api/notifications/${userId}`)
 
             if (response.status === 200) {
-                const jsonResponse = await response.json()
+                const jsonResponse = (await response.json()) as {
+                    notifications: Notification[] | []
+                }
 
-                setNotifications(jsonResponse)
+                setNotifications(jsonResponse.notifications)
             }
         } catch (error) {
             console.error("Error fetching initial notifications", error)

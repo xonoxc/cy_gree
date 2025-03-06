@@ -106,5 +106,7 @@ export async function POST(
             { error: "error creating reward" },
             { status: 500 }
         )
+    } finally {
+        await prisma.$disconnect()
     }
 }

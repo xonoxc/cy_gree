@@ -34,7 +34,12 @@ export async function GET(
             )
         }
 
-        return NextResponse.json({}, { status: 200 })
+        return NextResponse.json(
+            {
+                notifications: userNotifications,
+            },
+            { status: 200 }
+        )
     } catch (error) {
         return NextResponse.json(
             { error: "Something went wrong!" },

@@ -428,12 +428,12 @@ export default function UserDashboard() {
                                         >
                                             <div>
                                                 <h3 className="text-lg font-semibold dark:text-white">
-                                                    {reward.title}
+                                                    {reward.reward.title}
                                                 </h3>
                                                 <p className="text-sm text-gray-500 dark:text-gray-400 flex gap-2">
                                                     <span>claimed</span>
                                                     {getRelativeTime(
-                                                        reward.claimed_date
+                                                        reward.claimedDate
                                                     )}
                                                 </p>
                                             </div>

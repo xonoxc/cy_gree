@@ -26,9 +26,11 @@ interface IAvailableRewards {
 }
 
 interface IClaimedRewards {
-    id: number
-    title: string
-    claimed_date: string
+    id: string
+    reward: {
+        title: string
+    }
+    claimedDate: string
 }
 
 interface IUserbadge {
@@ -116,8 +118,10 @@ export const useClientstats = (userId: string | undefined) => {
         const result = await fetch(`/api/client/${userId}/rewards/history`)
 
         if (result.status === 200) {
-            const jsonResponse = await result.json()
-            setClaimedRewards(jsonResponse)
+            const jsonResponse = (await result.json()) as {
+                claimedRewards: IClaimedRewards[]
+            }
+            setClaimedRewards(jsonResponse.claimedRewards)
         }
     }, [userId])
 

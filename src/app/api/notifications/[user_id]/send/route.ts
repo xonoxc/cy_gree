@@ -69,5 +69,7 @@ export async function POST(
             { error: "Error while sending notifications" },
             { status: 500 }
         )
+    } finally {
+        await prisma.$disconnect()
     }
 }

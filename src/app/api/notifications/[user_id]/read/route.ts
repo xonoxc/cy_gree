@@ -46,5 +46,7 @@ export async function PATCH(
             },
             { status: 500 }
         )
+    } finally {
+        await prisma.$disconnect()
     }
 }

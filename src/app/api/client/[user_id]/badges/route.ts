@@ -65,5 +65,7 @@ export async function GET(
             { error: "Error while retriving badges" },
             { status: 500 }
         )
+    } finally {
+        await prisma.$disconnect()
     }
 }

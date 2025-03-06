@@ -59,6 +59,8 @@ export const authOptions: NextAuthOptions = {
                     }
                 } catch (e: any) {
                     throw new Error(e)
+                } finally {
+                    await prisma.$disconnect()
                 }
             },
         }),

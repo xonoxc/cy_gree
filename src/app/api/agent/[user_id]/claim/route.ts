@@ -76,5 +76,7 @@ export async function POST(
             { error: "Something went wrong!" },
             { status: 500 }
         )
+    } finally {
+        await prisma.$disconnect()
     }
 }

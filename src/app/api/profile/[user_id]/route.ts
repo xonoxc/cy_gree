@@ -107,5 +107,7 @@ export async function PATCH(
             { error: "Something went wrong" },
             { status: 500 }
         )
+    } finally {
+        await prisma.$disconnect()
     }
 }

@@ -43,5 +43,7 @@ export async function GET({ params }: { params: { user_id: string } }) {
             { error: "Something went wrong!" },
             { status: 500 }
         )
+    } finally {
+        await prisma.$disconnect()
     }
 }

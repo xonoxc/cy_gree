@@ -56,5 +56,7 @@ export async function POST(
             { error: "error creating collection" },
             { status: 500 }
         )
+    } finally {
+        await prisma.$disconnect()
     }
 }

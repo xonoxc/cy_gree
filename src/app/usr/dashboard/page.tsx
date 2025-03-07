@@ -38,6 +38,14 @@ import { useToast } from "@/hooks/use-toast"
 import dynamic from "next/dynamic"
 import { signOut } from "next-auth/react"
 import { Separator } from "@/components/ui/separator"
+import {
+    CollectionHistoryTableSkeleton,
+    SummaryCardSkeleton,
+    ActivityStatsTabsSkeleton,
+    CollectionSummaryCardSkeleton,
+} from "./skeletons"
+import { RequestStatus } from "@/types/requests.status"
+import { ProfileCardSkeleton } from "@/components/profile/profile_sekeleton"
 
 const CollectionForm = dynamic(
     () => import("@/components/collection/collection-form"),
@@ -47,12 +55,14 @@ const CollectionForm = dynamic(
 )
 
 const ProfileCard = dynamic(() => import("@/components/profile/profile_card"), {
+    loading: () => <ProfileCardSkeleton />,
     ssr: false,
 })
 
 export default function UserDashboard() {
     const { data: session } = useSession()
     const {
+        loading,
         userData,
         userBadges,
         availableRewards,
@@ -97,6 +107,7 @@ export default function UserDashboard() {
             <main className="flex-1 p-6">
                 {/* Summary Cards */}
                 <SummaryCards
+                    loading={loading}
                     totalPlasticRecycled={userData.totalPlasticRecycled}
                     earnedPoints={userData.earnedPoints}
                     userBadges={userBadges}
@@ -110,6 +121,7 @@ export default function UserDashboard() {
                     <ProfileCard userId={session?.user.id} />
 
                     <CollectionSummaryCard
+                        loading={loading}
                         pendingRequests={pendingRequests}
                         collectedPlastic={collectedPlastic}
                         unclaimedRequests={unclaimedRequests}
@@ -117,6 +129,7 @@ export default function UserDashboard() {
                 </div>
 
                 <ActivityStatsTabs
+                    loading={loading}
                     unclaimedRequests={unclaimedRequests}
                     earnedPoints={userData.earnedPoints}
                     onClaimedRewards={handleRewardsClaim}
@@ -131,88 +144,99 @@ export default function UserDashboard() {
 }
 
 const CollectionHistoryTable = ({
+    loading,
     title,
     data,
     className,
 }: {
+    loading: RequestStatus
     title: string
     data: any[]
     className?: string
-}) => (
-    <div className={`space-y-4 ${className}`}>
-        <div className="flex items-center">
-            <h3 className="text-lg font-medium">{title}</h3>
-            <Badge variant="outline" className="ml-2">
-                {data.length}
-            </Badge>
-        </div>
-        {data && data.length > 0 ? (
-            <div className="rounded-lg border overflow-hidden">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-16 font-medium">
-                                S.No
-                            </TableHead>
-                            <TableHead className="font-medium">Time</TableHead>
-                            <TableHead className="font-medium">
-                                Amount (kg)
-                            </TableHead>
-                            <TableHead className="font-medium">
-                                Status
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {data.map((collection, index) => (
-                            <TableRow key={index}>
-                                <TableCell className="font-medium">
-                                    {index + 1}
-                                </TableCell>
-                                <TableCell>
-                                    {getRelativeTime(
-                                        collection.collection_date
-                                    )}
-                                </TableCell>
-                                <TableCell>
-                                    {collection.amount_collected}
-                                </TableCell>
-                                <TableCell>
-                                    <Badge
-                                        variant={
-                                            title === "Completed Requests"
-                                                ? "default"
-                                                : title === "Pending Requests"
-                                                  ? "secondary"
-                                                  : "outline"
-                                        }
-                                        className={
-                                            title === "Completed Requests"
-                                                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
-                                                : ""
-                                        }
-                                    >
-                                        {title === "Completed Requests"
-                                            ? "Completed"
-                                            : title === "Pending Requests"
-                                              ? "Pending"
-                                              : "Unclaimed"}
-                                    </Badge>
-                                </TableCell>
+}) => {
+    if (loading === "pending") {
+        return <CollectionHistoryTableSkeleton />
+    }
+
+    return (
+        <div className={`space-y-4 ${className}`}>
+            <div className="flex items-center">
+                <h3 className="text-lg font-medium">{title}</h3>
+                <Badge variant="outline" className="ml-2">
+                    {data.length}
+                </Badge>
+            </div>
+            {data && data.length > 0 ? (
+                <div className="rounded-lg border overflow-hidden">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-16 font-medium">
+                                    S.No
+                                </TableHead>
+                                <TableHead className="font-medium">
+                                    Time
+                                </TableHead>
+                                <TableHead className="font-medium">
+                                    Amount (kg)
+                                </TableHead>
+                                <TableHead className="font-medium">
+                                    Status
+                                </TableHead>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </div>
-        ) : (
-            <div className="flex flex-col items-center justify-center py-6 text-center rounded-lg border bg-muted/20">
-                <p className="text-muted-foreground">
-                    No {title.toLowerCase()} found
-                </p>
-            </div>
-        )}
-    </div>
-)
+                        </TableHeader>
+                        <TableBody>
+                            {data.map((collection, index) => (
+                                <TableRow key={index}>
+                                    <TableCell className="font-medium">
+                                        {index + 1}
+                                    </TableCell>
+                                    <TableCell>
+                                        {getRelativeTime(
+                                            collection.collection_date
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        {collection.amount_collected}
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge
+                                            variant={
+                                                title === "Completed Requests"
+                                                    ? "default"
+                                                    : title ===
+                                                        "Pending Requests"
+                                                      ? "secondary"
+                                                      : "outline"
+                                            }
+                                            className={
+                                                title === "Completed Requests"
+                                                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+                                                    : ""
+                                            }
+                                        >
+                                            {title === "Completed Requests"
+                                                ? "Completed"
+                                                : title === "Pending Requests"
+                                                  ? "Pending"
+                                                  : "Unclaimed"}
+                                        </Badge>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+            ) : (
+                <div className="flex flex-col items-center justify-center py-6 text-center rounded-lg border bg-muted/20">
+                    <p className="text-muted-foreground">
+                        No {title.toLowerCase()} found
+                    </p>
+                </div>
+            )}
+        </div>
+    )
+}
 
 const DashboardHeader = ({ onLogout }: { onLogout: () => void }) => {
     return (
@@ -235,16 +259,23 @@ const DashboardHeader = ({ onLogout }: { onLogout: () => void }) => {
 }
 
 const SummaryCards = ({
+    loading,
     earnedPoints,
     totalPlasticRecycled,
     userBadges,
 }: {
+    loading: RequestStatus
     earnedPoints: string
     totalPlasticRecycled: string
     userBadges: IUserbadge[]
 }) => {
     const pointsPercentage = Math.min((+earnedPoints / 2000) * 100, 100)
     const plasticPercentage = Math.min((+totalPlasticRecycled / 10) * 100, 100)
+
+    if (loading === "pending") {
+        return <SummaryCardSkeleton />
+    }
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <Card>
@@ -315,14 +346,20 @@ const SummaryCards = ({
 }
 
 const CollectionSummaryCard = ({
+    loading,
     collectedPlastic,
     unclaimedRequests,
     pendingRequests,
 }: {
+    loading: RequestStatus
     collectedPlastic: ICollection[]
     unclaimedRequests: ICollection[]
     pendingRequests: ICollection[]
 }) => {
+    if (loading === "pending") {
+        return <CollectionSummaryCardSkeleton />
+    }
+
     return (
         <Card>
             <CardHeader>
@@ -423,6 +460,7 @@ const CollectionSummaryCard = ({
 }
 
 const ActivityStatsTabs = ({
+    loading,
     availableRewards,
     collectedPlastic,
     pendingRequests,
@@ -431,6 +469,7 @@ const ActivityStatsTabs = ({
     earnedPoints,
     onClaimedRewards,
 }: {
+    loading: RequestStatus
     availableRewards: IAvailableRewards[]
     collectedPlastic: ICollection[]
     unclaimedRequests: ICollection[]
@@ -439,6 +478,10 @@ const ActivityStatsTabs = ({
     claimedRewards: IClaimedRewards[]
     onClaimedRewards: (id: string, expense: number) => Promise<void>
 }) => {
+    if (loading === "pending") {
+        return <ActivityStatsTabsSkeleton />
+    }
+
     return (
         <Tabs defaultValue="rewards" className="space-y-4">
             <TabsList className="w-full">
@@ -576,15 +619,18 @@ const ActivityStatsTabs = ({
                     <CardContent>
                         <div className="space-y-8">
                             <CollectionHistoryTable
+                                loading={loading}
                                 title="Unclaimed Requests"
                                 data={unclaimedRequests}
                             />
                             <CollectionHistoryTable
+                                loading={loading}
                                 title="Completed Requests"
                                 data={collectedPlastic}
                                 className="pt-4 border-t"
                             />
                             <CollectionHistoryTable
+                                loading={loading}
                                 title="Pending Requests"
                                 data={pendingRequests}
                                 className="pt-4 border-t"

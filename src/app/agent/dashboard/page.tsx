@@ -57,43 +57,50 @@ export default function RecyclingAgentDashboard() {
         requests,
         updateRequestStatus,
         totalWasteCollected,
+        isError,
         acceptCollectionRequest,
+        isLoading,
     } = useAgent(session?.user.id as string)
 
-    const handleAcceptRequestClick = async (collectionId: string) => {
-        try {
-            await acceptCollectionRequest(collectionId)
-
-            toast({
-                title: "Request Approved",
-                description:
-                    "Collection request has been approved successfully",
+    const handleAcceptRequestClick = useCallback(
+        (collectionId: string) => {
+            acceptCollectionRequest(collectionId, {
+                onSuccess: () => {
+                    toast({
+                        title: "Request Approved",
+                        description:
+                            "Collection request has been approved successfully",
+                    })
+                },
+                onError: (error: any) => {
+                    toast({
+                        variant: "destructive",
+                        title: error.message || "Request not accepted",
+                        description: "Please try again later",
+                    })
+                },
             })
-        } catch (error: any) {
-            toast({
-                variant: "destructive",
-                title: error.message || "Request not accepted",
-                description: "Please try again later",
-            })
-        }
-    }
+        },
+        [acceptCollectionRequest, toast]
+    )
 
     const handleClaimBtnClick = useCallback(
-        async (id: string) => {
-            try {
-                await updateRequestStatus(id)
-
-                toast({
-                    title: "Reward Claimed",
-                    description: "Request has been updated successfully",
-                })
-            } catch (error: any) {
-                toast({
-                    variant: "destructive",
-                    title: error.message || "Request not claimed",
-                    description: "Please try again later",
-                })
-            }
+        (collectionId: string) => {
+            updateRequestStatus(collectionId, {
+                onSuccess: () => {
+                    toast({
+                        title: "Reward Claimed",
+                        description: "Request has been updated successfully",
+                    })
+                },
+                onError: (error: any) => {
+                    toast({
+                        variant: "destructive",
+                        title: error.message || "Request not claimed",
+                        description: "Please try again later",
+                    })
+                },
+            })
         },
         [updateRequestStatus, toast]
     )
@@ -103,7 +110,6 @@ export default function RecyclingAgentDashboard() {
         router.push("/sign-in")
     }, [router])
 
-    // Calculate completion percentage for progress bar
     const totalRequests =
         (requests.pending_requests?.length || 0) +
         (requests.completed_requests?.length || 0)
@@ -111,6 +117,10 @@ export default function RecyclingAgentDashboard() {
         totalRequests > 0
             ? ((requests.completed_requests?.length || 0) / totalRequests) * 100
             : 0
+
+    if (isError) return <div>Error loading data</div>
+
+    if (isLoading) return <div>Loading...</div>
 
     return (
         <SidebarProvider>

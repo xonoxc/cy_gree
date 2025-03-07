@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 
 interface IRequests {
     id: string
@@ -12,148 +12,158 @@ interface IRequestsCollection {
 }
 
 export const useAgent = (agentId: string | undefined) => {
-    const [requests, setPendingRequests] = useState<IRequestsCollection>({
-        pending_requests: [],
-        completed_requests: [],
+    const queryClient = useQueryClient()
+
+    const {
+        data: requests = { pending_requests: [], completed_requests: [] },
+        isLoading: isLoadingRequests,
+        isError: isErrorRequests,
+    } = useQuery<IRequestsCollection>({
+        queryKey: ["agentRequests", agentId],
+        queryFn: async () => {
+            const response = await fetch(`/api/agent/${agentId}/history`)
+            if (!response.ok) throw new Error("Error fetching agent requests")
+            return response.json()
+        },
+        enabled: !!agentId,
     })
-    const [matches, setMatches] = useState<IRequests[]>([])
+
+    const {
+        data: matches = [],
+        isLoading: isLoadingMatches,
+        isError: isErrorMatches,
+    } = useQuery<IRequests[]>({
+        queryKey: ["agentMatches", agentId],
+        queryFn: async () => {
+            const response = await fetch(`/api/agent/${agentId}/requests`)
+            if (!response.ok) throw new Error("Error fetching matches")
+            return response.json()
+        },
+        enabled: !!agentId,
+    })
 
     const totalWasteCollected = requests.completed_requests.reduce(
         (acc, curr) => acc + Number(curr.amount_collected),
         0
     )
 
-    const fetchAgentRequests = useCallback(async () => {
-        try {
-            const response = await fetch(`/api/agent/${agentId}/history`)
-            if (response.status === 200) {
-                const jsonResponse = await response.json()
-                setPendingRequests(jsonResponse)
-            }
-        } catch (error) {
-            throw error || "Error fetching agent requests"
-        }
-    }, [agentId])
-
-    const updateRequestStatus = useCallback(
-        async (collectionId: string) => {
-            const requestToMove = matches.find(req => req.id === collectionId)
-            if (!requestToMove) return
-
-            setMatches(prev => prev.filter(req => req.id !== collectionId))
-            setPendingRequests(prev => ({
-                ...prev,
-                pending_requests: [...prev.pending_requests, requestToMove],
-            }))
-
-            try {
-                const response = await fetch(
-                    `/api/agent/${agentId}/claim?collection_id=${collectionId}`,
-                    {
-                        method: "POST",
-                    }
-                )
-                if (response.status !== 200) {
-                    setPendingRequests(prev => ({
-                        ...prev,
-                        pending_requests: prev.pending_requests.filter(
-                            req => req.id !== collectionId
-                        ),
-                    }))
-                    setMatches(prev => [...prev, requestToMove])
-                }
-            } catch (error) {
-                setPendingRequests(prev => ({
-                    ...prev,
-                    pending_requests: prev.pending_requests.filter(
-                        req => req.id !== collectionId
-                    ),
-                }))
-                setMatches(prev => [...prev, requestToMove])
-                console.error("error updating request status", error)
-                return false
-            }
+    const updateRequestStatus = useMutation({
+        mutationFn: async (collectionId: string) => {
+            const response = await fetch(
+                `/api/agent/${agentId}/claim?collection_id=${collectionId}`,
+                { method: "POST" }
+            )
+            if (!response.ok) throw new Error("Failed to update request status")
+            return response
         },
-        [agentId]
-    )
-
-    const listCollections = useCallback(async () => {
-        try {
-            const result = await fetch(`/api/agent/${agentId}/requests`, {
-                method: "GET",
+        onMutate: async collectionId => {
+            await queryClient.cancelQueries({
+                queryKey: ["agentMatches", agentId],
             })
-            if (result.status === 200) {
-                const jsonResponse = await result.json()
-                setMatches(jsonResponse)
-            }
-        } catch (error) {
-            console.error("Error while listing requests", error)
-        }
-    }, [agentId])
+            await queryClient.cancelQueries({
+                queryKey: ["agentRequests", agentId],
+            })
+            const previousMatches = queryClient.getQueryData<IRequests[]>([
+                "agentMatches",
+                agentId,
+            ])
+            const previousRequests =
+                queryClient.getQueryData<IRequestsCollection>([
+                    "agentRequests",
+                    agentId,
+                ])
+            const requestToMove = matches.find(req => req.id === collectionId)
 
-    const acceptCollectionRequest = useCallback(
-        async (collectionId: string) => {
+            if (requestToMove) {
+                queryClient.setQueryData(
+                    ["agentMatches", agentId],
+                    matches.filter(req => req.id !== collectionId)
+                )
+                queryClient.setQueryData(["agentRequests", agentId], {
+                    ...previousRequests,
+                    pending_requests: [
+                        ...(previousRequests?.pending_requests || []),
+                        requestToMove,
+                    ],
+                })
+            }
+            return { previousMatches, previousRequests, requestToMove }
+        },
+        onError: (_, __, context) => {
+            queryClient.setQueryData(
+                ["agentMatches", agentId],
+                context?.previousMatches
+            )
+            queryClient.setQueryData(
+                ["agentRequests", agentId],
+                context?.previousRequests
+            )
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({
+                queryKey: ["agentMatches", agentId],
+            })
+            queryClient.invalidateQueries({
+                queryKey: ["agentRequests", agentId],
+            })
+        },
+    })
+
+    const acceptCollectionRequest = useMutation({
+        mutationFn: async (collectionId: string) => {
+            const response = await fetch(
+                `/api/agent/${agentId}/collect?collection_id=${collectionId}`,
+                { method: "PATCH" }
+            )
+            if (!response.ok) throw new Error("Failed to accept collection")
+            return true
+        },
+        onMutate: async collectionId => {
+            await queryClient.cancelQueries({
+                queryKey: ["agentRequests", agentId],
+            })
+            const previousRequests =
+                queryClient.getQueryData<IRequestsCollection>([
+                    "agentRequests",
+                    agentId,
+                ])
             const requestToComplete = requests.pending_requests.find(
                 req => req.id === collectionId
             )
-            if (!requestToComplete) return
 
-            setPendingRequests(prev => ({
-                pending_requests: prev.pending_requests.filter(
-                    req => req.id !== collectionId
-                ),
-                completed_requests: [
-                    ...prev.completed_requests,
-                    requestToComplete,
-                ],
-            }))
-
-            try {
-                const response = await fetch(
-                    `/api/agent/${agentId}/collect?collection_id=${collectionId}`,
-                    {
-                        method: "PATCH",
-                    }
-                )
-                if (response.status !== 200) {
-                    setPendingRequests(prev => ({
-                        pending_requests: [
-                            ...prev.pending_requests,
-                            requestToComplete,
-                        ],
-                        completed_requests: prev.completed_requests.filter(
-                            req => req.id !== collectionId
-                        ),
-                    }))
-                }
-                return true
-            } catch (error) {
-                setPendingRequests(prev => ({
-                    pending_requests: [
-                        ...prev.pending_requests,
-                        requestToComplete,
-                    ],
-                    completed_requests: prev.completed_requests.filter(
+            if (requestToComplete) {
+                queryClient.setQueryData(["agentRequests", agentId], {
+                    pending_requests: requests.pending_requests.filter(
                         req => req.id !== collectionId
                     ),
-                }))
-                throw error
+                    completed_requests: [
+                        ...requests.completed_requests,
+                        requestToComplete,
+                    ],
+                })
             }
+            return { previousRequests, requestToComplete }
         },
-        [agentId]
-    )
-
-    useEffect(() => {
-        if (!agentId) return
-        fetchAgentRequests()
-        listCollections()
-    }, [])
+        onError: (_, __, context) => {
+            queryClient.setQueryData(
+                ["agentRequests", agentId],
+                context?.previousRequests
+            )
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({
+                queryKey: ["agentRequests", agentId],
+            })
+        },
+    })
 
     return {
         requests,
-        updateRequestStatus,
+        updateRequestStatus: updateRequestStatus.mutate,
         totalWasteCollected,
         matches,
-        acceptCollectionRequest,
+        acceptCollectionRequest: acceptCollectionRequest.mutate,
+        isError: isErrorRequests || isErrorMatches,
+        isLoading: isLoadingRequests || isLoadingMatches,
     }
 }

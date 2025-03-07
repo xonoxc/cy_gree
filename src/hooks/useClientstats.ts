@@ -1,31 +1,32 @@
+import { RequestStatus } from "@/types/requests.status"
 import { useCallback, useEffect, useState } from "react"
 
 interface IUserData {
-    profile_pic: string
+    profilePic: string
     user: number
     name: string
-    phone_number: string
+    phoneNumber: string
     email: string
     address: string
-    total_plastic_recycled: string
+    totalPlasticRecycled: string
     city: string
     state: string
     country: string
-    earned_points: number
+    earnedPoints: string
 }
 
-interface ICollection {
+export interface ICollection {
     amount_collected: string
     collection_date: string
 }
 
-interface IAvailableRewards {
+export interface IAvailableRewards {
     id: string
     name: string
-    points_required: number
+    pointsRequired: number
 }
 
-interface IClaimedRewards {
+export interface IClaimedRewards {
     id: string
     reward: {
         title: string
@@ -33,26 +34,29 @@ interface IClaimedRewards {
     claimedDate: string
 }
 
-interface IUserbadge {
+export interface IUserbadge {
     name: string
     issue_date: string
 }
 
 export const useClientstats = (userId: string | undefined) => {
+    const [loading, setLoading] = useState<RequestStatus>("pending")
+
     const [userData, setUserData] = useState<IUserData>({
-        profile_pic: "",
+        profilePic: "",
         user: -1,
-        phone_number: "",
+        phoneNumber: "",
         email: "",
         name: "",
         address: "",
         city: "",
         state: "",
         country: "",
-        total_plastic_recycled: "",
-        earned_points: 0,
+        totalPlasticRecycled: "",
+        earnedPoints: "",
     })
     const [userBadges, setUserBadges] = useState<IUserbadge[]>([])
+
     const [collectedPlastic, setCollectedPlastic] = useState<ICollection[]>([])
     const [unclaimedRequests, setUnclaimedRequests] = useState<ICollection[]>(
         []
@@ -71,22 +75,26 @@ export const useClientstats = (userId: string | undefined) => {
         if (response.status === 200) {
             const json = await response.json()
 
+            console.log("user data from api", json)
+
             setUserData(prev => ({
                 ...prev,
                 name: json.user.username,
                 user: json.user.id,
-                phone_number: json.phone_number,
+                phoneNumber: json.phoneNumber,
                 email: json.user.email,
                 address: json.address,
                 state: json.state,
                 country: json.country,
                 city: json.city,
-                profile_pic: json.profile_pic,
-                total_plastic_recycled: json.total_plastic_recycled,
-                earned_points: json.earned_points,
+                profilePic: json.profilePic,
+                totalPlasticRecycled: json.totalPlasticRecycled,
+                earned_points: json.earnedPoints,
             }))
         }
     }, [userId])
+
+    console.log("claimed rewards from api", claimedRewards)
 
     const fetchCollectionHistory = useCallback(async () => {
         const response = await fetch(`/api/client/${userId}/history`)
@@ -138,7 +146,7 @@ export const useClientstats = (userId: string | undefined) => {
                 await fetchClaimedRewards()
                 setUserData(prev => ({
                     ...prev,
-                    earned_points: prev.earned_points - expense,
+                    earned_points: +prev.earnedPoints - expense,
                 }))
             }
         },
@@ -179,6 +187,7 @@ export const useClientstats = (userId: string | undefined) => {
                     throw new Error(error.message || "Profile update failed")
                 }
             } catch (error) {
+                setLoading("error")
                 throw error
             }
         },
@@ -201,6 +210,7 @@ export const useClientstats = (userId: string | undefined) => {
                     }))
                 }
             } catch (error: any) {
+                setLoading("error")
                 throw new Error(error.message || "Error updating emailId")
             }
         },
@@ -228,6 +238,7 @@ export const useClientstats = (userId: string | undefined) => {
                 }
                 return false
             } catch (error) {
+                setLoading("error")
                 throw error
             }
         },
@@ -236,11 +247,20 @@ export const useClientstats = (userId: string | undefined) => {
 
     useEffect(() => {
         if (!userId) return
-        fetchUserProfileData()
-        fetchUserBadges()
-        fetchCollectionHistory()
-        fetchAvailableRewards()
-        fetchClaimedRewards()
+        ;(async () => {
+            try {
+                await Promise.all([
+                    fetchUserProfileData(),
+                    fetchUserBadges(),
+                    fetchCollectionHistory(),
+                    fetchAvailableRewards(),
+                    fetchClaimedRewards(),
+                ])
+                setLoading("success")
+            } catch (error) {
+                setLoading("error")
+            }
+        })()
     }, [userId])
 
     return {
@@ -255,6 +275,7 @@ export const useClientstats = (userId: string | undefined) => {
         handelClaimReward,
         handleProfileUpdate,
         userBadges,
+        loading,
         handleCollectionCreate,
     }
 }

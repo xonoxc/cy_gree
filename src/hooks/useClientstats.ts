@@ -162,21 +162,15 @@ export const useClientstats = (userId: string | undefined) => {
     )
 
     const handleProfileUpdate = useCallback(
-        async (file?: File | Blob | undefined) => {
+        async (pic: string | undefined) => {
             try {
-                const formData = new FormData()
-
-                if (file && file instanceof File) {
-                    formData.append("pic", file as File, file.name)
-                }
-
                 await updateEmailId(userId as string)
-
-                formData.append("data", JSON.stringify({ ...userData }))
 
                 const result = await fetch(`/api/profile/${userId}`, {
                     method: "POST",
-                    body: formData,
+                    body: JSON.stringify({
+                        ...userData,
+                    }),
                 })
 
                 if (result.status === 200) {

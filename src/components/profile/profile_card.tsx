@@ -19,7 +19,7 @@ import { ProfileCardSkeleton } from "./profile_sekeleton"
 
 const ProfileCard = ({ userId }: { userId: string | undefined }) => {
     const [editing, setEditing] = useState(false)
-    const [avatar, setAvatar] = useState<File | null>(null)
+    const [avatar, setAvatar] = useState<string | null>(null)
     const { handleProfileUpdate, userData, handleInputChange, loading } =
         useClientstats(userId)
     const { toast } = useToast()
@@ -27,7 +27,7 @@ const ProfileCard = ({ userId }: { userId: string | undefined }) => {
     const handleEditToggle = useCallback(async () => {
         try {
             if (editing) {
-                const result = await handleProfileUpdate(avatar as File)
+                const result = await handleProfileUpdate(avatar)
                 if (result.status === 200) {
                     toast({
                         title: "Changes saved successfully!",
@@ -44,15 +44,6 @@ const ProfileCard = ({ userId }: { userId: string | undefined }) => {
             setEditing(!editing)
         }
     }, [editing, avatar, handleProfileUpdate, toast])
-
-    const handleAvatarChange = useCallback(
-        (e: React.ChangeEvent<HTMLInputElement>) => {
-            if (e.target.files) {
-                setAvatar(e.target.files[0])
-            }
-        },
-        []
-    )
 
     if (loading === "pending") return <ProfileCardSkeleton />
 

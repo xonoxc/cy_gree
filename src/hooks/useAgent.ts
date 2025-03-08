@@ -24,6 +24,7 @@ export const useAgent = (agentId: string | undefined) => {
             const response = await fetch(`/api/agent/${agentId}/history`)
             if (!response.ok) throw new Error("Error fetching agent requests")
             const jsonResponse = await response.json()
+            console.log(jsonResponse)
             return jsonResponse
         },
         enabled: !!agentId,
@@ -42,6 +43,8 @@ export const useAgent = (agentId: string | undefined) => {
         },
         enabled: !!agentId,
     })
+
+    console.log("completed_requests", requests.completed_requests)
 
     const totalWasteCollected = requests.completed_requests.reduce(
         (acc, curr) => acc + Number(curr.amount_collected),

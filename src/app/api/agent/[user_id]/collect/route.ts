@@ -3,10 +3,8 @@ import { checkAuth } from "@/utils/check.auth"
 import { logErrors } from "@/utils/errors/errorLogs"
 import { NextRequest, NextResponse } from "next/server"
 
-export async function PATCH(
-    request: NextRequest,
-    { params }: { params: { user_id: string } }
-) {
+export async function PATCH(request: NextRequest, props: { params: Promise<{ user_id: string }> }) {
+    const params = await props.params;
     await checkAuth()
     try {
         const { user_id: userId } = params

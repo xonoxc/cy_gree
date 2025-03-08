@@ -11,8 +11,9 @@ const searchParamsSchema = z.object({
 
 export async function POST(
     request: NextRequest,
-    { params }: { params: { user_id: string } }
+    props: { params: Promise<{ user_id: string }> }
 ) {
+    const params = await props.params
     const currentUserId = await checkAuth()
 
     try {

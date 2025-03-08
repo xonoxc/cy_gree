@@ -4,8 +4,9 @@ import { NextRequest, NextResponse } from "next/server"
 
 export async function PATCH(
     _: NextRequest,
-    { params }: { params: { notification_id: string } }
+    props: { params: Promise<{ notification_id: string }> }
 ) {
+    const params = await props.params
     try {
         const { notification_id: notificationId } = params
 

@@ -5,8 +5,9 @@ import { NextRequest, NextResponse } from "next/server"
 
 export async function PATCH(
     _: NextRequest,
-    { params }: { params: { user_id: string } }
+    props: { params: Promise<{ user_id: string }> }
 ) {
+    const params = await props.params
     await checkAuth()
     try {
         const { user_id: userId } = params

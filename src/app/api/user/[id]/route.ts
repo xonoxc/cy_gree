@@ -8,8 +8,9 @@ import { checkAuth } from "@/utils/check.auth"
 
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    props: { params: Promise<{ id: string }> }
 ) {
+    const params = await props.params
     await checkAuth()
     try {
         const { id } = params
@@ -87,8 +88,9 @@ export async function PATCH(
 
 export async function DELETE(
     _: NextRequest,
-    { params }: { params: { id: string } }
+    props: { params: Promise<{ id: string }> }
 ) {
+    const params = await props.params
     try {
         const { id } = params
 

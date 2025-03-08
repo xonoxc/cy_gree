@@ -2,6 +2,7 @@
 
 import type React from "react"
 
+import { IKImage, IKUpload } from "imagekitio-next"
 import { useCallback, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,33 +16,30 @@ import {
 } from "@/components/ui/dialog"
 import { useClientstats } from "@/hooks/useClientstats"
 import { useToast } from "@/hooks/use-toast"
-import { ImagePlus, Plus } from "lucide-react"
+import { Plus } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { Card } from "@/components/ui/card"
+import { IKUploadResponse } from "imagekitio-next/dist/types/components/IKUpload/props"
+import { Progress } from "../ui/progress"
 
 export default function PlasticCollectionModalForm() {
     const [open, setOpen] = useState<boolean>(false)
     const [amount_collected, setAmountCollected] = useState<string>("")
-    const [picture, setPicture] = useState<File | null>(null)
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+    const [picture, setPicture] = useState<string | null>(null)
+    const [imageUploadError, setImageUploadError] = useState<string>("")
+    const [progress, setProgress] = useState<number>(0)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const { toast } = useToast()
 
     const { data: session } = useSession()
 
-    const { handleCollectionCreate } = useClientstats(session?.user?.id)
-
-    useEffect(() => {
-        return () => {
-            if (previewUrl) {
-                URL.revokeObjectURL(previewUrl)
-            }
-        }
-    }, [previewUrl])
+    const { handleCollectionCreate, loading } = useClientstats(
+        session?.user?.id
+    )
 
     useEffect(() => {
         if (!open) {
-            setPreviewUrl(null)
+            setPicture(null)
         }
     }, [open])
 
@@ -58,51 +56,52 @@ export default function PlasticCollectionModalForm() {
 
             setIsSubmitting(true)
             try {
-                const reader = new FileReader()
-                reader.readAsDataURL(picture)
-                reader.onload = async () => {
-                    const base64Image = reader.result as string
+                const created = await handleCollectionCreate(
+                    amount_collected,
+                    picture
+                )
 
-                    const created = await handleCollectionCreate(
-                        amount_collected,
-                        base64Image
-                    )
-
-                    if (created) {
-                        toast({
-                            title: "Collection Created Successfully!",
-                        })
-                        setOpen(false)
-                        setAmountCollected("")
-                        setPicture(null)
-                        setPreviewUrl(null)
-                    }
-                }
-
-                reader.onerror = () => {
-                    throw new Error("Error processing image")
+                if (created) {
+                    toast({
+                        title: "Collection Created Successfully!",
+                    })
+                    setOpen(false)
+                    setAmountCollected("")
+                    setPicture(null)
                 }
             } catch (error: any) {
                 toast({
                     title: error.message || "Error creating collection",
                     variant: "destructive",
                 })
+            } finally {
                 setIsSubmitting(false)
             }
         },
-        [amount_collected, picture, handleCollectionCreate, toast]
+        [picture, amount_collected, toast]
     )
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button
-                    variant="outline"
-                    className="dark:bg-white dark:text-black font-bold mb-5 flex items-center"
-                >
-                    <Plus className="mr-2 h-4 w-4" />
-                    <span>Add Collection</span>
-                </Button>
+                {loading !== "pending" ? (
+                    <Button
+                        variant="outline"
+                        className="dark:bg-white dark:text-black font-bold mb-5 flex items-center"
+                    >
+                        <Plus className="mr-2 h-4 w-4" />
+                        <span>Add Collection</span>
+                    </Button>
+                ) : (
+                    <Button
+                        variant="outline"
+                        className="dark:bg-black dark:text-black font-bold mb-5 flex items-center animate-pulse"
+                        disabled
+                    >
+                        <div className="mr-2 h-4 w-4 bg-gray-300 dark:bg-gray-600 rounded-full" />
+                        <div className="h-5 w-24 bg-gray-300 dark:bg-gray-600 rounded" />
+                    </Button>
+                )}
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden">
                 <DialogHeader className="p-6 pb-2">
@@ -148,55 +147,52 @@ export default function PlasticCollectionModalForm() {
                             </Label>
                             <div className="flex flex-col gap-2">
                                 <div className="relative">
-                                    <Input
-                                        id="pic"
-                                        name="pic"
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={e => {
-                                            const file = e.target.files?.[0]
-                                            if (file) {
-                                                setPicture(file)
-                                                const url =
-                                                    URL.createObjectURL(file)
-                                                setPreviewUrl(url)
-                                            }
-                                        }}
-                                        required
-                                        className="dark:bg-muted w-full"
+                                    {imageUploadError && (
+                                        <div>{imageUploadError}</div>
+                                    )}
+
+                                    <IKUpload
+                                        folder={"collections"}
+                                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                        onError={(e: any) =>
+                                            setImageUploadError(
+                                                JSON.stringify(e)
+                                            )
+                                        }
+                                        onSuccess={(resp: IKUploadResponse) =>
+                                            setPicture(resp.filePath)
+                                        }
+                                        onUploadProgress={(
+                                            e: ProgressEvent<XMLHttpRequestEventTarget>
+                                        ) =>
+                                            setProgress(
+                                                (e.loaded / e.total) * 100
+                                            )
+                                        }
                                     />
                                 </div>
 
-                                {previewUrl ? (
-                                    <Card className="p-2 mt-2 overflow-hidden">
-                                        <div className="relative aspect-video w-full overflow-hidden rounded-md bg-muted">
-                                            <img
-                                                src={
-                                                    previewUrl ||
-                                                    "/placeholder.svg"
-                                                }
-                                                alt="Collection preview"
-                                                className="object-cover w-full h-full"
-                                            />
-                                        </div>
-                                    </Card>
-                                ) : (
-                                    <div
-                                        className="flex items-center justify-center w-full h-32 rounded-md border-2 border-dashed border-muted-foreground/25 bg-muted/50 cursor-pointer"
-                                        onClick={() =>
-                                            document
-                                                .getElementById("pic")
-                                                ?.click()
-                                        }
-                                    >
-                                        <div className="flex flex-col items-center gap-1 text-sm text-muted-foreground">
-                                            <ImagePlus className="h-8 w-8" />
-                                            <span>
-                                                Click to upload an image
-                                            </span>
-                                        </div>
-                                    </div>
-                                )}
+                                <div className="w-full items-center justify-center flex">
+                                    {progress > 0 && progress < 100 ? (
+                                        <Progress
+                                            value={progress}
+                                            className="w-[90%]"
+                                        />
+                                    ) : (
+                                        <>
+                                            {picture && (
+                                                <Card className="p-2 mt-2 overflow-hidden">
+                                                    <div className="relative aspect-video w-full overflow-hidden rounded-md bg-muted">
+                                                        <IKImage
+                                                            path={picture}
+                                                            alt="uploaded image"
+                                                        />
+                                                    </div>
+                                                </Card>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
                             </div>
                         </div>
 

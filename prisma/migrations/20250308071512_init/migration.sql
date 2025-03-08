@@ -53,7 +53,7 @@ CREATE TABLE "PlasticCollection" (
     "imagePath" TEXT NOT NULL,
     "amount" DECIMAL(20,2) NOT NULL,
     "status" "Status" NOT NULL DEFAULT 'Pending',
-    "claimedBy" INTEGER,
+    "claimedBy" TEXT DEFAULT '',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -123,7 +123,7 @@ CREATE INDEX "Notification_importanceLevel_notificationDate_idx" ON "Notificatio
 ALTER TABLE "UserProfile" ADD CONSTRAINT "UserProfile_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PlasticCollection" ADD CONSTRAINT "PlasticCollection_userId_fkey" FOREIGN KEY ("userId") REFERENCES "UserProfile"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "PlasticCollection" ADD CONSTRAINT "PlasticCollection_userId_fkey" FOREIGN KEY ("userId") REFERENCES "UserProfile"("userId") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Reward" ADD CONSTRAINT "Reward_userId_fkey" FOREIGN KEY ("userId") REFERENCES "UserProfile"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

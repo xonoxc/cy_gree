@@ -1,6 +1,7 @@
 import { formatDistanceToNow, isToday, isYesterday, format } from "date-fns"
 
 function getRelativeTime(timestamp: string): string {
+    console.log("timestamp", timestamp)
     const now = new Date()
     const date = new Date(timestamp)
 
@@ -20,6 +21,8 @@ function getRelativeTime(timestamp: string): string {
     if (daysDiff < 7) {
         return `${daysDiff} days ago`
     }
+
+    console.log("date", date)
 
     return format(date, "MMM d, yyyy")
 }

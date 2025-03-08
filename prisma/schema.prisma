@@ -88,7 +88,7 @@ enum State {
 model PlasticCollection {
     id        String      @id @default(uuid())
     userId    String
-    user      UserProfile @relation(fields: [userId], references: [id])
+    user      UserProfile @relation(fields: [userId], references: [userId])
     imagePath String
     amount    Decimal     @db.Decimal(20, 2)
     status    Status      @default(Pending)

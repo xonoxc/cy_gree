@@ -71,13 +71,14 @@ export function LoginForm() {
                 <div className="space-y-2">
                     <Label htmlFor="email">Username</Label>
                     <Input
-                        id="email"
+                        id="username"
                         type="text"
+                        className="p-4 rounded-xl"
+                        placeholder="username..."
                         value={creds.username}
                         onChange={e => {
                             setCreds({ ...creds, username: e.target.value })
                         }}
-                        placeholder="someone_usr"
                         required
                     />
                 </div>
@@ -86,6 +87,8 @@ export function LoginForm() {
                     <Input
                         id="password"
                         type="password"
+                        placeholder="password..."
+                        className="p-4 rounded-xl"
                         value={creds.password}
                         onChange={e => {
                             setCreds({ ...creds, password: e.target.value })
@@ -97,7 +100,7 @@ export function LoginForm() {
                     type="submit"
                     onClick={handleSubmission}
                     disabled={isLoading}
-                    className="w-full font-bold"
+                    className="w-full font-bold rounded-xl"
                 >
                     {isLoading ? (
                         <>
@@ -109,26 +112,6 @@ export function LoginForm() {
                     )}
                 </Button>
             </div>
-            {/* <div className="space-y-2"> */}
-            {/*     <p className="text-center text-gray-500 dark:text-gray-400"> */}
-            {/*         Or continue with */}
-            {/*     </p> */}
-            {/*     <div className="grid grid-cols-3 gap-2"> */}
-            {/*         <Button variant="outline" className="w-full"> */}
-            {/*             <ChromeIcon className="h-5 w-5 mr-2" /> */}
-            {/*             Google */}
-            {/*         </Button> */}
-            {/*         <Button variant="outline" className="w-full"> */}
-            {/*             <AppleIcon className="h-5 w-5 mr-2" /> */}
-            {/*             Apple */}
-            {/*         </Button> */}
-            {/*         <Button variant="outline" className="w-full"> */}
-            {/*             <FacebookIcon className="h-5 w-5 mr-2" /> */}
-            {/*             Facebook */}
-            {/*         </Button> */}
-            {/*     </div> */}
-            {/* </div> */}
-            {/**/}
             <div className="link flex items-center justify-center">
                 <span>
                     Don't have an account?

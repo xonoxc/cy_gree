@@ -16,8 +16,8 @@ interface IUserData {
 }
 
 export interface ICollection {
-    amount_collected: string
-    collection_date: string
+    amount: string
+    createdAt: string
 }
 
 export interface IAvailableRewards {
@@ -94,13 +94,13 @@ export const useClientstats = (userId: string | undefined) => {
         }
     }, [userId])
 
-    console.log("claimed rewards from api", claimedRewards)
-
     const fetchCollectionHistory = useCallback(async () => {
         const response = await fetch(`/api/client/${userId}/history`)
 
         if (response.status === 200) {
             const jsonResponse = await response.json()
+
+            console.log("collection history response", jsonResponse)
 
             setCollectedPlastic(jsonResponse.completed_requests || [])
             setUnclaimedRequests(jsonResponse.unclaimed_requests || [])
@@ -224,10 +224,8 @@ export const useClientstats = (userId: string | undefined) => {
                         }),
                     }
                 )
-                if (response.status === 200) {
-                    const jsonResponse = await response.json()
-                    console.log("Form submitted successfully", jsonResponse)
-
+                if (response.status === 201) {
+                    await fetchCollectionHistory()
                     return true
                 }
                 return false

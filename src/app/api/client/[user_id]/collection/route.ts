@@ -12,7 +12,10 @@ export async function POST(
     await checkAuth()
     try {
         const { user_id: userId } = params
-        const body = req.body
+        const { amount_collected, pic } = (await req.json()) as {
+            amount_collected: string
+            pic: string
+        }
 
         const idValidation = idValidationSchema.safeParse(userId)
         if (!idValidation.success)
@@ -23,24 +26,34 @@ export async function POST(
                 { status: 400 }
             )
 
-        const collectionValidation =
-            collectionCreateValidationSchema.safeParse(body)
+        const existingUser = await prisma.user.findUnique({
+            where: { id: userId },
+        })
+
+        if (!existingUser) {
+            return NextResponse.json(
+                { error: "User profile not found" },
+                { status: 404 }
+            )
+        }
+
+        const collectionValidation = collectionCreateValidationSchema.safeParse(
+            { amount_collected, pic }
+        )
         if (!collectionValidation.success)
             return NextResponse.json(
                 {
                     error: "Invalid body!",
-                    message: collectionValidation.error.format(),
+                    message: collectionValidation.error.flatten().fieldErrors,
                 },
                 { status: 400 }
             )
 
-        const { amount_collected, pic } = collectionValidation.data
-
         const createdCollection = await prisma.plasticCollection.create({
             data: {
-                amount: amount_collected,
+                amount: +amount_collected,
+                userId: existingUser.id,
                 imagePath: pic,
-                userId,
             },
         })
 

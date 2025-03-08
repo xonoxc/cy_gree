@@ -151,7 +151,7 @@ const CollectionHistoryTable = ({
 }: {
     loading: RequestStatus
     title: string
-    data: any[]
+    data: ICollection[]
     className?: string
 }) => {
     if (loading === "pending") {
@@ -192,13 +192,9 @@ const CollectionHistoryTable = ({
                                         {index + 1}
                                     </TableCell>
                                     <TableCell>
-                                        {getRelativeTime(
-                                            collection.collection_date
-                                        )}
+                                        {getRelativeTime(collection.createdAt)}
                                     </TableCell>
-                                    <TableCell>
-                                        {collection.amount_collected}
-                                    </TableCell>
+                                    <TableCell>{collection.amount}</TableCell>
                                     <TableCell>
                                         <Badge
                                             variant={
@@ -433,8 +429,8 @@ const CollectionSummaryCard = ({
                     ]
                         .sort(
                             (a, b) =>
-                                new Date(b.collection_date).getTime() -
-                                new Date(a.collection_date).getTime()
+                                new Date(b.createdAt).getTime() -
+                                new Date(a.createdAt).getTime()
                         )
                         .slice(0, 3)
                         .map((item, index) => (
@@ -444,12 +440,10 @@ const CollectionSummaryCard = ({
                             >
                                 <div className="flex items-center gap-2">
                                     <History className="h-4 w-4 text-muted-foreground" />
-                                    <span>
-                                        {item.amount_collected} kg collected
-                                    </span>
+                                    <span>{item.amount} kg collected</span>
                                 </div>
                                 <span className="text-xs text-muted-foreground">
-                                    {getRelativeTime(item.collection_date)}
+                                    {getRelativeTime(item.createdAt)}
                                 </span>
                             </div>
                         ))}
@@ -478,6 +472,8 @@ const ActivityStatsTabs = ({
     claimedRewards: IClaimedRewards[]
     onClaimedRewards: (id: string, expense: number) => Promise<void>
 }) => {
+    console.log("unclaimed requests in the dashabord", unclaimedRequests)
+
     if (loading === "pending") {
         return <ActivityStatsTabsSkeleton />
     }

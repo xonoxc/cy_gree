@@ -12,7 +12,7 @@ const publicKey = process.env.NEXT_PUBLIC_IMAGEKIT_IO_PUBLIC_KEY!
 
 const authenticator = async () => {
     try {
-        const res = await fetch("/auth/bucket")
+        const res = await fetch("/api/auth/bucket")
         if (!res.ok) {
             throw new Error("Failed to authenticate")
         }

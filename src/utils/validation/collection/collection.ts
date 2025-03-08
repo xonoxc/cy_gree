@@ -5,8 +5,6 @@ import { z } from "zod"
  *
  */
 export const collectionCreateValidationSchema = z.object({
-    amount_collected: z.number({ message: "Invalid collection amount" }),
-    pic: z
-        .string({ message: "pic must be a string" })
-        .url({ message: "Pic must be a valid url" }),
+    amount_collected: z.string({ message: "Invalid collection amount" }),
+    pic: z.string({ message: "pic must be a string" }),
 })

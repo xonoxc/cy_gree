@@ -102,7 +102,7 @@ export default function RegistrationForm() {
                 </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
-                {/* <div className="grid grid-cols-2 gap-6"> */}
+                {/* <div className="grid grid-cols-2 gap-4"> */}
                 {/*     <Button variant="outline"> */}
                 {/*         <Github className="mr-2 h-4 w-4" /> */}
                 {/*         Github */}
@@ -126,6 +126,7 @@ export default function RegistrationForm() {
                     <Label htmlFor="email">Email</Label>
                     <Input
                         id="email"
+                        className="p-3 rounded-xl"
                         type="email"
                         value={creds.email}
                         onChange={e => {
@@ -141,7 +142,9 @@ export default function RegistrationForm() {
                 <div className="grid gap-2">
                     <Label htmlFor="password">Password</Label>
                     <Input
+                        className="rounded-xl"
                         id="password"
+                        placeholder="password"
                         value={creds.password}
                         onChange={e => {
                             setCreds(prev => ({
@@ -156,6 +159,7 @@ export default function RegistrationForm() {
                 <div className="grid gap-2">
                     <Label htmlFor="username">Username</Label>
                     <Input
+                        className="rounded-xl"
                         id="username"
                         value={creds.username}
                         onChange={e => {
@@ -175,6 +179,7 @@ export default function RegistrationForm() {
                         <Input
                             id="first_name"
                             value={creds.first_name}
+                            className="rounded-xl"
                             onChange={e => {
                                 setCreds(prev => ({
                                     ...prev,
@@ -191,6 +196,7 @@ export default function RegistrationForm() {
                         <Input
                             id="last_name"
                             value={creds.last_name}
+                            className="rounded-xl"
                             onChange={e => {
                                 setCreds(prev => ({
                                     ...prev,
@@ -205,7 +211,7 @@ export default function RegistrationForm() {
             </CardContent>
             <CardFooter>
                 <Button
-                    className="w-full font-bold"
+                    className="w-full font-bold p-4 rounded-xl"
                     onClick={onSubmit}
                     disabled={isLoading}
                 >

@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 
 export default function SignUp() {
     return (
-        <div className="py-44 ">
+        <div className="h-screen py-44 bg-gradient-to-b from-[#161617] to-black">
             <RegistrationForm />
         </div>
     )

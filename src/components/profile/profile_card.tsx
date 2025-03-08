@@ -19,7 +19,7 @@ import { ProfileCardSkeleton } from "./profile_sekeleton"
 
 const ProfileCard = ({ userId }: { userId: string | undefined }) => {
     const [editing, setEditing] = useState(false)
-    const [avatar, setAvatar] = useState<string | null>(null)
+    const [avatar, _] = useState<string | null>(null)
     const { handleProfileUpdate, userData, handleInputChange, loading } =
         useClientstats(userId)
     const { toast } = useToast()
@@ -64,11 +64,7 @@ const ProfileCard = ({ userId }: { userId: string | undefined }) => {
                     {editing ? (
                         <div className="space-y-2">
                             <Label htmlFor="avatar">Profile Picture</Label>
-                            <Input
-                                id="avatar"
-                                type="file"
-                                onChange={handleAvatarChange}
-                            />
+                            <Input id="avatar" type="file" />
                         </div>
                     ) : (
                         <Avatar className="h-20 w-20">

@@ -29,23 +29,24 @@ const AboutSection = () => (
                     cryptocurrency based on defined thresholds.
                 </p>
             </motion.div>
-            <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8 }}
-                className="dark:bg-black p-6 rounded-lg shadow-md"
-            >
-                <h4 className="text-xl font-semibold text-green-400 mb-4 flex items-center">
-                    Our Innovation: Plastic Crypto Coin{" "}
-                    <Bitcoin color="white" size={60} />{" "}
-                </h4>
-                <p className="dark:text-gray-300 text-gray-600">
-                    Earn our custom plastic cryptocurrency as you meet specific
-                    plastic collection thresholds. These coins can be redeemed
-                    for gift coupons, exchanged for other digital assets, or
-                    even traded on supported platforms.
-                </p>
-            </motion.div>
+            <div className="dark:bg-black p-6 rounded-lg shadow-md">
+                <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.8 }}
+                >
+                    <h4 className="text-xl font-semibold text-green-400 mb-4 flex items-center">
+                        Our Innovation: Plastic Crypto Coin{" "}
+                        <Bitcoin color="white" size={60} />{" "}
+                    </h4>
+                    <p className="dark:text-gray-300 text-gray-600">
+                        Earn our custom plastic cryptocurrency as you meet
+                        specific plastic collection thresholds. These coins can
+                        be redeemed for gift coupons, exchanged for other
+                        digital assets, or even traded on supported platforms.
+                    </p>
+                </motion.div>
+            </div>
             <DotPattern
                 width={20}
                 height={20}

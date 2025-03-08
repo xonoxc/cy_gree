@@ -15,7 +15,9 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="text-center"
+            style={{
+                textAlign: "center",
+            }}
         >
             <div className="container flex  justify gap-2 flex-col md:flex-row md:h-screen">
                 <div className="intro flex items-center  md:py-52 flex-col">

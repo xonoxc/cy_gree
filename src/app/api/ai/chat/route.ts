@@ -3,14 +3,15 @@ import { createGroq } from "@ai-sdk/groq"
 import { streamText } from "ai"
 import { checkAuth } from "@/utils/check.auth"
 
-export const runtime = "edge"
-
-const groq = createGroq({
-    apiKey: process.env.AI_API_KEY!,
-})
+export const runtime = "nodejs"
 
 export async function POST(req: NextRequest) {
     await checkAuth()
+
+    const groq = createGroq({
+        apiKey: process.env.AI_API_KEY!,
+    })
+
     try {
         const { messages } = await req.json()
 

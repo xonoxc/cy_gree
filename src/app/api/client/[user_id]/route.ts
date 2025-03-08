@@ -1,11 +1,14 @@
 import prisma from "@/config/prisma/prisma.client"
 import { logErrors } from "@/utils/errors/errorLogs"
 import { idValidationSchema } from "@/utils/validation/user"
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 
-export async function GET({ params }: { params: { user_id: string } }) {
+export async function GET(
+    _: NextRequest,
+    { params }: { params: Promise<{ user_id: string }> }
+) {
     try {
-        const { user_id: userId } = params
+        const { user_id: userId } = await params
 
         const idValidationRes = idValidationSchema.safeParse(userId)
         if (!idValidationRes.success)

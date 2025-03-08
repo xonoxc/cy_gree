@@ -1,5 +1,5 @@
-import { ModeToggle } from "@/components/ui/mode-toggle"
 import { Button } from "@/components/ui/button"
+import ModeToggle from "../mode-toggle"
 import { Input } from "@/components/ui/input"
 import { Search, Bell } from "lucide-react"
 

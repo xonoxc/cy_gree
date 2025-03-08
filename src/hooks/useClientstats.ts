@@ -162,7 +162,7 @@ export const useClientstats = (userId: string | undefined) => {
     )
 
     const handleProfileUpdate = useCallback(
-        async (pic: string | undefined) => {
+        async (_: string | null) => {
             try {
                 await updateEmailId(userId as string)
 

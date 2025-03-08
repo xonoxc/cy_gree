@@ -1,7 +1,5 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,31 +15,33 @@ import { Checkbox } from "@/components/ui/checkbox"
 
 interface Field {
     name: string
-    type: string
+    type: "string" | "number" | "boolean" | "enum"
     label: string
     options?: string[]
 }
 
 interface ModelFormProps {
     fields: Field[]
-    submitHandler: (data: any) => void
-    initialData?: any
+    submitHandler: (data: Record<string, string | number | boolean>) => void
+    initialData?: Record<string, string | number | boolean>
 }
 
 export function ModelForm({
     fields,
-    submitHanlder,
+    submitHandler,
     initialData,
 }: ModelFormProps) {
-    const [formData, setFormData] = useState(initialData || {})
+    const [formData, setFormData] = useState<
+        Record<string, string | number | boolean>
+    >(initialData || {})
 
-    const handleChange = (name: string, value: any) => {
+    const handleChange = (name: string, value: string | number | boolean) => {
         setFormData(prev => ({ ...prev, [name]: value }))
     }
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        submitHanlder(formData)
+        submitHandler(formData)
     }
 
     return (
@@ -52,7 +52,7 @@ export function ModelForm({
                     {field.type === "string" && (
                         <Input
                             id={field.name}
-                            value={formData[field.name] || ""}
+                            value={(formData[field.name] as string) || ""}
                             onChange={e =>
                                 handleChange(field.name, e.target.value)
                             }
@@ -62,7 +62,7 @@ export function ModelForm({
                         <Input
                             id={field.name}
                             type="number"
-                            value={formData[field.name] || ""}
+                            value={(formData[field.name] as number) || ""}
                             onChange={e =>
                                 handleChange(
                                     field.name,
@@ -74,7 +74,7 @@ export function ModelForm({
                     {field.type === "boolean" && (
                         <Checkbox
                             id={field.name}
-                            checked={formData[field.name] || false}
+                            checked={(formData[field.name] as boolean) || false}
                             onCheckedChange={checked =>
                                 handleChange(field.name, checked)
                             }
@@ -82,7 +82,7 @@ export function ModelForm({
                     )}
                     {field.type === "enum" && field.options && (
                         <Select
-                            value={formData[field.name] || ""}
+                            value={(formData[field.name] as string) || ""}
                             onValueChange={value =>
                                 handleChange(field.name, value)
                             }

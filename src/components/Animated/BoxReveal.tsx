@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, type JSX } from "react";
+import { RefObject, useEffect, useRef, type JSX } from "react"
 import { motion, useAnimation, useInView } from "framer-motion"
 
 interface BoxRevealProps {
@@ -19,8 +19,8 @@ export const BoxReveal = ({
     const mainControls = useAnimation()
     const slideControls = useAnimation()
 
-    const ref = useRef(null)
-    const isInView = useInView(ref, { once: true })
+    const ref = useRef<HTMLDivElement>(null)
+    const isInView = useInView(ref as RefObject<Element>, { once: true })
 
     useEffect(() => {
         if (isInView) {

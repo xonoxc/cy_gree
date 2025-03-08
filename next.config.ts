@@ -5,6 +5,10 @@ const nextConfig: NextConfig = {
         config.resolve.fallback = {
             crypto: require.resolve("crypto-browserify"),
             stream: require.resolve("stream-browserify"),
+            https: require.resolve("https-browserify"),
+            http: require.resolve("http-browserify"),
+            querystring: require.resolve("querystring-browser"),
+            vm: require.resolve("vm-browserify"),
         }
         return config
     },

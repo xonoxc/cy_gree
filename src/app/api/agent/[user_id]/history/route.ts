@@ -3,9 +3,12 @@ import { checkAuth } from "@/utils/check.auth"
 import { logErrors } from "@/utils/errors/errorLogs"
 import { idValidationSchema } from "@/utils/validation/user"
 
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 
-export async function GET({ params }: { params: { user_id: string } }) {
+export async function GET(
+    _: NextRequest,
+    { params }: { params: { user_id: string } }
+) {
     await checkAuth()
     try {
         const { user_id: agentId } = params

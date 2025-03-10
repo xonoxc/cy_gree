@@ -1,8 +1,8 @@
-"use client"
-
 import localFont from "next/font/local"
+import Container from "@/components/Container"
 import "./globals.css"
 import Providers from "@/components/Providers/prodviders"
+
 const sfpro = localFont({
     src: "../../public/fonts/sf-pro-display_regular.woff2",
 })
@@ -14,8 +14,13 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en" suppressHydrationWarning>
-            <body className={`${sfpro.className} antialiased`}>
-                <Providers>{children}</Providers>
+            <body
+                className={`${sfpro.className} antialiased`}
+                suppressHydrationWarning
+            >
+                <Providers>
+                    <Container>{children}</Container>
+                </Providers>
             </body>
         </html>
     )

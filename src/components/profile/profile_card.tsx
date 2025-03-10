@@ -64,7 +64,11 @@ const ProfileCard = ({ userId }: { userId: string | undefined }) => {
                     {editing ? (
                         <div className="space-y-2">
                             <Label htmlFor="avatar">Profile Picture</Label>
-                            <Input id="avatar" type="file" />
+                            <Input
+                                id="avatar"
+                                type="file"
+                                value={userData.profilePic}
+                            />
                         </div>
                     ) : (
                         <Avatar className="h-20 w-20">
@@ -91,7 +95,7 @@ const ProfileCard = ({ userId }: { userId: string | undefined }) => {
                         onClick={handleEditToggle}
                         variant="outline"
                         size="sm"
-                        className="w-1/8 ml-2 bg-white text-black font-bold"
+                        className="w-1/8 ml-2 bg-white text-black font-bold rounded-xl"
                     >
                         {editing ? (
                             <>

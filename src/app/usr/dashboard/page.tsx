@@ -4,7 +4,6 @@ import type React from "react"
 import { useSession } from "next-auth/react"
 import { useCallback } from "react"
 import { Button } from "@/components/ui/button"
-import getRelativeTime from "@/utils/date"
 import {
     Card,
     CardContent,
@@ -46,6 +45,18 @@ import {
 } from "./skeletons"
 import { RequestStatus } from "@/types/requests.status"
 import { ProfileCardSkeleton } from "@/components/profile/profile_sekeleton"
+import { Skeleton } from "@/components/ui/skeleton"
+
+/**
+ * dynamic imports
+ *
+ * dynamic imports are used to load components only when they are needed with some ssr disabled
+ */
+
+const Time = dynamic(() => import("@/components/time"), {
+    ssr: false,
+    loading: () => <Skeleton className="h-4 w-1/2" />,
+})
 
 const CollectionForm = dynamic(
     () => import("@/components/collection/collection-form"),
@@ -56,7 +67,6 @@ const CollectionForm = dynamic(
 
 const ProfileCard = dynamic(() => import("@/components/profile/profile_card"), {
     loading: () => <ProfileCardSkeleton />,
-    ssr: false,
 })
 
 export default function UserDashboard() {
@@ -102,8 +112,11 @@ export default function UserDashboard() {
     }, [router])
 
     return (
-        <div className="flex flex-col min-h-screen">
-            <DashboardHeader onLogout={handleLogout} />
+        <div
+            className="flex flex-col min-h-screen bg-gradient-to-b from-[#161617] to-black
+		"
+        >
+            <DashboardHeader onLogout={handleLogout} class />
             <main className="flex-1 p-6">
                 {/* Summary Cards */}
                 <SummaryCards
@@ -191,9 +204,7 @@ const CollectionHistoryTable = ({
                                     <TableCell className="font-medium">
                                         {index + 1}
                                     </TableCell>
-                                    <TableCell>
-                                        {getRelativeTime(collection.createdAt)}
-                                    </TableCell>
+                                    <TableCell></TableCell>
                                     <TableCell>{collection.amount}</TableCell>
                                     <TableCell>
                                         <Badge
@@ -236,7 +247,7 @@ const CollectionHistoryTable = ({
 
 const DashboardHeader = ({ onLogout }: { onLogout: () => void }) => {
     return (
-        <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-6">
+        <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <h1 className="text-xl font-semibold">User Dashboard</h1>
             <div className="ml-auto flex items-center gap-4">
                 <NotificationPopup />
@@ -443,7 +454,7 @@ const CollectionSummaryCard = ({
                                     <span>{item.amount} kg collected</span>
                                 </div>
                                 <span className="text-xs text-muted-foreground">
-                                    {getRelativeTime(item.createdAt)}
+                                    <Time timeStamp={item.createdAt} />
                                 </span>
                             </div>
                         ))}
@@ -472,8 +483,6 @@ const ActivityStatsTabs = ({
     claimedRewards: IClaimedRewards[]
     onClaimedRewards: (id: string, expense: number) => Promise<void>
 }) => {
-    console.log("unclaimed requests in the dashabord", unclaimedRequests)
-
     if (loading === "pending") {
         return <ActivityStatsTabsSkeleton />
     }
@@ -586,9 +595,11 @@ const ActivityStatsTabs = ({
                                                     <History className="h-4 w-4 text-muted-foreground mr-1" />
                                                     <p className="text-sm text-muted-foreground">
                                                         Claimed{" "}
-                                                        {getRelativeTime(
-                                                            reward.claimedDate
-                                                        )}
+                                                        <Time
+                                                            timeStamp={
+                                                                reward.claimedDate
+                                                            }
+                                                        />
                                                     </p>
                                                 </div>
                                             </div>

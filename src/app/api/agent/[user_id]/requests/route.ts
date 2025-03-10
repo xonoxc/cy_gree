@@ -1,10 +1,14 @@
 import prisma from "@/config/prisma/prisma.client"
 import { checkAuth } from "@/utils/check.auth"
+import { logErrors } from "@/utils/errors/errorLogs"
 import { idValidationSchema } from "@/utils/validation/user"
 import { NextRequest, NextResponse } from "next/server"
 
-export async function GET(_: NextRequest, props: { params: Promise<{ user_id: string }> }) {
-    const params = await props.params;
+export async function GET(
+    _: NextRequest,
+    props: { params: Promise<{ user_id: string }> }
+) {
+    const params = await props.params
     await checkAuth()
     try {
         const { user_id: agentId } = params
@@ -20,7 +24,7 @@ export async function GET(_: NextRequest, props: { params: Promise<{ user_id: st
 
         const agentProfile = await prisma.userProfile.findFirst({
             where: {
-                id: agentId,
+                userId: agentId,
             },
         })
 
@@ -34,6 +38,7 @@ export async function GET(_: NextRequest, props: { params: Promise<{ user_id: st
         }
 
         const { city, state, country } = agentProfile
+
         if (!city && !state && !country)
             return NextResponse.json(
                 {
@@ -55,15 +60,12 @@ export async function GET(_: NextRequest, props: { params: Promise<{ user_id: st
             where: {
                 status: "Pending",
                 user: {
-                    AND: {
-                        ...filters,
-                    },
+                    OR: [...filters],
                 },
             },
             orderBy: {
                 user: {
                     city: "asc",
-                    state: "asc",
                 },
             },
         })
@@ -78,6 +80,7 @@ export async function GET(_: NextRequest, props: { params: Promise<{ user_id: st
 
         return NextResponse.json(collectionRequests, { status: 200 })
     } catch (error) {
+        logErrors(error)
         return NextResponse.json(
             { error: "Something went wrong!" },
             { status: 500 }

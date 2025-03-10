@@ -75,8 +75,6 @@ export const useClientstats = (userId: string | undefined) => {
         if (response.status === 200) {
             const json = await response.json()
 
-            console.log("user data from api", json)
-
             setUserData(prev => ({
                 ...prev,
                 name: json.user.username,
@@ -99,8 +97,6 @@ export const useClientstats = (userId: string | undefined) => {
 
         if (response.status === 200) {
             const jsonResponse = await response.json()
-
-            console.log("collection history response", jsonResponse)
 
             setCollectedPlastic(jsonResponse.completed_requests || [])
             setUnclaimedRequests(jsonResponse.unclaimed_requests || [])

@@ -1,7 +1,6 @@
 import { formatDistanceToNow, isToday, isYesterday, format } from "date-fns"
 
 function getRelativeTime(timestamp: string): string {
-    console.log("timestamp", timestamp)
     const now = new Date()
     const date = new Date(timestamp)
 

@@ -15,22 +15,3 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-
-  app:
-    build: .
-    ports:
-      - "3000:3000"
-    volumes:
-      - .:/app
-      - /app/node_modules
-      - bun_cache:/root/.bun/install/cache
-    environment:
-      - DATABASE_URL=postgres://dbadmin:secret@db:5432/cygree
-      - NEXT_TELEMETRY_DISABLED=1
-    depends_on:
-      db:
-        condition: service_healthy
-    command: bun run dev
-
-volumes:
-  bun_cache:

@@ -87,7 +87,7 @@ export default function PlasticCollectionModalForm() {
                 {loading !== "pending" ? (
                     <Button
                         variant="outline"
-                        className="dark:bg-white dark:text-black font-bold mb-5 flex items-center"
+                        className="dark:bg-white dark:text-black font-bold mb-5 flex items-center rounded-xl p-4"
                     >
                         <Plus className="mr-2 h-4 w-4" />
                         <span>Add Collection</span>

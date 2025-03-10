@@ -9,8 +9,15 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover"
 import { useNotifications } from "@/hooks/useNotifications"
-import getRelativeTime from "@/utils/date"
 import { useSession } from "next-auth/react"
+import dynamic from "next/dynamic"
+
+/**
+ * dynamic imports
+ *
+ * dynamic imports are used to load components only when they are needed with some ssr disabled
+ */
+const Time = dynamic(() => import("@/components/time"), { ssr: false })
 
 export default function NotificationPopup() {
     const [open, setOpen] = useState(false)
@@ -86,9 +93,11 @@ export default function NotificationPopup() {
                                                     <div className="flex items-center gap-1 text-gray-500">
                                                         <Clock className="h-3 w-3" />
                                                         <span className="text-xs">
-                                                            {getRelativeTime(
-                                                                notification.notification_date
-                                                            )}
+                                                            <Time
+                                                                timeStamp={
+                                                                    notification.notification_date
+                                                                }
+                                                            />
                                                         </span>
                                                     </div>
                                                     {!notification.is_read && (

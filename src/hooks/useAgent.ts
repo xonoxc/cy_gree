@@ -2,20 +2,20 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 
 interface IRequests {
     id: string
-    amount_collected: string
-    collection_date: string
+    amount: string
+    createdAt: string
 }
 
 interface IRequestsCollection {
     pending_requests: IRequests[]
-    completed_requests: IRequests[]
+    claimed_requests: IRequests[]
 }
 
 export const useAgent = (agentId: string | undefined) => {
     const queryClient = useQueryClient()
 
     const {
-        data: requests = { pending_requests: [], completed_requests: [] },
+        data: requests = { pending_requests: [], claimed_requests: [] },
         isLoading: isLoadingRequests,
         isError: isErrorRequests,
     } = useQuery<IRequestsCollection>({
@@ -24,7 +24,6 @@ export const useAgent = (agentId: string | undefined) => {
             const response = await fetch(`/api/agent/${agentId}/history`)
             if (!response.ok) throw new Error("Error fetching agent requests")
             const jsonResponse = await response.json()
-            console.log(jsonResponse)
             return jsonResponse
         },
         enabled: !!agentId,
@@ -44,10 +43,10 @@ export const useAgent = (agentId: string | undefined) => {
         enabled: !!agentId,
     })
 
-    console.log("completed_requests", requests.completed_requests)
+    console.log("requests", requests)
 
-    const totalWasteCollected = requests.completed_requests.reduce(
-        (acc, curr) => acc + Number(curr.amount_collected),
+    const totalWasteCollected = requests.claimed_requests.reduce(
+        (acc, curr) => acc + Number(curr.amount),
         0
     )
 
@@ -141,7 +140,7 @@ export const useAgent = (agentId: string | undefined) => {
                         req => req.id !== collectionId
                     ),
                     completed_requests: [
-                        ...requests.completed_requests,
+                        ...requests.claimed_requests,
                         requestToComplete,
                     ],
                 })

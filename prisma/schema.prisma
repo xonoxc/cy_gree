@@ -43,6 +43,7 @@ model UserProfile {
 
 enum Role {
     Client
+    Admin
     Agent
 }
 

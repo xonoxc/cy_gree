@@ -18,7 +18,7 @@ export async function middleware(request: NextRequest) {
     if (token && role && publicRoutes.includes(pathName)) {
         return NextResponse.redirect(
             new URL(
-                `/${role === "Client" ? "usr" : "agent"}/dashboard`,
+                `/${role === "Client" ? "usr" : role === "Admin" ? "admin" : "agent"}/dashboard`,
                 request.url
             )
         )

@@ -13,7 +13,7 @@ export default function UsersPage() {
                         Manage user accounts and their information.
                     </p>
                 </div>
-                <Link href="/dashboard/users/new">
+                <Link href="/admin/dashboard/users/new">
                     <Button>
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add User

@@ -39,8 +39,16 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import dynamic from "next/dynamic"
 
-// Mock data
+/**
+ * dynamic import for Time component
+ *
+ *  this allows the Time component to be loaded only on the client side
+ */
+
+const Time = dynamic(() => import("@/components/time"), { ssr: false })
+
 const users = [
     {
         id: "1",
@@ -175,9 +183,7 @@ export function UsersTable() {
                                         </Badge>
                                     </TableCell>
                                     <TableCell>
-                                        {new Date(
-                                            user.joinedAt
-                                        ).toLocaleDateString()}
+                                        <Time timeStamp={user.joinedAt} />
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <DropdownMenu>

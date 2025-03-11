@@ -15,7 +15,7 @@ export default function UserProfilesPage() {
                         Manage detailed user profile information.
                     </p>
                 </div>
-                <Link href="/dashboard/user-profiles/new">
+                <Link href="/admin/dashboard/user-profiles/new">
                     <Button>
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add Profile

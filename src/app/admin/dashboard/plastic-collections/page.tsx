@@ -15,7 +15,7 @@ export default function PlasticCollectionsPage() {
                         Manage plastic collection records and their status.
                     </p>
                 </div>
-                <Link href="/dashboard/plastic-collections/new">
+                <Link href="/admin/dashboard/plastic-collections/new">
                     <Button>
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add Collection

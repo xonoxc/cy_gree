@@ -15,7 +15,7 @@ export default function NotificationsPage() {
                         Manage system and user notifications.
                     </p>
                 </div>
-                <Link href="/dashboard/notifications/new">
+                <Link href="/admin/dashboard/notifications/new">
                     <Button>
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Create Notification

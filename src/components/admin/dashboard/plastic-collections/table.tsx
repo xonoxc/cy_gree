@@ -43,8 +43,16 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import Image from "next/image"
+import dynamic from "next/dynamic"
 
-// Mock data
+/**
+ * dynamic import for Time component
+ *
+ *  this allows the Time component to be loaded only on the client side
+ */
+
+const Time = dynamic(() => import("@/components/time"), { ssr: false })
+
 const collections = [
     {
         id: "1",
@@ -242,9 +250,9 @@ export function PlasticCollectionsTable() {
                                             {collection.claimedBy || "—"}
                                         </TableCell>
                                         <TableCell>
-                                            {new Date(
-                                                collection.createdAt
-                                            ).toLocaleDateString()}
+                                            <Time
+                                                timeStamp={collection.createdAt}
+                                            />
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <DropdownMenu>

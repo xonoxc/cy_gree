@@ -15,7 +15,7 @@ export default function ListRewardsPage() {
                         Manage available rewards that users can claim.
                     </p>
                 </div>
-                <Link href="/dashboard/list-rewards/new">
+                <Link href="/admin/dashboard/list-rewards/new">
                     <Button>
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add Reward

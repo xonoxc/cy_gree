@@ -5,7 +5,6 @@ import { NextResponse } from "next/server"
 import { monthNames } from "@/constants/months"
 
 export async function GET() {
-    console.warn("GET /api/admin/metrics recivied requests")
     await checkAuth()
     try {
         const monthlyPlasticCollections = (await prisma.$queryRaw`
@@ -25,7 +24,7 @@ export async function GET() {
             })
         )
 
-        return NextResponse.json(monthlyData)
+        return NextResponse.json({ monthlyData }, { status: 200 })
     } catch (e) {
         logErrors(e)
         if (e instanceof Error) {

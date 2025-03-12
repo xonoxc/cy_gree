@@ -44,9 +44,9 @@ export function Overview() {
 
     if (isLoading) {
         return (
-            <ResponsiveContainer width="100%" height={350}>
-                <div className="w-full h-full bg-gray-200 animate-pulse rounded" />
-            </ResponsiveContainer>
+            <div className="w-full h-[350px]">
+                <div className="w-full h-full bg-gray-500 animate-pulse  rounded-xl" />
+            </div>
         )
     }
 
@@ -60,7 +60,7 @@ export function Overview() {
     }
 
     return (
-        <ResponsiveContainer width="100%" height={350}>
+        <div className="w-full h-[350px]">
             {data && data.monthlyData.length === 0 ? (
                 <>
                     <div className="flex items-center justify-center h-full rounded-xl">
@@ -98,6 +98,6 @@ export function Overview() {
                     />
                 </BarChart>
             )}
-        </ResponsiveContainer>
+        </div>
     )
 }

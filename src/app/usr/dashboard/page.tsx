@@ -116,7 +116,7 @@ export default function UserDashboard() {
             className="flex flex-col min-h-screen bg-gradient-to-b from-[#161617] to-black
 		"
         >
-            <DashboardHeader onLogout={handleLogout} class />
+            <DashboardHeader onLogout={handleLogout} />
             <main className="flex-1 p-6">
                 {/* Summary Cards */}
                 <SummaryCards

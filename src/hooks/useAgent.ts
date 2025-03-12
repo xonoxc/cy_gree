@@ -23,8 +23,7 @@ export const useAgent = (agentId: string | undefined) => {
         queryFn: async () => {
             const response = await fetch(`/api/agent/${agentId}/history`)
             if (!response.ok) throw new Error("Error fetching agent requests")
-            const jsonResponse = await response.json()
-            return jsonResponse
+            return response.json()
         },
         enabled: !!agentId,
     })

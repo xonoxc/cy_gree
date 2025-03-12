@@ -60,8 +60,8 @@ export async function GET(
             },
             { status: 200 }
         )
-    } catch (error) {
-        logErrors(error)
+    } catch (e) {
+        logErrors(e)
         return NextResponse.json(
             {
                 error: "Something went wrong while fetching history",

@@ -20,8 +20,8 @@ const authenticator = async () => {
         }
 
         return res.json()
-    } catch (error) {
-        throw error
+    } catch (e) {
+        throw e
     }
 }
 

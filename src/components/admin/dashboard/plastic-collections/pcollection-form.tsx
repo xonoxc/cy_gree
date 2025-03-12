@@ -97,7 +97,7 @@ export function PlasticCollectionForm({ collection }: { collection?: any }) {
             })
 
             router.push("/dashboard/plastic-collections")
-        } catch (error) {
+        } catch (e) {
             toast({
                 title: "Something went wrong.",
                 description: "Your collection was not saved. Please try again.",

@@ -77,10 +77,10 @@ export default function RegistrationForm() {
                     router.refresh()
                 }
             }
-        } catch (error: any) {
+        } catch (e: any) {
             toast({
                 variant: "destructive",
-                title: error.message || "something went wrong!!",
+                title: e.message || "something went wrong!!",
                 description: "please try again later",
             })
         } finally {

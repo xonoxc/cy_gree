@@ -42,7 +42,7 @@ export async function GET(
         }
 
         return NextResponse.json({ ...userProfile }, { status: 200 })
-    } catch (error) {
+    } catch (e) {
         return NextResponse.json(
             { error: "Something went wrong" },
             { status: 500 }
@@ -104,7 +104,7 @@ export async function PATCH(
             },
             { status: 200 }
         )
-    } catch (error) {
+    } catch (e) {
         return NextResponse.json(
             { error: "Something went wrong" },
             { status: 500 }

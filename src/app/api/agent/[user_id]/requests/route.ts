@@ -79,8 +79,8 @@ export async function GET(
             )
 
         return NextResponse.json(collectionRequests, { status: 200 })
-    } catch (error) {
-        logErrors(error)
+    } catch (e) {
+        logErrors(e)
         return NextResponse.json(
             { error: "Something went wrong!" },
             { status: 500 }

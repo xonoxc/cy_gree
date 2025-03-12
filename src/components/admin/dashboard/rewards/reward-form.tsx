@@ -133,7 +133,7 @@ export function RewardForm({ reward }: { reward?: any }) {
             })
 
             router.push("/dashboard/rewards")
-        } catch (error) {
+        } catch (e) {
             toast({
                 title: "Something went wrong.",
                 description:

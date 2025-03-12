@@ -78,7 +78,7 @@ export async function GET(
             pending_requests,
             completed_requests,
         })
-    } catch (error) {
+    } catch (e) {
         return NextResponse.json(
             {
                 error: "Something went wrong",

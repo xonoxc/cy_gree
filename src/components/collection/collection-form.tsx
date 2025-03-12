@@ -69,9 +69,9 @@ export default function PlasticCollectionModalForm() {
                     setAmountCollected("")
                     setPicture(null)
                 }
-            } catch (error: any) {
+            } catch (e: any) {
                 toast({
-                    title: error.message || "Error creating collection",
+                    title: e.message || "Error creating collection",
                     variant: "destructive",
                 })
             } finally {

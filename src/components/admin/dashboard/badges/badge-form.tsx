@@ -74,7 +74,7 @@ export function BadgeForm() {
             })
 
             router.push("/dashboard/badges")
-        } catch (error) {
+        } catch (e) {
             toast({
                 title: "Something went wrong.",
                 description: "The badge was not awarded. Please try again.",

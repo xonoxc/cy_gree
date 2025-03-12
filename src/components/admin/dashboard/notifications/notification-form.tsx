@@ -88,7 +88,7 @@ export function NotificationForm({ notification }: { notification?: any }) {
             })
 
             router.push("/dashboard/notifications")
-        } catch (error) {
+        } catch (e) {
             toast({
                 title: "Something went wrong.",
                 description:

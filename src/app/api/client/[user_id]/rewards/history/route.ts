@@ -1,5 +1,6 @@
 import prisma from "@/config/prisma/prisma.client"
 import { checkAuth } from "@/utils/check.auth"
+import { logErrors } from "@/utils/errors/errorLogs"
 import { idValidationSchema } from "@/utils/validation/user"
 import { NextRequest, NextResponse } from "next/server"
 
@@ -43,7 +44,8 @@ export async function GET(
         }
 
         return NextResponse.json({ claimedRewards }, { status: 200 })
-    } catch (error) {
+    } catch (e) {
+        logErrors(e)
         return NextResponse.json(
             { error: "Something went wrong" },
             { status: 500 }

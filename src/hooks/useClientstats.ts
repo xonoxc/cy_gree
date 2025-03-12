@@ -1,4 +1,5 @@
 import { RequestStatus } from "@/types/requests.status"
+import { logErrors } from "@/utils/errors/errorLogs"
 import { useCallback, useEffect, useState } from "react"
 
 interface IUserData {
@@ -176,9 +177,9 @@ export const useClientstats = (userId: string | undefined) => {
                     const error = await result.json()
                     throw new Error(error.message || "Profile update failed")
                 }
-            } catch (error) {
+            } catch (e) {
                 setLoading("error")
-                throw error
+                throw e
             }
         },
         [userId]
@@ -199,9 +200,9 @@ export const useClientstats = (userId: string | undefined) => {
                         email: jsonResponse.email,
                     }))
                 }
-            } catch (error: any) {
+            } catch (e) {
                 setLoading("error")
-                throw new Error(error.message || "Error updating emailId")
+                logErrors(e)
             }
         },
         [userId]
@@ -225,9 +226,9 @@ export const useClientstats = (userId: string | undefined) => {
                     return true
                 }
                 return false
-            } catch (error) {
+            } catch (e) {
                 setLoading("error")
-                throw error
+                throw e
             }
         },
         []
@@ -245,7 +246,7 @@ export const useClientstats = (userId: string | undefined) => {
                     fetchClaimedRewards(),
                 ])
                 setLoading("success")
-            } catch (error) {
+            } catch (e) {
                 setLoading("error")
             }
         })()

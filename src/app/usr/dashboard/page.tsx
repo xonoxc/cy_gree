@@ -95,10 +95,10 @@ export default function UserDashboard() {
                     title: "Reward Claimed",
                     description: "You have successfully claimed this reward!",
                 })
-            } catch (error: any) {
+            } catch (e: any) {
                 toast({
                     variant: "destructive",
-                    title: error.message || "Cannot claim reward",
+                    title: e.message || "Cannot claim reward",
                     description: "Please try again later.",
                 })
             }

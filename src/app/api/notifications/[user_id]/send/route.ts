@@ -65,7 +65,7 @@ export async function POST(
             },
             { status: 200 }
         )
-    } catch (error) {
+    } catch (e) {
         return NextResponse.json(
             { error: "Error while sending notifications" },
             { status: 500 }

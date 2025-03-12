@@ -43,10 +43,10 @@ export function LoginForm() {
                 })
                 router.refresh()
             }
-        } catch (error: any) {
+        } catch (e: any) {
             toast({
                 variant: "destructive",
-                title: error.message || "something went wrong!!",
+                title: e.message || "something went wrong!!",
                 description: "please check your credentials",
             })
         } finally {

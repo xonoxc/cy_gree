@@ -163,7 +163,7 @@ export function UserProfileForm({ profileId }: { profileId?: string }) {
             })
 
             router.push("/dashboard/user-profiles")
-        } catch (error) {
+        } catch (e) {
             toast({
                 title: "Something went wrong.",
                 description: "Your profile was not saved. Please try again.",

@@ -64,8 +64,8 @@ export async function POST(
             { message: "Collection created successfully!" },
             { status: 201 }
         )
-    } catch (error) {
-        logErrors(error)
+    } catch (e) {
+        logErrors(e)
         return NextResponse.json(
             { error: "error creating collection" },
             { status: 500 }

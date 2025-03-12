@@ -40,7 +40,7 @@ export async function PATCH(
             { message: "notification read successfully!" },
             { status: 200 }
         )
-    } catch (error) {
+    } catch (e) {
         return NextResponse.json(
             {
                 response: "Cannot reacd notifications!",

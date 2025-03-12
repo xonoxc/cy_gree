@@ -4,7 +4,6 @@ import { logErrors } from "@/utils/errors/errorLogs"
 import { NextResponse } from "next/server"
 
 export async function GET() {
-    console.log("so we got stats requests")
     await checkAuth()
     try {
         const userCountPromise = prisma.user.count()
@@ -40,5 +39,7 @@ export async function GET() {
             { message: "Internal server error" },
             { status: 500 }
         )
+    } finally {
+        await prisma.$disconnect()
     }
 }

@@ -91,7 +91,7 @@ export function ListRewardForm({ reward }: { reward?: any }) {
             })
 
             router.push("/dashboard/list-rewards")
-        } catch (error) {
+        } catch (e) {
             toast({
                 title: "Something went wrong.",
                 description: "Your reward was not saved. Please try again.",

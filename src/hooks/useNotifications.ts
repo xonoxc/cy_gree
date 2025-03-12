@@ -26,8 +26,8 @@ export const useNotifications = (userId: string | undefined) => {
 
                 setNotifications(jsonResponse.notifications)
             }
-        } catch (error) {
-            console.error("Error fetching initial notifications", error)
+        } catch (e) {
+            console.error("Error fetching initial notifications", e)
         } finally {
             setLoading(false)
         }
@@ -51,8 +51,8 @@ export const useNotifications = (userId: string | undefined) => {
                     )
                     await fetchInitialNotifications()
                 }
-            } catch (error) {
-                console.error("erorr while updating notifications", error)
+            } catch (e) {
+                console.error("erorr while updating notifications", e)
             } finally {
                 setLoading(false)
             }
@@ -75,8 +75,8 @@ export const useNotifications = (userId: string | undefined) => {
                 setNotifications([])
                 await fetchInitialNotifications()
             }
-        } catch (error) {
-            console.log("error while updating notifications", error)
+        } catch (e) {
+            console.log("error while updating notifications", e)
         } finally {
             setLoading(false)
         }
@@ -92,8 +92,8 @@ export const useNotifications = (userId: string | undefined) => {
             }
 
             return false
-        } catch (error) {
-            console.error("Error while sending notification", error)
+        } catch (e) {
+            console.error("Error while sending notification", e)
             return false
         }
     }, [userId])

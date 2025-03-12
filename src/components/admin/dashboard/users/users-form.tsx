@@ -69,7 +69,7 @@ export function UserForm({ user }: { user?: any }) {
             })
 
             router.push("/dashboard/users")
-        } catch (error) {
+        } catch (e) {
             toast({
                 title: "Something went wrong.",
                 description: "Your user was not saved. Please try again.",

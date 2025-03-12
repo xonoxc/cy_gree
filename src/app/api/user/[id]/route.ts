@@ -72,13 +72,13 @@ export async function PATCH(
                     success: true,
                     updatedUser: updatedResult,
                 }
-            } catch (error: any) {
-                throw new Error("error updating user", error)
+            } catch (e: any) {
+                throw new Error("error updating user", e)
             }
         })
 
         return NextResponse.json(result, { status: 200 })
-    } catch (error) {
+    } catch (e) {
         return NextResponse.json(
             { error: "cannot update user details" },
             { status: 500 }
@@ -119,13 +119,9 @@ export async function DELETE(
             { message: "User deleted successfully" },
             { status: 200 }
         )
-    } catch (error) {
-        console.error("Error deleting user:", error)
-        if (
-            error instanceof Error &&
-            "code" in error &&
-            error.code === "P2003"
-        ) {
+    } catch (e) {
+        console.error("Error deleting user:", e)
+        if (e instanceof Error && "code" in e && e.code === "P2003") {
             return NextResponse.json(
                 {
                     error: "Cannot delete user due to existing related records",

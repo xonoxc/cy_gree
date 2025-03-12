@@ -31,10 +31,10 @@ export async function POST(req: NextRequest) {
         })
 
         return result.toDataStreamResponse()
-    } catch (error: any) {
-        console.error("Chat response error:", error)
+    } catch (e: any) {
+        console.error("Chat response error:", e)
         return NextResponse.json(
-            { error: error.message || "Internal server error" },
+            { error: e.message || "Internal server error" },
             { status: 500 }
         )
     }

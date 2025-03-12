@@ -8,59 +8,57 @@ import {
     YAxis,
     Tooltip,
 } from "recharts"
+import { useQuery } from "@tanstack/react-query"
 
-const data = [
-    {
-        name: "Jan",
-        total: 120,
-    },
-    {
-        name: "Feb",
-        total: 180,
-    },
-    {
-        name: "Mar",
-        total: 240,
-    },
-    {
-        name: "Apr",
-        total: 280,
-    },
-    {
-        name: "May",
-        total: 350,
-    },
-    {
-        name: "Jun",
-        total: 390,
-    },
-    {
-        name: "Jul",
-        total: 420,
-    },
-    {
-        name: "Aug",
-        total: 490,
-    },
-    {
-        name: "Sep",
-        total: 520,
-    },
-    {
-        name: "Oct",
-        total: 580,
-    },
-    {
-        name: "Nov",
-        total: 650,
-    },
-    {
-        name: "Dec",
-        total: 720,
-    },
-]
+/**
+ * Data type for chart data
+ *
+ *	@property name - The name of the month
+ *  @property total - The total plastic collected in kg
+ */
 
+interface ChartData {
+    name: string
+    total: number
+}
+
+/*
+function for fetching plastic collection stats
+*/
+async function fetchPlasticCollectionStats() {
+    const response = await fetch("/api/admin/metrics")
+    if (!response.ok) {
+        throw new Error("Failed to fetch plastic collection data")
+    }
+    return response.json()
+}
+
+/*
+ main component
+*/
 export function Overview() {
+    const { data, isLoading, error } = useQuery<ChartData[]>({
+        queryKey: ["plastic-collections-monthly"],
+        queryFn: fetchPlasticCollectionStats,
+    })
+
+    if (isLoading) {
+        return (
+            <ResponsiveContainer width="100%" height={350}>
+                <div className="w-full h-full bg-gray-200 animate-pulse rounded" />
+            </ResponsiveContainer>
+        )
+    }
+
+    if (error) {
+        return (
+            <div>
+                Error:{" "}
+                {error instanceof Error ? error.message : "An error occurred"}
+            </div>
+        )
+    }
+
     return (
         <ResponsiveContainer width="100%" height={350}>
             <BarChart data={data}>

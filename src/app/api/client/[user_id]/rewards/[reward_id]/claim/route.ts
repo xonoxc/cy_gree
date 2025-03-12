@@ -101,8 +101,8 @@ export async function POST(
             { message: "Reward claimed successfully" },
             { status: 200 }
         )
-    } catch (error) {
-        logErrors(error)
+    } catch (e) {
+        logErrors(e)
         return NextResponse.json(
             { error: "error creating reward" },
             { status: 500 }

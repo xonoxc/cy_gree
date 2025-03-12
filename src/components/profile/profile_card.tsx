@@ -35,9 +35,9 @@ const ProfileCard = ({ userId }: { userId: string | undefined }) => {
                     })
                 }
             }
-        } catch (error: any) {
+        } catch (e: any) {
             toast({
-                title: error.message || "Profile update failed",
+                title: e.message || "Profile update failed",
                 variant: "destructive",
             })
         } finally {

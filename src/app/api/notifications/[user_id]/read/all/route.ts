@@ -42,7 +42,7 @@ export async function PATCH(
             { message: "All notifications read successfully" },
             { status: 200 }
         )
-    } catch (error) {
+    } catch (e) {
         return NextResponse.json(
             {
                 error: "Something went wrong!",

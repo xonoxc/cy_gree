@@ -15,55 +15,48 @@ import {
     LogOut,
     Settings,
 } from "lucide-react"
+import { Logo } from "@/components/logo"
 
 const routes = [
     {
         label: "Dashboard",
         icon: Home,
         href: "/admin/dashboard",
-        color: "text-sky-500",
     },
     {
         label: "Users",
         icon: Users,
         href: "/admin/dashboard/users",
-        color: "text-violet-500",
     },
     {
         label: "User Profiles",
         icon: UserCircle,
         href: "/admin/dashboard/user-profiles",
-        color: "text-pink-700",
     },
     {
         label: "Plastic Collections",
         icon: Recycle,
         href: "/admin/dashboard/plastic-collections",
-        color: "text-green-700",
     },
     {
         label: "List Rewards",
         icon: Gift,
         href: "/admin/dashboard/list-rewards",
-        color: "text-orange-700",
     },
     {
         label: "Rewards",
         icon: Gift,
         href: "/admin/dashboard/rewards",
-        color: "text-yellow-500",
     },
     {
         label: "Badges",
         icon: Award,
         href: "/admin/dashboard/badges",
-        color: "text-emerald-500",
     },
     {
         label: "Notifications",
         icon: Bell,
         href: "/admin/dashboard/notifications",
-        color: "text-rose-500",
     },
 ]
 
@@ -77,7 +70,7 @@ export function Sidebar() {
                     <div className="relative w-8 h-8 mr-4">
                         <Recycle className="h-8 w-8 text-primary" />
                     </div>
-                    <h1 className="text-xl font-bold">EcoTrack</h1>
+                    <Logo />
                 </Link>
                 <div className="space-y-1">
                     {routes.map(route => (
@@ -93,7 +86,7 @@ export function Sidebar() {
                         >
                             <div className="flex items-center flex-1">
                                 <route.icon
-                                    className={cn("h-5 w-5 mr-3", route.color)}
+                                    className={"h-5 w-5 mr-3 text-gray-500"}
                                 />
                                 {route.label}
                             </div>

@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { ModeToggle } from "@/components/mode_toggle"
+import { Logo } from "../logo"
 
 const Header = () => {
     const router = useRouter()
@@ -10,10 +11,7 @@ const Header = () => {
     return (
         <header className="dark:bg-black shadow-lg dark:border-b-gray-200">
             <div className="container mx-auto px-4 py-6 flex justify-between items-center">
-                <h1 className="text-2xl font-bold">
-                    <span className="dark:text-white text-black">Cy</span>
-                    <span className="text-green-300">Gree</span>
-                </h1>
+                <Logo />
                 <nav>
                     <ul className="flex space-x-4">
                         <li>

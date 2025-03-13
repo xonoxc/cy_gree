@@ -21,8 +21,6 @@ function getRelativeTime(timestamp: string): string {
         return `${daysDiff} days ago`
     }
 
-    console.log("date", date)
-
     return format(date, "MMM d, yyyy")
 }
 

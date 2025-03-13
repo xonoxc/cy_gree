@@ -5,6 +5,45 @@ import {
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/config/prisma/prisma.client"
 import { checkAuth } from "@/utils/check.auth"
+import { logErrors } from "@/utils/errors/errorLogs"
+
+export async function GET(
+    _: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    await checkAuth()
+    try {
+        const { id } = await params
+
+        const idValidationResult = idValidationSchema.safeParse(id)
+        if (!idValidationResult.success)
+            return NextResponse.json(
+                { error: "Invalid user id provided" },
+                { status: 400 }
+            )
+
+        const user = await prisma.user.findUnique({
+            where: { id },
+        })
+
+        if (!user) {
+            return NextResponse.json(
+                { error: "User not found" },
+                { status: 404 }
+            )
+        }
+
+        return NextResponse.json(user, { status: 200 })
+    } catch (e) {
+        logErrors(e)
+        return NextResponse.json(
+            { error: "cannot update user details" },
+            { status: 500 }
+        )
+    } finally {
+        await prisma.$disconnect()
+    }
+}
 
 export async function PATCH(
     request: NextRequest,

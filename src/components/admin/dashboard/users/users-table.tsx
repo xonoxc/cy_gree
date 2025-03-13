@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { UsersResp } from "@/app/api/admin/user/route"
 import {
     Table,
     TableBody,
@@ -40,6 +40,13 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import dynamic from "next/dynamic"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { PaginatedResponse } from "@/types/response"
+import { useEffect, useState } from "react"
+import { useDebounceValue } from "usehooks-ts"
+import { useToast } from "@/hooks/use-toast"
+
+type PaginatedUsers = PaginatedResponse<UsersResp[]>
 
 /**
  * dynamic import for Time component
@@ -49,77 +56,79 @@ import dynamic from "next/dynamic"
 
 const Time = dynamic(() => import("@/components/time"), { ssr: false })
 
-const users = [
-    {
-        id: "1",
-        username: "johndoe",
-        email: "john.doe@example.com",
-        name: "John Doe",
-        isActive: true,
-        joinedAt: "2023-01-15T00:00:00.000Z",
-    },
-    {
-        id: "2",
-        username: "janedoe",
-        email: "jane.doe@example.com",
-        name: "Jane Doe",
-        isActive: true,
-        joinedAt: "2023-02-20T00:00:00.000Z",
-    },
-    {
-        id: "3",
-        username: "bobsmith",
-        email: "bob.smith@example.com",
-        name: "Bob Smith",
-        isActive: false,
-        joinedAt: "2023-03-10T00:00:00.000Z",
-    },
-    {
-        id: "4",
-        username: "alicejones",
-        email: "alice.jones@example.com",
-        name: "Alice Jones",
-        isActive: true,
-        joinedAt: "2023-04-05T00:00:00.000Z",
-    },
-    {
-        id: "5",
-        username: "mikebrown",
-        email: "mike.brown@example.com",
-        name: "Mike Brown",
-        isActive: true,
-        joinedAt: "2023-05-12T00:00:00.000Z",
-    },
-]
+const itemsPerPage = 2
+
+const fetchUsers = async (
+    page = 1,
+    searchQuery: string = "",
+    statusFilter: string = "all"
+): Promise<PaginatedUsers> => {
+    const res = await fetch(
+        `/api/admin/user?page=${page}&limit=${itemsPerPage}&search=${searchQuery}&status=${statusFilter}`
+    )
+    if (!res.ok) {
+        throw new Error("Unable to fetch users")
+    }
+    return res.json()
+}
+
+const deleteUser = async (userId: string): Promise<void> => {
+    const res = await fetch(`/api/user/${userId}`, {
+        method: "DELETE",
+    })
+    if (!res.ok) {
+        throw new Error(`Failed to delete user: ${res.status}`)
+    }
+}
 
 export function UsersTable() {
-    const [searchQuery, setSearchQuery] = useState("")
-    const [currentPage, setCurrentPage] = useState(1)
-    const [statusFilter, setStatusFilter] = useState("all")
+    const [inputSearchQuery, setInputSearchQuery] = useState<string>("")
+    const [page, setPage] = useState<number>(1)
+    const [statusFilter, setStatusFilter] = useState<
+        "inactive" | "active" | "all"
+    >("all")
+    const { toast } = useToast()
+    const queryClient = useQueryClient()
 
-    const itemsPerPage = 10
+    const [searchQuery] = useDebounceValue(inputSearchQuery, 1000)
 
-    // Filter users based on search query and status
-    const filteredUsers = users.filter(user => {
-        const matchesSearch =
-            user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            user.username.toLowerCase().includes(searchQuery.toLowerCase())
-
-        const matchesStatus =
-            statusFilter === "all" ||
-            (statusFilter === "active" && user.isActive) ||
-            (statusFilter === "inactive" && !user.isActive)
-
-        return matchesSearch && matchesStatus
+    const {
+        data: paginatedUsers,
+        isError,
+        isFetching,
+        error,
+        refetch,
+    } = useQuery({
+        queryKey: ["users", page, searchQuery, statusFilter],
+        queryFn: () => fetchUsers(page, searchQuery, statusFilter),
     })
 
-    // Calculate pagination
-    const totalPages = Math.ceil(filteredUsers.length / itemsPerPage)
-    const paginatedUsers = filteredUsers.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    )
+    const deleteMutation = useMutation({
+        mutationFn: deleteUser,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["users"] })
+            toast({
+                title: "User deleted successfully!",
+            })
+        },
+        onError: (error: Error) => {
+            toast({
+                title: "Error",
+                description: error.message || "Failed to delete user.",
+                variant: "destructive",
+            })
+        },
+    })
+
+    useEffect(() => {
+        ;(async () => {
+            await refetch()
+        })()
+    }, [page, searchQuery, statusFilter])
+
+    if (isError) return <div>Error: {error.message}</div>
+
+    if (isFetching) return <UsersTableSkeleton />
 
     return (
         <div className="space-y-4">
@@ -130,11 +139,16 @@ export function UsersTable() {
                         type="search"
                         placeholder="Search users..."
                         className="w-full pl-8 bg-background"
-                        value={searchQuery}
-                        onChange={e => setSearchQuery(e.target.value)}
+                        value={inputSearchQuery}
+                        onChange={e => setInputSearchQuery(e.target.value)}
                     />
                 </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <Select
+                    value={statusFilter}
+                    onValueChange={value =>
+                        setStatusFilter(value as "all" | "active" | "inactive")
+                    }
+                >
                     <SelectTrigger className="w-full sm:w-36">
                         <SelectValue placeholder="Filter by status" />
                     </SelectTrigger>
@@ -161,8 +175,8 @@ export function UsersTable() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {paginatedUsers.length > 0 ? (
-                            paginatedUsers.map(user => (
+                        {paginatedUsers!.data.length > 0 ? (
+                            paginatedUsers?.data.map(user => (
                                 <TableRow key={user.id}>
                                     <TableCell className="font-medium">
                                         {user.name}
@@ -183,7 +197,9 @@ export function UsersTable() {
                                         </Badge>
                                     </TableCell>
                                     <TableCell>
-                                        <Time timeStamp={user.joinedAt} />
+                                        <Time
+                                            timeStamp={String(user.joinedAt)}
+                                        />
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <DropdownMenu>
@@ -205,7 +221,7 @@ export function UsersTable() {
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem asChild>
                                                     <Link
-                                                        href={`/dashboard/users/${user.id}`}
+                                                        href={`/admin/dashboard/users/${user.id}`}
                                                     >
                                                         <Eye className="mr-2 h-4 w-4" />
                                                         View
@@ -213,13 +229,20 @@ export function UsersTable() {
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem asChild>
                                                     <Link
-                                                        href={`/dashboard/users/${user.id}/edit`}
+                                                        href={`/admin/dashboard/users/${user.id}/edit`}
                                                     >
                                                         <Edit className="mr-2 h-4 w-4" />
                                                         Edit
                                                     </Link>
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem className="text-destructive">
+                                                <DropdownMenuItem
+                                                    className="text-destructive"
+                                                    onClick={() =>
+                                                        deleteMutation.mutate(
+                                                            user.id
+                                                        )
+                                                    }
+                                                >
                                                     <Trash className="mr-2 h-4 w-4" />
                                                     Delete
                                                 </DropdownMenuItem>
@@ -243,47 +266,49 @@ export function UsersTable() {
             </div>
 
             {/* Pagination */}
-            {filteredUsers.length > 0 && (
+            {paginatedUsers && paginatedUsers.data.length > 0 && (
                 <div className="flex items-center justify-between">
                     <div className="text-sm text-muted-foreground">
                         Showing{" "}
                         {Math.min(
-                            filteredUsers.length,
-                            (currentPage - 1) * itemsPerPage + 1
+                            paginatedUsers.data?.length,
+                            (page - 1) * itemsPerPage + 1
                         )}{" "}
                         to{" "}
                         {Math.min(
-                            filteredUsers.length,
-                            currentPage * itemsPerPage
+                            paginatedUsers.data?.length,
+                            page * itemsPerPage
                         )}{" "}
-                        of {filteredUsers.length} users
+                        of {paginatedUsers.data?.length} users
                     </div>
                     <div className="flex items-center space-x-2">
                         <Button
                             variant="outline"
                             size="icon"
-                            onClick={() => setCurrentPage(1)}
-                            disabled={currentPage === 1}
+                            onClick={() => setPage(1)}
+                            disabled={page === 1}
                         >
                             <ChevronsLeft className="h-4 w-4" />
                         </Button>
                         <Button
                             variant="outline"
                             size="icon"
-                            onClick={() => setCurrentPage(currentPage - 1)}
-                            disabled={currentPage === 1}
+                            onClick={() => setPage(page - 1)}
+                            disabled={page === 1}
                         >
                             <ChevronLeft className="h-4 w-4" />
                         </Button>
                         <span className="text-sm font-medium">
-                            Page {currentPage} of {totalPages || 1}
+                            Page {page} of{" "}
+                            {paginatedUsers.pagination.totalPages || 1}
                         </span>
                         <Button
                             variant="outline"
                             size="icon"
-                            onClick={() => setCurrentPage(currentPage + 1)}
+                            onClick={() => setPage(prev => prev + 1)}
                             disabled={
-                                currentPage === totalPages || totalPages === 0
+                                paginatedUsers.pagination.totalPages === page ||
+                                paginatedUsers.data?.length === 0
                             }
                         >
                             <ChevronRight className="h-4 w-4" />
@@ -291,9 +316,12 @@ export function UsersTable() {
                         <Button
                             variant="outline"
                             size="icon"
-                            onClick={() => setCurrentPage(totalPages)}
+                            onClick={() =>
+                                setPage(paginatedUsers.pagination.totalPages)
+                            }
                             disabled={
-                                currentPage === totalPages || totalPages === 0
+                                paginatedUsers.pagination.totalPages === page ||
+                                paginatedUsers.data.length === 0
                             }
                         >
                             <ChevronsRight className="h-4 w-4" />
@@ -301,6 +329,87 @@ export function UsersTable() {
                     </div>
                 </div>
             )}
+        </div>
+    )
+}
+
+function UsersTableSkeleton() {
+    return (
+        <div className="space-y-4">
+            {/* Search and Filter Section */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-between">
+                <div className="relative w-full sm:w-72">
+                    <div className="h-10 bg-gray-500  animate-pulse rounded-xl" />
+                </div>
+                <div className="w-full sm:w-36">
+                    <div className="h-10 bg-gray-500 rounded-xl animate-pulse" />
+                </div>
+            </div>
+
+            {/* Table Section */}
+            <div className="rounded-md border">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>
+                                <div className="h-4 w-16 bg-gray-500 rounded animate-pulse" />
+                            </TableHead>
+                            <TableHead>
+                                <div className="h-4 w-20 bg-gray-500 rounded animate-pulse" />
+                            </TableHead>
+                            <TableHead>
+                                <div className="h-4 w-24 bg-gray-500 rounded animate-pulse" />
+                            </TableHead>
+                            <TableHead>
+                                <div className="h-4 w-16 bg-gray-500 rounded animate-pulse" />
+                            </TableHead>
+                            <TableHead>
+                                <div className="h-4 w-20 bg-gray-500 rounded animate-pulse" />
+                            </TableHead>
+                            <TableHead className="text-right">
+                                <div className="h-4 w-16 bg-gray-500 rounded animate-pulse ml-auto" />
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {/* Simulate 3 placeholder rows */}
+                        {[...Array(3)].map((_, index) => (
+                            <TableRow key={index}>
+                                <TableCell>
+                                    <div className="h-4 w-32 bg-gray-500 rounded animate-pulse" />
+                                </TableCell>
+                                <TableCell>
+                                    <div className="h-4 w-24 bg-gray-500 rounded animate-pulse" />
+                                </TableCell>
+                                <TableCell>
+                                    <div className="h-4 w-40 bg-gray-500 rounded animate-pulse" />
+                                </TableCell>
+                                <TableCell>
+                                    <div className="h-4 w-16 bg-gray-500 rounded animate-pulse" />
+                                </TableCell>
+                                <TableCell>
+                                    <div className="h-4 w-28 bg-gray-500 rounded animate-pulse" />
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <div className="h-8 w-8 bg-gray-500 rounded-full animate-pulse ml-auto" />
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
+
+            {/* Pagination Section */}
+            <div className="flex items-center justify-between">
+                <div className="h-8 w-32 bg-gray-500 rounded-xl animate-pulse" />
+                <div className="flex items-center space-x-2">
+                    <div className="h-8 w-8 bg-gray-500 rounded-xl animate-pulse" />
+                    <div className="h-8 w-8 bg-gray-500 rounded-xl animate-pulse" />
+                    <div className="h-7 w-16 bg-gray-500 rounded-md  animate-pulse" />
+                    <div className="h-8 w-8 bg-gray-500 rounded-xl animate-pulse" />
+                    <div className="h-8 w-8 bg-gray-500 rounded-xl animate-pulse" />
+                </div>
+            </div>
         </div>
     )
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -16,6 +16,7 @@ import {
     Settings,
 } from "lucide-react"
 import { Logo } from "@/components/logo"
+import { signOut } from "next-auth/react"
 
 const routes = [
     {
@@ -63,6 +64,13 @@ const routes = [
 export function Sidebar() {
     const pathname = usePathname()
 
+    const router = useRouter()
+
+    const handleLogout = async () => {
+        await signOut()
+        router.push("/sign-in")
+    }
+
     return (
         <div className="flex flex-col h-full space-y-4 py-4 bg-card text-card-foreground border-r w-64">
             <div className="px-3 py-2 flex-1">
@@ -108,6 +116,7 @@ export function Sidebar() {
                     <Button
                         variant="ghost"
                         className="text-sm group flex p-3 w-full justify-start font-medium cursor-pointer hover:bg-destructive/10 rounded-lg transition text-muted-foreground"
+                        onClick={handleLogout}
                     >
                         <div className="flex items-center flex-1">
                             <LogOut className="h-5 w-5 mr-3 text-gray-500" />

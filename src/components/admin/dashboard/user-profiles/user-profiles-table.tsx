@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+// import { useRouter } from "next/navigation"
 import {
     Table,
     TableBody,
@@ -44,117 +45,47 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { RoleFilter } from "@/app/api/admin/profiles/route"
+import { ProfilesResp } from "@/app/api/admin/profiles/route"
+import { PaginatedResponse } from "@/types/response"
+import { useQuery } from "@tanstack/react-query"
 
-// Mock data
-const userProfiles = [
-    {
-        id: "1",
-        userId: "user1",
-        userName: "John Doe",
-        profilePic: "/placeholder.svg?height=40&width=40&text=JD",
-        role: "Client",
-        address: "123 Main St",
-        city: "Mumbai",
-        state: "Maharashtra",
-        country: "India",
-        phoneNumber: "9876543210",
-        totalPlasticRecycled: 25.5,
-        earnedPoints: 1250.0,
-    },
-    {
-        id: "2",
-        userId: "user2",
-        userName: "Jane Smith",
-        profilePic: "/placeholder.svg?height=40&width=40&text=JS",
-        role: "Agent",
-        address: "456 Park Ave",
-        city: "Delhi",
-        state: "Delhi",
-        country: "India",
-        phoneNumber: "8765432109",
-        totalPlasticRecycled: 0,
-        earnedPoints: 500.0,
-    },
-    {
-        id: "3",
-        userId: "user3",
-        userName: "Mike Johnson",
-        profilePic: "/placeholder.svg?height=40&width=40&text=MJ",
-        role: "Client",
-        address: "789 Oak St",
-        city: "Bangalore",
-        state: "Karnataka",
-        country: "India",
-        phoneNumber: "7654321098",
-        totalPlasticRecycled: 15.2,
-        earnedPoints: 760.0,
-    },
-    {
-        id: "4",
-        userId: "user4",
-        userName: "Sarah Williams",
-        profilePic: "/placeholder.svg?height=40&width=40&text=SW",
-        role: "Client",
-        address: "101 Pine Rd",
-        city: "Chennai",
-        state: "Tamil_Nadu",
-        country: "India",
-        phoneNumber: "6543210987",
-        totalPlasticRecycled: 8.7,
-        earnedPoints: 435.0,
-    },
-    {
-        id: "5",
-        userId: "user5",
-        userName: "David Brown",
-        profilePic: "/placeholder.svg?height=40&width=40&text=DB",
-        role: "Agent",
-        address: "202 Maple Dr",
-        city: "Hyderabad",
-        state: "Telangana",
-        country: "India",
-        phoneNumber: "5432109876",
-        totalPlasticRecycled: 0,
-        earnedPoints: 1500.0,
-    },
-]
+type PaginatedProfilsResponse = PaginatedResponse<ProfilesResp[]>
+
+const ITEMS_PER_PAGE = 3
 
 export function UserProfilesTable() {
-    const [searchQuery, setSearchQuery] = useState("")
-    const [currentPage, setCurrentPage] = useState(1)
-    const [roleFilter, setRoleFilter] = useState("all")
+    const [searchQuery, setSearchQuery] = useState<string>("")
+    const [currentPage, setCurrentPage] = useState<number>(1)
+    const [roleFilter, setRoleFilter] = useState<RoleFilter>("all")
 
-    const itemsPerPage = 10
+    // const router = useRouter()
 
-    // Filter profiles based on search query and role
-    const filteredProfiles = userProfiles.filter(profile => {
-        const matchesSearch =
-            profile.userName
-                .toLowerCase()
-                .includes(searchQuery.toLowerCase()) ||
-            profile.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (profile.state &&
-                profile.state
-                    .toLowerCase()
-                    .includes(searchQuery.toLowerCase())) ||
-            (profile.phoneNumber && profile.phoneNumber.includes(searchQuery))
-
-        const matchesRole = roleFilter === "all" || roleFilter === profile.role
-
-        return matchesSearch && matchesRole
+    const {
+        data: profileResponseData,
+        isLoading,
+        error,
+    } = useQuery({
+        queryKey: ["userProfiles", searchQuery, roleFilter, currentPage],
+        queryFn: () =>
+            fetchProfiles({
+                search: searchQuery,
+                role: roleFilter,
+                page: currentPage,
+            }),
     })
 
-    // Calculate pagination
-    const totalPages = Math.ceil(filteredProfiles.length / itemsPerPage)
-    const paginatedProfiles = filteredProfiles.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    )
-
-    // Format state name for display
-    const formatStateName = (state: string) => {
+    const formatStateName = (state: string | null) => {
         return state ? state.replace(/_/g, " ") : ""
     }
+
+    if (error) {
+        return <div>Error: {(error as Error).message}</div>
+    }
+
+    const profiles = profileResponseData?.data || []
+    const total = profileResponseData?.pagination?.totalEntries || 0
+    const totalPages = profileResponseData?.pagination?.totalPages || 1
 
     return (
         <div className="space-y-4">
@@ -166,10 +97,19 @@ export function UserProfilesTable() {
                         placeholder="Search profiles..."
                         className="w-full pl-8 bg-background"
                         value={searchQuery}
-                        onChange={e => setSearchQuery(e.target.value)}
+                        onChange={e => {
+                            setSearchQuery(e.target.value)
+                            setCurrentPage(1)
+                        }}
                     />
                 </div>
-                <Select value={roleFilter} onValueChange={setRoleFilter}>
+                <Select
+                    value={roleFilter}
+                    onValueChange={(value: RoleFilter) => {
+                        setRoleFilter(value)
+                        setCurrentPage(1)
+                    }}
+                >
                     <SelectTrigger className="w-full sm:w-36">
                         <SelectValue placeholder="Filter by role" />
                     </SelectTrigger>
@@ -177,6 +117,7 @@ export function UserProfilesTable() {
                         <SelectItem value="all">All Roles</SelectItem>
                         <SelectItem value="Client">Client</SelectItem>
                         <SelectItem value="Agent">Agent</SelectItem>
+                        <SelectItem value="Admin">Admin</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
@@ -197,14 +138,32 @@ export function UserProfilesTable() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {paginatedProfiles.length > 0 ? (
-                            paginatedProfiles.map(profile => (
-                                <TableRow key={profile.id}>
+                        {isLoading ? (
+                            <TableRow>
+                                <TableCell
+                                    colSpan={7}
+                                    className="h-24 text-center"
+                                >
+                                    Loading...
+                                </TableCell>
+                            </TableRow>
+                        ) : profiles.length > 0 ? (
+                            profiles.map((profile: ProfilesResp) => (
+                                <TableRow
+                                    key={profile.id}
+                                    // onClick={() =>
+                                    //     router.push(
+                                    //         `/admin/dashboard/users/${profile.userId}`
+                                    //     )
+                                    // }
+                                >
                                     <TableCell>
                                         <div className="flex items-center gap-3">
                                             <Avatar className="h-8 w-8">
                                                 <AvatarImage
-                                                    src={profile.profilePic}
+                                                    src={
+                                                        profile.profilePic || ""
+                                                    }
                                                     alt={profile.userName}
                                                 />
                                                 <AvatarFallback>
@@ -321,21 +280,16 @@ export function UserProfilesTable() {
                 </Table>
             </div>
 
-            {/* Pagination */}
-            {filteredProfiles.length > 0 && (
+            {total > 0 && (
                 <div className="flex items-center justify-between">
                     <div className="text-sm text-muted-foreground">
                         Showing{" "}
                         {Math.min(
-                            filteredProfiles.length,
-                            (currentPage - 1) * itemsPerPage + 1
+                            total,
+                            (currentPage - 1) * ITEMS_PER_PAGE + 1
                         )}{" "}
-                        to{" "}
-                        {Math.min(
-                            filteredProfiles.length,
-                            currentPage * itemsPerPage
-                        )}{" "}
-                        of {filteredProfiles.length} profiles
+                        to {Math.min(total, currentPage * ITEMS_PER_PAGE)} of{" "}
+                        {total} profiles
                     </div>
                     <div className="flex items-center space-x-2">
                         <Button
@@ -355,15 +309,13 @@ export function UserProfilesTable() {
                             <ChevronLeft className="h-4 w-4" />
                         </Button>
                         <span className="text-sm font-medium">
-                            Page {currentPage} of {totalPages || 1}
+                            Page {currentPage} of {totalPages}
                         </span>
                         <Button
                             variant="outline"
                             size="icon"
                             onClick={() => setCurrentPage(currentPage + 1)}
-                            disabled={
-                                currentPage === totalPages || totalPages === 0
-                            }
+                            disabled={currentPage === totalPages}
                         >
                             <ChevronRight className="h-4 w-4" />
                         </Button>
@@ -371,9 +323,7 @@ export function UserProfilesTable() {
                             variant="outline"
                             size="icon"
                             onClick={() => setCurrentPage(totalPages)}
-                            disabled={
-                                currentPage === totalPages || totalPages === 0
-                            }
+                            disabled={currentPage === totalPages}
                         >
                             <ChevronsRight className="h-4 w-4" />
                         </Button>
@@ -382,4 +332,31 @@ export function UserProfilesTable() {
             )}
         </div>
     )
+}
+
+/**
+ * function to fetch paginated Profiles
+ */
+
+async function fetchProfiles({
+    search,
+    role,
+    page = 1,
+}: {
+    search: string
+    role: RoleFilter
+    page: number
+}): Promise<PaginatedProfilsResponse> {
+    const searchParams = new URLSearchParams({
+        search,
+        role,
+        limit: ITEMS_PER_PAGE.toString(),
+        page: page.toString(),
+    })
+    const response = await fetch(`/api/admin/profiles?${searchParams}`)
+
+    if (!response.ok) {
+        throw new Error("An error occurred while fetching profiles")
+    }
+    return response.json()
 }

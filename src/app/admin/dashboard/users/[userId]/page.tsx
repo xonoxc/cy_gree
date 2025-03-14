@@ -9,6 +9,8 @@ export default async function UserPage({
     params: Promise<{ userId: string }>
 }) {
     const { userId } = await params
+
+    console.log("userId", userId)
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">

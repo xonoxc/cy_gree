@@ -45,8 +45,10 @@ import { PaginatedResponse } from "@/types/response"
 import { useEffect, useState } from "react"
 import { useDebounceValue } from "usehooks-ts"
 import { useToast } from "@/hooks/use-toast"
+import { useRouter } from "next/navigation"
 
 type PaginatedUsers = PaginatedResponse<UsersResp[]>
+type ActiveStatus = "all" | "active" | "inactive"
 
 /**
  * dynamic import for Time component
@@ -63,9 +65,13 @@ const fetchUsers = async (
     searchQuery: string = "",
     statusFilter: string = "all"
 ): Promise<PaginatedUsers> => {
-    const res = await fetch(
-        `/api/admin/user?page=${page}&limit=${itemsPerPage}&search=${searchQuery}&status=${statusFilter}`
-    )
+    const searchParams = new URLSearchParams({
+        page: page.toString(),
+        limit: itemsPerPage.toString(),
+        search: searchQuery,
+        status: statusFilter,
+    })
+    const res = await fetch(`/api/admin/user?${searchParams}`)
     if (!res.ok) {
         throw new Error("Unable to fetch users")
     }
@@ -84,18 +90,17 @@ const deleteUser = async (userId: string): Promise<void> => {
 export function UsersTable() {
     const [inputSearchQuery, setInputSearchQuery] = useState<string>("")
     const [page, setPage] = useState<number>(1)
-    const [statusFilter, setStatusFilter] = useState<
-        "inactive" | "active" | "all"
-    >("all")
+    const [statusFilter, setStatusFilter] = useState<ActiveStatus>("all")
     const { toast } = useToast()
     const queryClient = useQueryClient()
+    const router = useRouter()
 
     const [searchQuery] = useDebounceValue(inputSearchQuery, 1000)
 
     const {
         data: paginatedUsers,
         isError,
-        isFetching,
+        isLoading,
         error,
         refetch,
     } = useQuery({
@@ -127,8 +132,6 @@ export function UsersTable() {
     }, [page, searchQuery, statusFilter])
 
     if (isError) return <div>Error: {error.message}</div>
-
-    if (isFetching) return <UsersTableSkeleton />
 
     return (
         <div className="space-y-4">
@@ -175,9 +178,25 @@ export function UsersTable() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {paginatedUsers!.data.length > 0 ? (
+                        {isLoading ? (
+                            <TableRow>
+                                <TableCell
+                                    colSpan={7}
+                                    className="h-24 text-center"
+                                >
+                                    Loading...
+                                </TableCell>
+                            </TableRow>
+                        ) : paginatedUsers!.data.length > 0 ? (
                             paginatedUsers?.data.map(user => (
-                                <TableRow key={user.id}>
+                                <TableRow
+                                    key={user.id}
+                                    onClick={() =>
+                                        router.push(
+                                            `/admin/dashboard/users/${user.id}`
+                                        )
+                                    }
+                                >
                                     <TableCell className="font-medium">
                                         {user.name}
                                     </TableCell>
@@ -329,87 +348,6 @@ export function UsersTable() {
                     </div>
                 </div>
             )}
-        </div>
-    )
-}
-
-function UsersTableSkeleton() {
-    return (
-        <div className="space-y-4">
-            {/* Search and Filter Section */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-between">
-                <div className="relative w-full sm:w-72">
-                    <div className="h-10 bg-gray-500  animate-pulse rounded-xl" />
-                </div>
-                <div className="w-full sm:w-36">
-                    <div className="h-10 bg-gray-500 rounded-xl animate-pulse" />
-                </div>
-            </div>
-
-            {/* Table Section */}
-            <div className="rounded-md border">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>
-                                <div className="h-4 w-16 bg-gray-500 rounded animate-pulse" />
-                            </TableHead>
-                            <TableHead>
-                                <div className="h-4 w-20 bg-gray-500 rounded animate-pulse" />
-                            </TableHead>
-                            <TableHead>
-                                <div className="h-4 w-24 bg-gray-500 rounded animate-pulse" />
-                            </TableHead>
-                            <TableHead>
-                                <div className="h-4 w-16 bg-gray-500 rounded animate-pulse" />
-                            </TableHead>
-                            <TableHead>
-                                <div className="h-4 w-20 bg-gray-500 rounded animate-pulse" />
-                            </TableHead>
-                            <TableHead className="text-right">
-                                <div className="h-4 w-16 bg-gray-500 rounded animate-pulse ml-auto" />
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {/* Simulate 3 placeholder rows */}
-                        {[...Array(3)].map((_, index) => (
-                            <TableRow key={index}>
-                                <TableCell>
-                                    <div className="h-4 w-32 bg-gray-500 rounded animate-pulse" />
-                                </TableCell>
-                                <TableCell>
-                                    <div className="h-4 w-24 bg-gray-500 rounded animate-pulse" />
-                                </TableCell>
-                                <TableCell>
-                                    <div className="h-4 w-40 bg-gray-500 rounded animate-pulse" />
-                                </TableCell>
-                                <TableCell>
-                                    <div className="h-4 w-16 bg-gray-500 rounded animate-pulse" />
-                                </TableCell>
-                                <TableCell>
-                                    <div className="h-4 w-28 bg-gray-500 rounded animate-pulse" />
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    <div className="h-8 w-8 bg-gray-500 rounded-full animate-pulse ml-auto" />
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </div>
-
-            {/* Pagination Section */}
-            <div className="flex items-center justify-between">
-                <div className="h-8 w-32 bg-gray-500 rounded-xl animate-pulse" />
-                <div className="flex items-center space-x-2">
-                    <div className="h-8 w-8 bg-gray-500 rounded-xl animate-pulse" />
-                    <div className="h-8 w-8 bg-gray-500 rounded-xl animate-pulse" />
-                    <div className="h-7 w-16 bg-gray-500 rounded-md  animate-pulse" />
-                    <div className="h-8 w-8 bg-gray-500 rounded-xl animate-pulse" />
-                    <div className="h-8 w-8 bg-gray-500 rounded-xl animate-pulse" />
-                </div>
-            </div>
         </div>
     )
 }

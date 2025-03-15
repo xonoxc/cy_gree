@@ -38,7 +38,7 @@ const JoinSection = () => {
                 </div>
                 <Button
                     size="lg"
-                    className="bg-green-600 hover:bg-green-700 font-bold"
+                    className="bg-green-600 hover:bg-green-700 font-bold rounded-xl bg-gradient-to-r from-white to-green-600"
                     onClick={() => router.push("/sign-up")}
                 >
                     Sign Up Now

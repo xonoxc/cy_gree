@@ -13,7 +13,7 @@ const Header = () => {
             <div className="container mx-auto px-4 py-6 flex justify-between items-center">
                 <Logo />
                 <nav>
-                    <ul className="flex space-x-4">
+                    <ul className="flex space-x-4 border-0 sm:border-2 p-3 px-8 rounded-3xl border-gray-500">
                         <li>
                             <a
                                 href="#about"
@@ -37,7 +37,7 @@ const Header = () => {
                     <ModeToggle />
                     <Button
                         onClick={() => router.push("/sign-in")}
-                        className="rounded-lg font-bold"
+                        className="rounded-xl font-bold text-black bg-gradient-to-r from-white to-green-600 p-4"
                     >
                         Sign In
                     </Button>

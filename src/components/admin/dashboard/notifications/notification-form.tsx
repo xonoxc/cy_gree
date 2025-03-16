@@ -1,5 +1,6 @@
 "use client"
-import { useState } from "react"
+
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -27,39 +28,23 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Bell, AlertCircle, AlertTriangle, Users } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
+import { adminNotificationSchema } from "@/types/admin/notifications"
 
-// Mock data for users
-const users = [
-    { id: "user1", name: "John Doe" },
-    { id: "user2", name: "Jane Smith" },
-    { id: "user3", name: "Mike Johnson" },
-    { id: "user4", name: "Sarah Williams" },
-    { id: "user5", name: "David Brown" },
-]
-
-const formSchema = z.object({
-    userId: z.string({
-        required_error: "Please select a sender user.",
-    }),
-    toUserId: z.string().optional(), // Allow "none" as a valid value
-    message: z.string().min(5, {
-        message: "Message must be at least 5 characters.",
-    }),
-    importanceLevel: z.enum(["Low", "Medium", "High"], {
-        required_error: "Please select an importance level.",
-    }),
-    sendToAll: z.boolean().default(false),
-})
+interface User {
+    id: string
+    name: string
+}
 
 export function NotificationForm({ notification }: { notification?: any }) {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
+    const [users, setUsers] = useState<User[]>([])
 
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+    const form = useForm<z.infer<typeof adminNotificationSchema>>({
+        resolver: zodResolver(adminNotificationSchema),
         defaultValues: {
             userId: notification?.userId || "",
-            toUserId: notification?.toUserId || "none", // Default to "none" instead of ""
+            toUserId: notification?.toUserId || "none",
             message: notification?.message || "",
             importanceLevel: notification?.importanceLevel || "Low",
             sendToAll: false,
@@ -68,15 +53,50 @@ export function NotificationForm({ notification }: { notification?: any }) {
 
     const sendToAll = form.watch("sendToAll")
 
-    async function onSubmit(values: z.infer<typeof formSchema>) {
+    useEffect(() => {
+        async function fetchUsers() {
+            try {
+                const response = await fetch("/api/user")
+                if (!response.ok) throw new Error("Failed to fetch users")
+                const data = await response.json()
+                setUsers(data.users)
+            } catch (error) {
+                console.error("Error fetching users:", error)
+                toast({
+                    title: "Error",
+                    description: "Failed to load users. Please try again.",
+                    variant: "destructive",
+                })
+            }
+        }
+        fetchUsers()
+    }, [])
+
+    async function onSubmit(values: z.infer<typeof adminNotificationSchema>) {
         setIsLoading(true)
 
         try {
-            // Here you would normally send the data to your API
-            console.log(values)
+            const method = notification ? "PUT" : "POST"
+            const body = notification ? { ...values } : values
+            const URLParams = new URLSearchParams({
+                notificationId: notification?.id || "",
+            })
+            const url = notification
+                ? `/api/admin/notifications?${URLParams}`
+                : "/api/admin/notifications"
 
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1000))
+            const response = await fetch(url, {
+                method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            })
+
+            if (!response.ok) {
+                const errorData = await response.json()
+                throw new Error(
+                    errorData.error || "Failed to process notification"
+                )
+            }
 
             toast({
                 title: notification
@@ -87,12 +107,13 @@ export function NotificationForm({ notification }: { notification?: any }) {
                     : "The notification has been sent successfully.",
             })
 
-            router.push("/dashboard/notifications")
-        } catch (e) {
+            router.push("/admin/dashboard/notifications")
+        } catch (error) {
+            console.error("Error submitting notification:", error)
             toast({
                 title: "Something went wrong.",
                 description:
-                    "Your notification was not sent. Please try again.",
+                    "Your notification was not processed. Please try again.",
                 variant: "destructive",
             })
         } finally {
@@ -128,6 +149,7 @@ export function NotificationForm({ notification }: { notification?: any }) {
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <CardContent className="space-y-6 pt-6">
+                        {/* Sender User */}
                         <FormField
                             control={form.control}
                             name="userId"
@@ -163,6 +185,7 @@ export function NotificationForm({ notification }: { notification?: any }) {
                             )}
                         />
 
+                        {/* Send to All Checkbox */}
                         <FormField
                             control={form.control}
                             name="sendToAll"
@@ -185,6 +208,7 @@ export function NotificationForm({ notification }: { notification?: any }) {
                             )}
                         />
 
+                        {/* Recipient User (Conditional) */}
                         {!sendToAll && (
                             <FormField
                                 control={form.control}
@@ -219,8 +243,8 @@ export function NotificationForm({ notification }: { notification?: any }) {
                                         </Select>
                                         <FormDescription>
                                             The user who will receive this
-                                            notification. Leave empty for system
-                                            notifications.
+                                            notification. Leave as "No specific
+                                            recipient" for system notifications.
                                         </FormDescription>
                                         <FormMessage />
                                     </FormItem>
@@ -228,6 +252,7 @@ export function NotificationForm({ notification }: { notification?: any }) {
                             />
                         )}
 
+                        {/* Message */}
                         <FormField
                             control={form.control}
                             name="message"
@@ -250,6 +275,7 @@ export function NotificationForm({ notification }: { notification?: any }) {
                             )}
                         />
 
+                        {/* Importance Level */}
                         <FormField
                             control={form.control}
                             name="importanceLevel"
@@ -268,7 +294,7 @@ export function NotificationForm({ notification }: { notification?: any }) {
                                         <SelectContent>
                                             {["Low", "Medium", "High"].map(
                                                 level => {
-                                                    const importanceDetails =
+                                                    const { variant, icon } =
                                                         getImportanceDetails(
                                                             level
                                                         )
@@ -280,13 +306,11 @@ export function NotificationForm({ notification }: { notification?: any }) {
                                                             <div className="flex items-center">
                                                                 <Badge
                                                                     variant={
-                                                                        importanceDetails.variant as any
+                                                                        variant as any
                                                                     }
                                                                     className="flex items-center mr-2"
                                                                 >
-                                                                    {
-                                                                        importanceDetails.icon
-                                                                    }
+                                                                    {icon}
                                                                     {level}
                                                                 </Badge>
                                                             </div>
@@ -305,6 +329,7 @@ export function NotificationForm({ notification }: { notification?: any }) {
                             )}
                         />
 
+                        {/* Preview */}
                         <div className="rounded-lg border p-4 bg-muted/20">
                             <h3 className="font-medium mb-2">
                                 Notification Preview

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import {
     Table,
     TableBody,
@@ -42,75 +43,67 @@ import {
 } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
-const badges = [
-    {
-        id: "1",
-        userId: "user1",
-        userName: "John Doe",
-        userImage: "/placeholder.svg?height=40&width=40&text=JD",
-        name: "Recycler",
-        issuedDate: "2023-06-15T00:00:00.000Z",
-    },
-    {
-        id: "2",
-        userId: "user2",
-        userName: "Jane Smith",
-        userImage: "/placeholder.svg?height=40&width=40&text=JS",
-        name: "Eco_Warrior",
-        issuedDate: "2023-06-10T00:00:00.000Z",
-    },
-    {
-        id: "3",
-        userId: "user3",
-        userName: "Mike Johnson",
-        userImage: "/placeholder.svg?height=40&width=40&text=MJ",
-        name: "Green_Ambassador",
-        issuedDate: "2023-06-05T00:00:00.000Z",
-    },
-    {
-        id: "4",
-        userId: "user4",
-        userName: "Sarah Williams",
-        userImage: "/placeholder.svg?height=40&width=40&text=SW",
-        name: "Sustainability_Hero",
-        issuedDate: "2023-06-01T00:00:00.000Z",
-    },
-    {
-        id: "5",
-        userId: "user1",
-        userName: "John Doe",
-        userImage: "/placeholder.svg?height=40&width=40&text=JD",
-        name: "Green_Ambassador",
-        issuedDate: "2023-05-25T00:00:00.000Z",
-    },
-]
+const ITEMS_PER_PAGE = 10
+
+interface Badge {
+    id: string
+    userId: string
+    userName: string
+    userImage: string
+    name: string
+    issuedDate: string
+}
+
+interface ApiResponse {
+    badges: Badge[]
+    total: number
+    currentPage: number
+    totalPages: number
+}
+
+async function fetchBadges({
+    page,
+    search,
+    badge,
+    limit,
+}: {
+    page: number
+    search: string
+    badge: string
+    limit: number
+}): Promise<ApiResponse> {
+    const searchParams = new URLSearchParams({
+        page: page.toString(),
+        search,
+        badge,
+        limit: limit.toString(),
+    })
+    const response = await fetch(`/api/admin/badges?${searchParams}`)
+    if (!response.ok) {
+        throw new Error("Failed to fetch badges")
+    }
+    return response.json()
+}
 
 export function BadgesTable() {
     const [searchQuery, setSearchQuery] = useState("")
     const [currentPage, setCurrentPage] = useState(1)
     const [badgeFilter, setBadgeFilter] = useState("all")
 
-    const itemsPerPage = 10
-
-    // Filter badges based on search query and badge type
-    const filteredBadges = badges.filter(badge => {
-        const matchesSearch =
-            badge.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            badge.id.toLowerCase().includes(searchQuery.toLowerCase())
-
-        const matchesType = badgeFilter === "all" || badgeFilter === badge.name
-
-        return matchesSearch && matchesType
+    const { data, isLoading, isError, error } = useQuery({
+        queryKey: ["badges", currentPage, searchQuery, badgeFilter],
+        queryFn: () =>
+            fetchBadges({
+                page: currentPage,
+                search: searchQuery,
+                badge: badgeFilter,
+                limit: ITEMS_PER_PAGE,
+            }),
     })
 
-    // Calculate pagination
-    const totalPages = Math.ceil(filteredBadges.length / itemsPerPage)
-    const paginatedBadges = filteredBadges.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    )
+    const badges = data?.badges || []
+    const totalPages = data?.totalPages || 1
 
-    // Badge icon and color
     const getBadgeDetails = (badgeType: string) => {
         switch (badgeType) {
             case "Recycler":
@@ -141,13 +134,13 @@ export function BadgesTable() {
         }
     }
 
-    // Format badge name for display
     const formatBadgeName = (name: string) => {
         return name.replace(/_/g, " ")
     }
 
     return (
         <div className="space-y-4">
+            {/* Search and Filter Controls */}
             <div className="flex flex-col sm:flex-row gap-4 justify-between">
                 <div className="relative w-full sm:w-72">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -177,6 +170,7 @@ export function BadgesTable() {
                 </Select>
             </div>
 
+            {/* Table */}
             <div className="rounded-md border">
                 <Table>
                     <TableHeader>
@@ -190,8 +184,28 @@ export function BadgesTable() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {paginatedBadges.length > 0 ? (
-                            paginatedBadges.map(badge => {
+                        {isLoading ? (
+                            <TableRow>
+                                <TableCell
+                                    colSpan={4}
+                                    className="h-24 text-center"
+                                >
+                                    Loading...
+                                </TableCell>
+                            </TableRow>
+                        ) : isError ? (
+                            <TableRow>
+                                <TableCell
+                                    colSpan={4}
+                                    className="h-24 text-center"
+                                >
+                                    Error:{" "}
+                                    {(error as Error)?.message ||
+                                        "Something went wrong"}
+                                </TableCell>
+                            </TableRow>
+                        ) : badges.length > 0 ? (
+                            badges.map(badge => {
                                 const badgeDetails = getBadgeDetails(badge.name)
 
                                 return (
@@ -273,48 +287,46 @@ export function BadgesTable() {
             </div>
 
             {/* Pagination */}
-            {filteredBadges.length > 0 && (
+            {badges.length > 0 && (
                 <div className="flex items-center justify-between">
                     <div className="text-sm text-muted-foreground">
                         Showing{" "}
                         {Math.min(
-                            filteredBadges.length,
-                            (currentPage - 1) * itemsPerPage + 1
+                            data?.total || 0,
+                            (currentPage - 1) * ITEMS_PER_PAGE + 1
                         )}{" "}
                         to{" "}
                         {Math.min(
-                            filteredBadges.length,
-                            currentPage * itemsPerPage
+                            data?.total || 0,
+                            currentPage * ITEMS_PER_PAGE
                         )}{" "}
-                        of {filteredBadges.length} badges
+                        of {data?.total || 0} badges
                     </div>
                     <div className="flex items-center space-x-2">
                         <Button
                             variant="outline"
                             size="icon"
                             onClick={() => setCurrentPage(1)}
-                            disabled={currentPage === 1}
+                            disabled={currentPage === 1 || isLoading}
                         >
                             <ChevronsLeft className="h-4 w-4" />
                         </Button>
                         <Button
                             variant="outline"
                             size="icon"
-                            onClick={() => setCurrentPage(currentPage - 1)}
-                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(prev => prev - 1)}
+                            disabled={currentPage === 1 || isLoading}
                         >
                             <ChevronLeft className="h-4 w-4" />
                         </Button>
                         <span className="text-sm font-medium">
-                            Page {currentPage} of {totalPages || 1}
+                            Page {currentPage} of {totalPages}
                         </span>
                         <Button
                             variant="outline"
                             size="icon"
-                            onClick={() => setCurrentPage(currentPage + 1)}
-                            disabled={
-                                currentPage === totalPages || totalPages === 0
-                            }
+                            onClick={() => setCurrentPage(prev => prev + 1)}
+                            disabled={currentPage === totalPages || isLoading}
                         >
                             <ChevronRight className="h-4 w-4" />
                         </Button>
@@ -322,9 +334,7 @@ export function BadgesTable() {
                             variant="outline"
                             size="icon"
                             onClick={() => setCurrentPage(totalPages)}
-                            disabled={
-                                currentPage === totalPages || totalPages === 0
-                            }
+                            disabled={currentPage === totalPages || isLoading}
                         >
                             <ChevronsRight className="h-4 w-4" />
                         </Button>

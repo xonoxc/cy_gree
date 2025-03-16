@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import {
     Table,
     TableBody,
@@ -44,106 +45,61 @@ import {
 } from "@/components/ui/select"
 import Image from "next/image"
 import dynamic from "next/dynamic"
-
-/**
- * dynamic import for Time component
- *
- *  this allows the Time component to be loaded only on the client side
- */
+import { RoleFilter } from "@/app/api/admin/profiles/route"
 
 const Time = dynamic(() => import("@/components/time"), { ssr: false })
 
-const collections = [
-    {
-        id: "1",
-        userId: "user1",
-        userName: "John Doe",
-        imagePath: "/placeholder.svg?height=80&width=80",
-        amount: 5.2,
-        status: "Pending",
-        claimedBy: "",
-        createdAt: "2023-06-15T10:30:00.000Z",
-        updatedAt: "2023-06-15T10:30:00.000Z",
-    },
-    {
-        id: "2",
-        userId: "user2",
-        userName: "Jane Smith",
-        imagePath: "/placeholder.svg?height=80&width=80",
-        amount: 3.7,
-        status: "Claimed",
-        claimedBy: "Agent1",
-        createdAt: "2023-06-14T14:20:00.000Z",
-        updatedAt: "2023-06-14T15:45:00.000Z",
-    },
-    {
-        id: "3",
-        userId: "user3",
-        userName: "Mike Johnson",
-        imagePath: "/placeholder.svg?height=80&width=80",
-        amount: 8.1,
-        status: "Collected",
-        claimedBy: "Agent2",
-        createdAt: "2023-06-13T09:15:00.000Z",
-        updatedAt: "2023-06-13T16:30:00.000Z",
-    },
-    {
-        id: "4",
-        userId: "user4",
-        userName: "Sarah Williams",
-        imagePath: "/placeholder.svg?height=80&width=80",
-        amount: 2.5,
-        status: "Pending",
-        claimedBy: "",
-        createdAt: "2023-06-12T11:45:00.000Z",
-        updatedAt: "2023-06-12T11:45:00.000Z",
-    },
-    {
-        id: "5",
-        userId: "user5",
-        userName: "David Brown",
-        imagePath: "/placeholder.svg?height=80&width=80",
-        amount: 6.3,
-        status: "Claimed",
-        claimedBy: "Agent3",
-        createdAt: "2023-06-11T13:20:00.000Z",
-        updatedAt: "2023-06-11T14:10:00.000Z",
-    },
-]
+const ITEMS_PER_PAGE = 10
 
+/**
+ * Plastic collection datatype
+ */
+
+interface Collection {
+    id: string
+    userId: string
+    userName: string
+    imagePath: string
+    amount: number
+    status: string
+    claimedBy: string
+    createdAt: string
+    updatedAt: string
+}
+
+/**
+ * API response datatype Interface
+ */
+
+interface ApiResponse {
+    collections: Collection[]
+    total: number
+    currentPage: number
+    totalPages: number
+}
+
+/**
+ * Main component for rendering the plastic collections table
+ */
 export function PlasticCollectionsTable() {
-    const [searchQuery, setSearchQuery] = useState("")
-    const [currentPage, setCurrentPage] = useState(1)
-    const [statusFilter, setStatusFilter] = useState("all")
+    const [searchQuery, setSearchQuery] = useState<string>("")
+    const [currentPage, setCurrentPage] = useState<number>(1)
+    const [statusFilter, setStatusFilter] = useState<RoleFilter>("all")
 
-    const itemsPerPage = 10
-
-    // Filter collections based on search query and status
-    const filteredCollections = collections.filter(collection => {
-        const matchesSearch =
-            collection.userName
-                .toLowerCase()
-                .includes(searchQuery.toLowerCase()) ||
-            collection.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            collection.claimedBy
-                .toLowerCase()
-                .includes(searchQuery.toLowerCase())
-
-        const matchesStatus =
-            statusFilter === "all" ||
-            statusFilter.toLowerCase() === collection.status.toLowerCase()
-
-        return matchesSearch && matchesStatus
+    const { data, isLoading, isError, error } = useQuery({
+        queryKey: ["collections", currentPage, searchQuery, statusFilter],
+        queryFn: () =>
+            fetchCollections({
+                page: currentPage,
+                search: searchQuery,
+                status: statusFilter,
+                limit: ITEMS_PER_PAGE,
+            }),
     })
 
-    // Calculate pagination
-    const totalPages = Math.ceil(filteredCollections.length / itemsPerPage)
-    const paginatedCollections = filteredCollections.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    )
+    const collections = data?.collections || []
+    const totalPages = data?.totalPages || 1
 
-    // Status badge variant and icon
     const getStatusDetails = (status: string) => {
         switch (status.toLowerCase()) {
             case "pending":
@@ -179,7 +135,12 @@ export function PlasticCollectionsTable() {
                         onChange={e => setSearchQuery(e.target.value)}
                     />
                 </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <Select
+                    value={statusFilter}
+                    onValueChange={(value: RoleFilter) =>
+                        setStatusFilter(value)
+                    }
+                >
                     <SelectTrigger className="w-full sm:w-36">
                         <SelectValue placeholder="Filter by status" />
                     </SelectTrigger>
@@ -208,8 +169,28 @@ export function PlasticCollectionsTable() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {paginatedCollections.length > 0 ? (
-                            paginatedCollections.map(collection => {
+                        {isLoading ? (
+                            <TableRow>
+                                <TableCell
+                                    colSpan={7}
+                                    className="h-24 text-center"
+                                >
+                                    Loading...
+                                </TableCell>
+                            </TableRow>
+                        ) : isError ? (
+                            <TableRow>
+                                <TableCell
+                                    colSpan={7}
+                                    className="h-24 text-center"
+                                >
+                                    Error:{" "}
+                                    {(error as Error)?.message ||
+                                        "Something went wrong"}
+                                </TableCell>
+                            </TableRow>
+                        ) : collections.length > 0 ? (
+                            collections.map(collection => {
                                 const statusDetails = getStatusDetails(
                                     collection.status
                                 )
@@ -223,9 +204,9 @@ export function PlasticCollectionsTable() {
                                                         collection.imagePath ||
                                                         "/placeholder.svg"
                                                     }
-                                                    alt="Plastic collection"
+                                                    alt="-"
                                                     fill
-                                                    className="object-cover"
+                                                    className="object-cover ml-4"
                                                 />
                                             </div>
                                         </TableCell>
@@ -312,49 +293,46 @@ export function PlasticCollectionsTable() {
                 </Table>
             </div>
 
-            {/* Pagination */}
-            {filteredCollections.length > 0 && (
+            {collections.length > 0 && (
                 <div className="flex items-center justify-between">
                     <div className="text-sm text-muted-foreground">
                         Showing{" "}
                         {Math.min(
-                            filteredCollections.length,
-                            (currentPage - 1) * itemsPerPage + 1
+                            data?.total || 0,
+                            (currentPage - 1) * ITEMS_PER_PAGE + 1
                         )}{" "}
                         to{" "}
                         {Math.min(
-                            filteredCollections.length,
-                            currentPage * itemsPerPage
-                        )}{" "}
-                        of {filteredCollections.length} collections
+                            data?.total || 0,
+                            currentPage * ITEMS_PER_PAGE
+                        )}
+                        of {data?.total || 0} collections
                     </div>
                     <div className="flex items-center space-x-2">
                         <Button
                             variant="outline"
                             size="icon"
                             onClick={() => setCurrentPage(1)}
-                            disabled={currentPage === 1}
+                            disabled={currentPage === 1 || isLoading}
                         >
                             <ChevronsLeft className="h-4 w-4" />
                         </Button>
                         <Button
                             variant="outline"
                             size="icon"
-                            onClick={() => setCurrentPage(currentPage - 1)}
-                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(prev => prev - 1)}
+                            disabled={currentPage === 1 || isLoading}
                         >
                             <ChevronLeft className="h-4 w-4" />
                         </Button>
                         <span className="text-sm font-medium">
-                            Page {currentPage} of {totalPages || 1}
+                            Page {currentPage} of {totalPages}
                         </span>
                         <Button
                             variant="outline"
                             size="icon"
-                            onClick={() => setCurrentPage(currentPage + 1)}
-                            disabled={
-                                currentPage === totalPages || totalPages === 0
-                            }
+                            onClick={() => setCurrentPage(prev => prev + 1)}
+                            disabled={currentPage === totalPages || isLoading}
                         >
                             <ChevronRight className="h-4 w-4" />
                         </Button>
@@ -362,9 +340,7 @@ export function PlasticCollectionsTable() {
                             variant="outline"
                             size="icon"
                             onClick={() => setCurrentPage(totalPages)}
-                            disabled={
-                                currentPage === totalPages || totalPages === 0
-                            }
+                            disabled={currentPage === totalPages || isLoading}
                         >
                             <ChevronsRight className="h-4 w-4" />
                         </Button>
@@ -373,4 +349,28 @@ export function PlasticCollectionsTable() {
             )}
         </div>
     )
+}
+
+async function fetchCollections({
+    page,
+    search,
+    status,
+    limit,
+}: {
+    page: number
+    search: string
+    status: string
+    limit: number
+}): Promise<ApiResponse> {
+    const searchParams = new URLSearchParams({
+        page: page.toString(),
+        search: search,
+        status: status,
+        limit: limit.toString(),
+    })
+    const response = await fetch(
+        `/api/admin/plastic-collections?${searchParams}`
+    )
+    if (!response.ok) throw new Error("Failed to fetch collections")
+    return response.json()
 }

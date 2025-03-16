@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import {
     Table,
     TableBody,
@@ -43,72 +44,66 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 
-// Mock data
-const listRewards = [
-    {
-        id: "1",
-        title: "10% Discount Coupon",
-        pointsRequired: 500,
-        issuedDate: "2023-05-15T00:00:00.000Z",
-        rewardType: "Gift_Coupon",
-    },
-    {
-        id: "2",
-        title: "₹100 Cashback",
-        pointsRequired: 1000,
-        issuedDate: "2023-05-20T00:00:00.000Z",
-        rewardType: "Cash",
-    },
-    {
-        id: "3",
-        title: "Free Eco-friendly Bag",
-        pointsRequired: 750,
-        issuedDate: "2023-06-01T00:00:00.000Z",
-        rewardType: "Gift_Coupon",
-    },
-    {
-        id: "4",
-        title: "Buy 1 Get 1 Free",
-        pointsRequired: 1200,
-        issuedDate: "2023-06-10T00:00:00.000Z",
-        rewardType: "Offer",
-    },
-    {
-        id: "5",
-        title: "₹250 Cashback",
-        pointsRequired: 2000,
-        issuedDate: "2023-06-15T00:00:00.000Z",
-        rewardType: "Cash",
-    },
-]
+const itemsPerPage = 10
+
+interface ListReward {
+    id: string
+    title: string | null
+    pointsRequired: number
+    issuedDate: string
+    rewardType: string
+}
+
+interface ApiResponse {
+    rewards: ListReward[]
+    total: number
+    currentPage: number
+    totalPages: number
+}
+
+async function fetchListRewards({
+    page,
+    search,
+    type,
+    limit,
+}: {
+    page: number
+    search: string
+    type: string
+    limit: number
+}): Promise<ApiResponse> {
+    const searchParams = new URLSearchParams({
+        search,
+        type,
+        page: page.toString(),
+        limit: limit.toString(),
+    })
+    const response = await fetch(`/api/admin/list-rewards?${searchParams}`)
+    if (!response.ok) {
+        throw new Error("Failed to fetch list rewards")
+    }
+    return response.json()
+}
 
 export function ListRewardsTable() {
     const [searchQuery, setSearchQuery] = useState("")
     const [currentPage, setCurrentPage] = useState(1)
     const [typeFilter, setTypeFilter] = useState("all")
 
-    const itemsPerPage = 10
-
-    // Filter rewards based on search query and type
-    const filteredRewards = listRewards.filter(reward => {
-        const matchesSearch =
-            reward.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            reward.id.toLowerCase().includes(searchQuery.toLowerCase())
-
-        const matchesType =
-            typeFilter === "all" || typeFilter === reward.rewardType
-
-        return matchesSearch && matchesType
+    const { data, isLoading, isError, error } = useQuery({
+        queryKey: ["list-rewards", currentPage, searchQuery, typeFilter],
+        queryFn: () =>
+            fetchListRewards({
+                page: currentPage,
+                search: searchQuery,
+                type: typeFilter,
+                limit: itemsPerPage,
+            }),
     })
 
-    // Calculate pagination
-    const totalPages = Math.ceil(filteredRewards.length / itemsPerPage)
-    const paginatedRewards = filteredRewards.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    )
+    const rewards = data?.rewards || []
+    const totalPages = data?.totalPages || 1
 
-    // Type badge variant and icon
     const getTypeDetails = (type: string) => {
         switch (type) {
             case "Gift_Coupon":
@@ -131,7 +126,6 @@ export function ListRewardsTable() {
         }
     }
 
-    // Format reward type for display
     const formatRewardType = (type: string) => {
         return type.replace(/_/g, " ")
     }
@@ -176,8 +170,28 @@ export function ListRewardsTable() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {paginatedRewards.length > 0 ? (
-                            paginatedRewards.map(reward => {
+                        {isLoading ? (
+                            <TableRow>
+                                <TableCell
+                                    colSpan={5}
+                                    className="h-24 text-center"
+                                >
+                                    Loading...
+                                </TableCell>
+                            </TableRow>
+                        ) : isError ? (
+                            <TableRow>
+                                <TableCell
+                                    colSpan={5}
+                                    className="h-24 text-center"
+                                >
+                                    Error:{" "}
+                                    {(error as Error).message ||
+                                        "Something went wrong"}
+                                </TableCell>
+                            </TableRow>
+                        ) : rewards.length > 0 ? (
+                            rewards.map(reward => {
                                 const typeDetails = getTypeDetails(
                                     reward.rewardType
                                 )
@@ -185,7 +199,7 @@ export function ListRewardsTable() {
                                 return (
                                     <TableRow key={reward.id}>
                                         <TableCell className="font-medium">
-                                            {reward.title}
+                                            {reward.title || "No title"}
                                         </TableCell>
                                         <TableCell>
                                             {reward.pointsRequired.toLocaleString()}
@@ -266,49 +280,43 @@ export function ListRewardsTable() {
                 </Table>
             </div>
 
-            {/* Pagination */}
-            {filteredRewards.length > 0 && (
+            {rewards.length > 0 && (
                 <div className="flex items-center justify-between">
                     <div className="text-sm text-muted-foreground">
                         Showing{" "}
                         {Math.min(
-                            filteredRewards.length,
+                            data?.total || 0,
                             (currentPage - 1) * itemsPerPage + 1
                         )}{" "}
                         to{" "}
-                        {Math.min(
-                            filteredRewards.length,
-                            currentPage * itemsPerPage
-                        )}{" "}
-                        of {filteredRewards.length} rewards
+                        {Math.min(data?.total || 0, currentPage * itemsPerPage)}{" "}
+                        of {data?.total || 0} rewards
                     </div>
                     <div className="flex items-center space-x-2">
                         <Button
                             variant="outline"
                             size="icon"
                             onClick={() => setCurrentPage(1)}
-                            disabled={currentPage === 1}
+                            disabled={currentPage === 1 || isLoading}
                         >
                             <ChevronsLeft className="h-4 w-4" />
                         </Button>
                         <Button
                             variant="outline"
                             size="icon"
-                            onClick={() => setCurrentPage(currentPage - 1)}
-                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(prev => prev - 1)}
+                            disabled={currentPage === 1 || isLoading}
                         >
                             <ChevronLeft className="h-4 w-4" />
                         </Button>
                         <span className="text-sm font-medium">
-                            Page {currentPage} of {totalPages || 1}
+                            Page {currentPage} of {totalPages}
                         </span>
                         <Button
                             variant="outline"
                             size="icon"
-                            onClick={() => setCurrentPage(currentPage + 1)}
-                            disabled={
-                                currentPage === totalPages || totalPages === 0
-                            }
+                            onClick={() => setCurrentPage(prev => prev + 1)}
+                            disabled={currentPage === totalPages || isLoading}
                         >
                             <ChevronRight className="h-4 w-4" />
                         </Button>
@@ -316,9 +324,7 @@ export function ListRewardsTable() {
                             variant="outline"
                             size="icon"
                             onClick={() => setCurrentPage(totalPages)}
-                            disabled={
-                                currentPage === totalPages || totalPages === 0
-                            }
+                            disabled={currentPage === totalPages || isLoading}
                         >
                             <ChevronsRight className="h-4 w-4" />
                         </Button>

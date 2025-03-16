@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
     Table,
     TableBody,
@@ -41,70 +42,29 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import Time from "@/components/time"
 
-// Mock data
-const notifications = [
-    {
-        id: "1",
-        userId: "user1",
-        userName: "John Doe",
-        userImage: "/placeholder.svg?height=40&width=40&text=JD",
-        toUserId: null,
-        toUserName: null,
-        message: "Your plastic collection has been approved.",
-        importanceLevel: "Medium",
-        notificationDate: "2023-06-15T10:30:00.000Z",
-        isRead: true,
-    },
-    {
-        id: "2",
-        userId: "user2",
-        userName: "Jane Smith",
-        userImage: "/placeholder.svg?height=40&width=40&text=JS",
-        toUserId: "user3",
-        toUserName: "Mike Johnson",
-        message: "You have earned a new badge: Eco Warrior!",
-        importanceLevel: "High",
-        notificationDate: "2023-06-14T15:45:00.000Z",
-        isRead: false,
-    },
-    {
-        id: "3",
-        userId: "user3",
-        userName: "Mike Johnson",
-        userImage: "/placeholder.svg?height=40&width=40&text=MJ",
-        toUserId: null,
-        toUserName: null,
-        message: "Your reward has been processed.",
-        importanceLevel: "Low",
-        notificationDate: "2023-06-13T09:20:00.000Z",
-        isRead: true,
-    },
-    {
-        id: "4",
-        userId: "user4",
-        userName: "Sarah Williams",
-        userImage: "/placeholder.svg?height=40&width=40&text=SW",
-        toUserId: null,
-        toUserName: null,
-        message: "System maintenance scheduled for tomorrow.",
-        importanceLevel: "High",
-        notificationDate: "2023-06-12T14:10:00.000Z",
-        isRead: false,
-    },
-    {
-        id: "5",
-        userId: "user5",
-        userName: "David Brown",
-        userImage: "/placeholder.svg?height=40&width=40&text=DB",
-        toUserId: "user1",
-        toUserName: "John Doe",
-        message: "New plastic collection request submitted.",
-        importanceLevel: "Medium",
-        notificationDate: "2023-06-11T11:30:00.000Z",
-        isRead: true,
-    },
-]
+const ITEMS_PER_PAGE = 10
+
+interface Notification {
+    id: string
+    userId: string
+    userName: string
+    userImage: string
+    toUserId: string | null
+    toUserName: string | null
+    message: string
+    importanceLevel: string
+    notificationDate: string
+    isRead: boolean
+}
+
+interface ApiResponse {
+    notifications: Notification[]
+    total: number
+    currentPage: number
+    totalPages: number
+}
 
 export function NotificationsTable() {
     const [searchQuery, setSearchQuery] = useState("")
@@ -112,43 +72,32 @@ export function NotificationsTable() {
     const [importanceFilter, setImportanceFilter] = useState("all")
     const [readFilter, setReadFilter] = useState("all")
 
-    const itemsPerPage = 10
+    const queryClient = useQueryClient()
 
-    // Filter notifications based on search query, importance level, and read status
-    const filteredNotifications = notifications.filter(notification => {
-        const matchesSearch =
-            notification.message
-                .toLowerCase()
-                .includes(searchQuery.toLowerCase()) ||
-            (notification.userName &&
-                notification.userName
-                    .toLowerCase()
-                    .includes(searchQuery.toLowerCase())) ||
-            (notification.toUserName &&
-                notification.toUserName
-                    .toLowerCase()
-                    .includes(searchQuery.toLowerCase()))
+    const getQueryKey = () => [
+        "notifications",
+        currentPage,
+        searchQuery,
+        importanceFilter,
+        readFilter,
+    ]
 
-        const matchesImportance =
-            importanceFilter === "all" ||
-            importanceFilter === notification.importanceLevel
-
-        const matchesReadStatus =
-            readFilter === "all" ||
-            (readFilter === "read" && notification.isRead) ||
-            (readFilter === "unread" && !notification.isRead)
-
-        return matchesSearch && matchesImportance && matchesReadStatus
+    const { data, isLoading, isError, error } = useQuery({
+        queryKey: getQueryKey(),
+        queryFn: () =>
+            fetchNotifications({
+                page: currentPage,
+                search: searchQuery,
+                importance: importanceFilter,
+                read: readFilter,
+                limit: ITEMS_PER_PAGE,
+            }),
     })
 
-    // Calculate pagination
-    const totalPages = Math.ceil(filteredNotifications.length / itemsPerPage)
-    const paginatedNotifications = filteredNotifications.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    )
+    const notifications = data?.notifications || []
+    const totalPages = data?.totalPages || 1
+    const totalNotifications = data?.total || 0
 
-    // Importance level badge variant and icon
     const getImportanceDetails = (level: string) => {
         switch (level) {
             case "Low":
@@ -171,38 +120,46 @@ export function NotificationsTable() {
         }
     }
 
-    // Format date to relative time
-    const formatRelativeTime = (dateString: string) => {
-        const date = new Date(dateString)
-        const now = new Date()
-        const diffInSeconds = Math.floor(
-            (now.getTime() - date.getTime()) / 1000
-        )
+    const deleteMutation = useMutation({
+        mutationFn: handleDeleteNotification,
+        onMutate: async (notificationId: string) => {
+            const queryKey = getQueryKey()
 
-        if (diffInSeconds < 60) {
-            return `${diffInSeconds} seconds ago`
-        }
+            await queryClient.cancelQueries({ queryKey })
 
-        const diffInMinutes = Math.floor(diffInSeconds / 60)
-        if (diffInMinutes < 60) {
-            return `${diffInMinutes} minute${diffInMinutes > 1 ? "s" : ""} ago`
-        }
+            const previousNotifications =
+                queryClient.getQueryData<ApiResponse>(queryKey)
 
-        const diffInHours = Math.floor(diffInMinutes / 60)
-        if (diffInHours < 24) {
-            return `${diffInHours} hour${diffInHours > 1 ? "s" : ""} ago`
-        }
+            if (previousNotifications) {
+                const updatedNotifications =
+                    previousNotifications.notifications.filter(
+                        notification => notification.id !== notificationId
+                    )
 
-        const diffInDays = Math.floor(diffInHours / 24)
-        if (diffInDays < 30) {
-            return `${diffInDays} day${diffInDays > 1 ? "s" : ""} ago`
-        }
-
-        return date.toLocaleDateString()
-    }
+                queryClient.setQueryData(queryKey, {
+                    ...previousNotifications,
+                    notifications: updatedNotifications,
+                    total: previousNotifications.total - 1,
+                })
+            }
+            return {
+                previousNotifications,
+            }
+        },
+        onError: (_, __, context) => {
+            queryClient.setQueryData(
+                ["notifications"],
+                context?.previousNotifications
+            )
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ["notifications"] })
+        },
+    })
 
     return (
         <div className="space-y-4">
+            {/* Filters and Search */}
             <div className="flex flex-col sm:flex-row gap-4 justify-between">
                 <div className="relative w-full sm:w-72">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -229,7 +186,6 @@ export function NotificationsTable() {
                             <SelectItem value="High">High</SelectItem>
                         </SelectContent>
                     </Select>
-
                     <Select value={readFilter} onValueChange={setReadFilter}>
                         <SelectTrigger className="w-full sm:w-36">
                             <SelectValue placeholder="Read Status" />
@@ -243,6 +199,7 @@ export function NotificationsTable() {
                 </div>
             </div>
 
+            {/* Table */}
             <div className="rounded-md border">
                 <Table>
                     <TableHeader>
@@ -258,12 +215,42 @@ export function NotificationsTable() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {paginatedNotifications.length > 0 ? (
-                            paginatedNotifications.map(notification => {
+                        {isLoading ? (
+                            <TableRow>
+                                <TableCell
+                                    colSpan={6}
+                                    className="h-24 text-center"
+                                >
+                                    Loading...
+                                </TableCell>
+                            </TableRow>
+                        ) : deleteMutation.isError ? (
+                            <TableRow>
+                                <TableCell
+                                    colSpan={6}
+                                    className="h-24 text-center"
+                                >
+                                    Error:
+                                    {(deleteMutation.error as Error)?.message ||
+                                        "Cannot delete notification. Please refresh to continue"}
+                                </TableCell>
+                            </TableRow>
+                        ) : isError ? (
+                            <TableRow>
+                                <TableCell
+                                    colSpan={6}
+                                    className="h-24 text-center"
+                                >
+                                    Error:{" "}
+                                    {(error as Error)?.message ||
+                                        "Something went wrong"}
+                                </TableCell>
+                            </TableRow>
+                        ) : notifications.length > 0 ? (
+                            notifications.map(notification => {
                                 const importanceDetails = getImportanceDetails(
                                     notification.importanceLevel
                                 )
-
                                 return (
                                     <TableRow
                                         key={notification.id}
@@ -286,7 +273,7 @@ export function NotificationsTable() {
                                                     />
                                                     <AvatarFallback>
                                                         {notification.userName
-                                                            ?.split(" ")
+                                                            .split(" ")
                                                             .map(n => n[0])
                                                             .join("")}
                                                     </AvatarFallback>
@@ -334,9 +321,11 @@ export function NotificationsTable() {
                                             )}
                                         </TableCell>
                                         <TableCell>
-                                            {formatRelativeTime(
-                                                notification.notificationDate
-                                            )}
+                                            <Time
+                                                timeStamp={
+                                                    notification.notificationDate
+                                                }
+                                            />
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <DropdownMenu>
@@ -368,7 +357,14 @@ export function NotificationsTable() {
                                                             Mark as Unread
                                                         </DropdownMenuItem>
                                                     )}
-                                                    <DropdownMenuItem className="text-destructive">
+                                                    <DropdownMenuItem
+                                                        className="text-destructive"
+                                                        onClick={() =>
+                                                            deleteMutation.mutate(
+                                                                notification.id
+                                                            )
+                                                        }
+                                                    >
                                                         <Trash className="mr-2 h-4 w-4" />
                                                         Delete
                                                     </DropdownMenuItem>
@@ -393,27 +389,27 @@ export function NotificationsTable() {
             </div>
 
             {/* Pagination */}
-            {filteredNotifications.length > 0 && (
+            {notifications.length > 0 && (
                 <div className="flex items-center justify-between">
                     <div className="text-sm text-muted-foreground">
                         Showing{" "}
                         {Math.min(
-                            filteredNotifications.length,
-                            (currentPage - 1) * itemsPerPage + 1
+                            totalNotifications,
+                            (currentPage - 1) * ITEMS_PER_PAGE + 1
                         )}{" "}
                         to{" "}
                         {Math.min(
-                            filteredNotifications.length,
-                            currentPage * itemsPerPage
+                            totalNotifications,
+                            currentPage * ITEMS_PER_PAGE
                         )}{" "}
-                        of {filteredNotifications.length} notifications
+                        of {totalNotifications} notifications
                     </div>
                     <div className="flex items-center space-x-2">
                         <Button
                             variant="outline"
                             size="icon"
                             onClick={() => setCurrentPage(1)}
-                            disabled={currentPage === 1}
+                            disabled={currentPage === 1 || isLoading}
                         >
                             <ChevronsLeft className="h-4 w-4" />
                         </Button>
@@ -421,20 +417,18 @@ export function NotificationsTable() {
                             variant="outline"
                             size="icon"
                             onClick={() => setCurrentPage(currentPage - 1)}
-                            disabled={currentPage === 1}
+                            disabled={currentPage === 1 || isLoading}
                         >
                             <ChevronLeft className="h-4 w-4" />
                         </Button>
                         <span className="text-sm font-medium">
-                            Page {currentPage} of {totalPages || 1}
+                            Page {currentPage} of {totalPages}
                         </span>
                         <Button
                             variant="outline"
                             size="icon"
                             onClick={() => setCurrentPage(currentPage + 1)}
-                            disabled={
-                                currentPage === totalPages || totalPages === 0
-                            }
+                            disabled={currentPage === totalPages || isLoading}
                         >
                             <ChevronRight className="h-4 w-4" />
                         </Button>
@@ -442,9 +436,7 @@ export function NotificationsTable() {
                             variant="outline"
                             size="icon"
                             onClick={() => setCurrentPage(totalPages)}
-                            disabled={
-                                currentPage === totalPages || totalPages === 0
-                            }
+                            disabled={currentPage === totalPages || isLoading}
                         >
                             <ChevronsRight className="h-4 w-4" />
                         </Button>
@@ -453,4 +445,48 @@ export function NotificationsTable() {
             )}
         </div>
     )
+}
+
+async function fetchNotifications({
+    page,
+    search,
+    importance,
+    read,
+    limit,
+}: {
+    page: number
+    search: string
+    importance: string
+    read: string
+    limit: number
+}): Promise<ApiResponse> {
+    const searchParams = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+        search,
+        importance,
+        read,
+    })
+
+    const response = await fetch(`/api/admin/notifications?${searchParams}`)
+    if (!response.ok) {
+        throw new Error("Failed to fetch notifications")
+    }
+    return response.json()
+}
+
+async function handleDeleteNotification(notificationId: string) {
+    const response = await fetch(`/api/admin/notifications/${notificationId}`, {
+        method: "DELETE",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    })
+    console.log("delete Response", response)
+
+    if (!response.ok) {
+        throw new Error("Failed to delete notification")
+    }
+
+    return response.json()
 }

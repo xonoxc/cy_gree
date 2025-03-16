@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
         const itemsPerPage = parseInt(limit as string) || 10
         const skip = (currentPage - 1) * itemsPerPage
 
-        const where: Record<string, Object[] | string | boolean> = {}
+        const where: Record<string, object[] | string | boolean> = {}
         if (search) {
             where.OR = [
                 { message: { contains: search, mode: "insensitive" } },

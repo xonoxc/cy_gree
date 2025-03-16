@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
 
         const skip = (pageInt - 1) * limitInt
 
-        const searchFilter: Record<string, Object[] | string> = {}
+        const searchFilter: Record<string, object[] | string> = {}
         if (search) {
             searchFilter["OR"] = [
                 {

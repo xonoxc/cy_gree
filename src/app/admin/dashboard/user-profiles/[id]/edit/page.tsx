@@ -3,11 +3,12 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
-export default function EditUserProfilePage({
+export default async function EditUserProfilePage({
     params,
 }: {
-    params: { id: string }
+    params: Promise<{ id: string }>
 }) {
+    const { id } = await params
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-2">
@@ -20,7 +21,7 @@ export default function EditUserProfilePage({
                     Edit User Profile
                 </h1>
             </div>
-            <UserProfileForm profileId={params.id} />
+            <UserProfileForm profileId={id} />
         </div>
     )
 }

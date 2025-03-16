@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
         const itemsPerPage = parseInt(limit as string) || 10
         const skip = (currentPage - 1) * itemsPerPage
 
-        const searchFilter: Record<string, Object[] | string> = {}
+        const searchFilter: Record<string, object[] | string> = {}
 
         if (search) {
             searchFilter.OR = [

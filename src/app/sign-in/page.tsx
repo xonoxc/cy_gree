@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { LoginForm } from "@/components/login"
+import BackBtn from "@/components/Backbtn"
 
 export const metadata: Metadata = {
     title: "SignIn | cyGree",
@@ -7,8 +8,13 @@ export const metadata: Metadata = {
 
 export default function SignIn() {
     return (
-        <div className="min-h-screen py-44 bg-gradient-to-b from-[#161617] to-black">
-            <LoginForm />
+        <div className="min-h-screen bg-gradient-to-b from-[#161617] to-black">
+            <div className="p-6 hidden sm:block">
+                <BackBtn />
+            </div>
+            <div className="py-44">
+                <LoginForm />
+            </div>
         </div>
     )
 }

@@ -54,6 +54,13 @@ export function LoginForm() {
         }
     }
 
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === "Enter" && !isLoading) {
+            e.preventDefault()
+            handleSubmission()
+        }
+    }
+
     return (
         <div className="mx-auto max-w-[90%] md:max-w-sm space-y-6">
             <div className="space-y-2 text-center">
@@ -67,7 +74,7 @@ export function LoginForm() {
                     Enter your email or username below to login to your account
                 </p>
             </div>
-            <div className="space-y-4">
+            <form onKeyDown={handleKeyDown} className="space-y-4">
                 <div className="space-y-2">
                     <Label htmlFor="email">Username</Label>
                     <Input
@@ -97,7 +104,7 @@ export function LoginForm() {
                     />
                 </div>
                 <Button
-                    type="submit"
+                    type="button" // Changed from submit to button since we're handling submission manually
                     onClick={handleSubmission}
                     disabled={isLoading}
                     className="w-full font-bold rounded-xl"
@@ -111,7 +118,7 @@ export function LoginForm() {
                         "Sign In"
                     )}
                 </Button>
-            </div>
+            </form>
             <div className="link flex items-center justify-center">
                 <span>
                     Don't have an account?

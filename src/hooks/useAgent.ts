@@ -42,8 +42,6 @@ export const useAgent = (agentId: string | undefined) => {
         enabled: !!agentId,
     })
 
-    console.log("requests", requests)
-
     const totalWasteCollected = requests.claimed_requests.reduce(
         (acc, curr) => acc + Number(curr.amount),
         0

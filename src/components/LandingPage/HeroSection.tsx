@@ -20,7 +20,7 @@ const HeroSection = () => {
             }}
         >
             <div className="container flex  justify gap-2 flex-col md:flex-row md:h-screen ">
-                <div className="intro flex items-center  md:py-52 flex-col">
+                <div className="intro flex items-center py-10 md:py-52 flex-col">
                     <BoxReveal boxColor="green">
                         <h2 className="text-4xl font-bold bg-gradient-to-r from-green-400 to-white bg-clip-text text-transparent mb-4">
                             Reducing Plastic Usage for a Sustainable Future
@@ -35,7 +35,7 @@ const HeroSection = () => {
                     <BoxReveal boxColor="green">
                         <RainbowButton
                             className="font-bold flex items-center justify-center gap-2"
-                            onClick={() => router.push("/sign-in")}
+                            onClick={() => router.push("/sign-up")}
                         >
                             Get Started
                             <MoveRight size={14} />
@@ -43,7 +43,7 @@ const HeroSection = () => {
                     </BoxReveal>
                 </div>
 
-                <div className="relative flex size-full max-w-lg items-center justify-center  rounded-lg dark:bg-black  pb-40 pt-0 md:pb-60 overflow-hidden inset-0">
+                <div className="relative hidden size-full max-w-lg items-center justify-center  rounded-lg dark:bg-black  pb-40 pt-0 md:pb-60 overflow-hidden inset-0 sm:flex">
                     <Globe className="top-10" />
                 </div>
             </div>

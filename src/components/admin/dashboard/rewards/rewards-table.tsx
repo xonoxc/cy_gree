@@ -92,8 +92,6 @@ export function RewardsTable() {
     const [currentPage, setCurrentPage] = useState<number>(1)
     const [typeFilter, setTypeFilter] = useState<RoleFilter>("all")
 
-    console.log("rward component mounted")
-
     const { data, isLoading, isError, error } = useQuery({
         queryKey: ["rewards", currentPage, searchQuery, typeFilter],
         queryFn: () =>

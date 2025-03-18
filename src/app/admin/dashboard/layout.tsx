@@ -6,9 +6,9 @@ import FloatingChat from "@/components/Ai/chatbox"
 
 export default function DashboardLayout({
     children,
-}: {
+}: Readonly<{
     children: React.ReactNode
-}) {
+}>) {
     return (
         <div className="flex h-screen bg-muted/30">
             <Sidebar />

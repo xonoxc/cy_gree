@@ -37,7 +37,8 @@ export default function RegistrationForm() {
     const router = useRouter()
     const { toast } = useToast()
 
-    const onSubmit = async () => {
+    const onSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
         setIsLoading(true)
         try {
             const authenticationResponse = await fetch("/api/auth/register", {
@@ -57,7 +58,7 @@ export default function RegistrationForm() {
             if (authenticationResponse.status === 201) {
                 toast({
                     title: "Account created successfully!",
-                    description: "youre being redirected",
+                    description: "You're being redirected.",
                 })
 
                 const result = await signIn("credentials", {
@@ -80,8 +81,8 @@ export default function RegistrationForm() {
         } catch (e: any) {
             toast({
                 variant: "destructive",
-                title: e.message || "something went wrong!!",
-                description: "please try again later",
+                title: e.message || "Something went wrong!",
+                description: "Please try again later.",
             })
         } finally {
             setIsLoading(false)
@@ -101,69 +102,54 @@ export default function RegistrationForm() {
                     Enter your email below to create your account
                 </CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-4">
-                <div className="grid gap-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                        id="email"
-                        className="p-3 rounded-xl"
-                        type="email"
-                        value={creds.email}
-                        onChange={e => {
-                            setCreds(prev => ({
-                                ...prev,
-                                email: e.target.value,
-                            }))
-                        }}
-                        placeholder="m@example.com"
-                        required
-                    />
-                </div>
-                <div className="grid gap-2">
-                    <Label htmlFor="password">Password</Label>
-                    <Input
-                        className="rounded-xl"
-                        id="password"
-                        placeholder="password"
-                        value={creds.password}
-                        onChange={e => {
-                            setCreds(prev => ({
-                                ...prev,
-                                password: e.target.value,
-                            }))
-                        }}
-                        type="password"
-                        required
-                    />
-                </div>
-                <div className="grid gap-2">
-                    <Label htmlFor="username">Username</Label>
-                    <Input
-                        className="rounded-xl"
-                        id="username"
-                        value={creds.username}
-                        onChange={e => {
-                            setCreds(prev => ({
-                                ...prev,
-                                username: e.target.value,
-                            }))
-                        }}
-                        type="text"
-                        required
-                    />
-                </div>
-
-                <div className="grid">
+            <form onSubmit={onSubmit}>
+                {" "}
+                {/* Wrap the form elements here */}
+                <CardContent className="grid gap-4">
                     <div className="grid gap-2">
-                        <Label htmlFor="first_name">first name</Label>
+                        <Label htmlFor="email">Email</Label>
                         <Input
-                            id="first_name"
-                            value={creds.first_name}
-                            className="rounded-xl"
+                            id="email"
+                            className="p-3 rounded-xl"
+                            type="email"
+                            value={creds.email}
                             onChange={e => {
                                 setCreds(prev => ({
                                     ...prev,
-                                    first_name: e.target.value,
+                                    email: e.target.value,
+                                }))
+                            }}
+                            placeholder="m@example.com"
+                            required
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="password">Password</Label>
+                        <Input
+                            className="rounded-xl"
+                            id="password"
+                            placeholder="password"
+                            value={creds.password}
+                            onChange={e => {
+                                setCreds(prev => ({
+                                    ...prev,
+                                    password: e.target.value,
+                                }))
+                            }}
+                            type="password"
+                            required
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="username">Username</Label>
+                        <Input
+                            className="rounded-xl"
+                            id="username"
+                            value={creds.username}
+                            onChange={e => {
+                                setCreds(prev => ({
+                                    ...prev,
+                                    username: e.target.value,
                                 }))
                             }}
                             type="text"
@@ -171,40 +157,59 @@ export default function RegistrationForm() {
                         />
                     </div>
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="last_name">Last name</Label>
-                        <Input
-                            id="last_name"
-                            value={creds.last_name}
-                            className="rounded-xl"
-                            onChange={e => {
-                                setCreds(prev => ({
-                                    ...prev,
-                                    last_name: e.target.value,
-                                }))
-                            }}
-                            type="text"
-                            required
-                        />
+                    <div className="grid">
+                        <div className="grid gap-2">
+                            <Label htmlFor="first_name">First name</Label>
+                            <Input
+                                id="first_name"
+                                value={creds.first_name}
+                                className="rounded-xl"
+                                onChange={e => {
+                                    setCreds(prev => ({
+                                        ...prev,
+                                        first_name: e.target.value,
+                                    }))
+                                }}
+                                type="text"
+                                required
+                            />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="last_name">Last name</Label>
+                            <Input
+                                id="last_name"
+                                value={creds.last_name}
+                                className="rounded-xl"
+                                onChange={e => {
+                                    setCreds(prev => ({
+                                        ...prev,
+                                        last_name: e.target.value,
+                                    }))
+                                }}
+                                type="text"
+                                required
+                            />
+                        </div>
                     </div>
-                </div>
-            </CardContent>
-            <CardFooter>
-                <Button
-                    className="w-full font-bold p-4 rounded-xl"
-                    onClick={onSubmit}
-                    disabled={isLoading}
-                >
-                    {isLoading ? (
-                        <>
-                            <Loader2 className="mr-2 animate-spin" />
-                            Signing up...
-                        </>
-                    ) : (
-                        "Sign Up"
-                    )}
-                </Button>
-            </CardFooter>
+                </CardContent>
+                <CardFooter>
+                    <Button
+                        type="submit"
+                        className="w-full font-bold p-4 rounded-xl"
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <>
+                                <Loader2 className="mr-2 animate-spin" />
+                                Signing up...
+                            </>
+                        ) : (
+                            "Sign Up"
+                        )}
+                    </Button>
+                </CardFooter>
+            </form>
             <div className="link flex items-center justify-center">
                 Already have an account?{" "}
                 <Link href="/sign-in" className="text-sm text-green-300">

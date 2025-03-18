@@ -490,3 +490,15 @@ async function handleDeleteNotification(notificationId: string) {
 
     return response.json()
 }
+
+async function handleMarkAsReadClick(notificationId: string) {
+    const response = await fetch(
+        `/api/admin/notifications/${notificationId}/mark-as-read`,
+        {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        }
+    )
+}

@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
     experimental: {
         reactCompiler: true,
     },
+    pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
     webpack: config => {
         config.resolve.fallback = {
             crypto: require.resolve("crypto-browserify"),

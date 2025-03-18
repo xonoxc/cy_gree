@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 import { createGroq } from "@ai-sdk/groq"
 import { streamText } from "ai"
 import { checkAuth } from "@/utils/check.auth"
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
 
         const result = streamText({
             messages,
-            model: groq("deepseek-r1-distill-llama-70b"),
+            model: groq("gemma2-9b-it"),
             temperature: 0.7,
         })
 

@@ -4,7 +4,6 @@ import { useState } from "react"
 import { Bell, Search, Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { UserNav } from "./user-nav"
 import { cn } from "@/lib/utils"
 import { Sidebar } from "./sidebar"
 import { Recycle } from "lucide-react"
@@ -44,7 +43,6 @@ export function TopNav() {
                                 <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive"></span>
                                 <span className="sr-only">Notifications</span>
                             </Button>
-                            <UserNav />
                         </div>
                     </div>
                 </div>

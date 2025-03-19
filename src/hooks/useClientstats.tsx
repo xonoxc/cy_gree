@@ -34,7 +34,9 @@ type ClientStatsContextType = {
     /**
      * functions
      */
-    handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+    handleInputChange: (
+        e: React.ChangeEvent<HTMLInputElement> | { name: string; value: string }
+    ) => void
     handleCollectionCreate: any
     handelClaimReward: (rewardId: string) => Promise<void>
     handleProfileUpdate: any
@@ -232,8 +234,20 @@ export const ClientStatsProvider = ({
         }
     }
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target
+    const handleInputChange = (
+        e: React.ChangeEvent<HTMLInputElement> | { name: string; value: string }
+    ) => {
+        let name: string
+        let value: string
+
+        if ("target" in e) {
+            name = e.target.name
+            value = e.target.value
+        } else {
+            name = e.name
+            value = e.value
+        }
+
         setFormData(prev => (prev ? { ...prev, [name]: value } : prev))
     }
 

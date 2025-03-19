@@ -1,5 +1,6 @@
 import prisma from "@/config/prisma/prisma.client"
 import { checkAuth } from "@/utils/check.auth"
+import { logErrors } from "@/utils/errors/errorLogs"
 import {
     idValidationSchema,
     updateProfileSchema,
@@ -49,6 +50,7 @@ export async function GET(
 
         return NextResponse.json({ ...userProfile }, { status: 200 })
     } catch (e) {
+        logErrors(e)
         return NextResponse.json(
             { error: "Something went wrong" },
             { status: 500 }
@@ -111,6 +113,7 @@ export async function PATCH(
             { status: 200 }
         )
     } catch (e) {
+        logErrors(e)
         return NextResponse.json(
             { error: "Something went wrong" },
             { status: 500 }

@@ -16,6 +16,14 @@ import { useClientstats } from "@/hooks/useClientstats"
 import { useToast } from "@/hooks/use-toast"
 import { Edit, Save } from "lucide-react"
 import { ProfileCardSkeleton } from "./profile_sekeleton"
+import { states } from "@/constants/states/states"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "../ui/select"
 
 const ProfileCard = () => {
     const [editing, setEditing] = useState(false)
@@ -163,13 +171,35 @@ const ProfileCard = () => {
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="state">State</Label>
-                        <Input
-                            id="state"
-                            name="state"
-                            value={userData.state}
-                            onChange={handleInputChange}
-                            disabled={!editing}
-                        />
+                        {editing ? (
+                            <Select
+                                onValueChange={value =>
+                                    handleInputChange({ name: "state", value })
+                                }
+                                defaultValue={userData.state}
+                            >
+                                <SelectTrigger className="w-[180px]">
+                                    <SelectValue
+                                        placeholder="Select a state"
+                                        defaultValue={userData.state}
+                                    />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {states.map(state => (
+                                        <SelectItem key={state} value={state}>
+                                            {state.replace(/_/g, " ")}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        ) : (
+                            <Input
+                                id="state"
+                                name="state"
+                                value={userData.state}
+                                disabled={true}
+                            />
+                        )}
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="country">Country</Label>

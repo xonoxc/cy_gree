@@ -55,8 +55,8 @@ export async function GET(
 
         return NextResponse.json(
             {
-                pending_requests: pendingRequests,
-                claimed_requests: claimedRequests,
+                pendingRequests,
+                claimedRequests,
             },
             { status: 200 }
         )

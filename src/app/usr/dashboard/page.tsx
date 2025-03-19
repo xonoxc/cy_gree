@@ -1,6 +1,5 @@
 "use client"
 
-import type React from "react"
 import { useSession } from "next-auth/react"
 import { useCallback } from "react"
 import { Button } from "@/components/ui/button"
@@ -25,13 +24,7 @@ import {
 import { Award, Gift, History, LogOut, Recycle } from "lucide-react"
 import { ModeToggle } from "@/components/mode_toggle"
 import { useRouter } from "next/navigation"
-import {
-    IAvailableRewards,
-    IClaimedRewards,
-    ICollection,
-    IUserbadge,
-    useClientstats,
-} from "@/hooks/useClientstats"
+import { ICollection, IUserData, useClientstats } from "@/hooks/useClientstats"
 import NotificationPopup from "@/components/notifications/notification-popup"
 import { useToast } from "@/hooks/use-toast"
 import dynamic from "next/dynamic"
@@ -43,15 +36,9 @@ import {
     ActivityStatsTabsSkeleton,
     CollectionSummaryCardSkeleton,
 } from "./skeletons"
-import { RequestStatus } from "@/types/requests.status"
 import { ProfileCardSkeleton } from "@/components/profile/profile_sekeleton"
 import { Skeleton } from "@/components/ui/skeleton"
-
-/**
- * dynamic imports
- *
- * dynamic imports are used to load components only when they are needed with some ssr disabled
- */
+import { CollectionBtnSkeleton } from "@/components/collection/collection.skeleton"
 
 const Time = dynamic(() => import("@/components/time"), {
     ssr: false,
@@ -62,35 +49,25 @@ const CollectionForm = dynamic(
     () => import("@/components/collection/collection-form"),
     {
         ssr: false,
+        loading: () => <CollectionBtnSkeleton />,
     }
 )
 
 const ProfileCard = dynamic(() => import("@/components/profile/profile_card"), {
+    ssr: false,
     loading: () => <ProfileCardSkeleton />,
 })
 
 export default function UserDashboard() {
-    const { data: session } = useSession()
-    const {
-        loading,
-        userData,
-        userBadges,
-        availableRewards,
-        pendingRequests,
-        unclaimedRequests,
-        collectedPlastic,
-        claimedRewards,
-        handelClaimReward,
-    } = useClientstats(session?.user?.id)
-
+    const { status } = useSession()
+    const { handelClaimReward } = useClientstats()
     const router = useRouter()
-
     const { toast } = useToast()
 
     const handleRewardsClaim = useCallback(
-        async (id: string, expense: number) => {
+        async (id: string, _: number) => {
             try {
-                await handelClaimReward(id, expense)
+                await handelClaimReward(id)
                 toast({
                     title: "Reward Claimed",
                     description: "You have successfully claimed this reward!",
@@ -111,46 +88,21 @@ export default function UserDashboard() {
         router.push("/sign-in")
     }, [router])
 
+    if (status === "loading") return <div>Loading...</div>
+
     return (
-        <div
-            className="flex flex-col min-h-screen bg-gradient-to-b from-[#161617] to-black
-		"
-        >
+        <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#161617] to-black">
             <DashboardHeader onLogout={handleLogout} />
             <main className="flex-1 p-6">
-                {/* Summary Cards */}
-                <SummaryCards
-                    loading={loading}
-                    totalPlasticRecycled={userData.totalPlasticRecycled}
-                    earnedPoints={userData.earnedPoints}
-                    userBadges={userBadges}
-                />
-
+                <SummaryCards />
                 <div className="flex justify-end mb-6">
                     <CollectionForm />
                 </div>
-
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                    <ProfileCard userId={session?.user.id} />
-
-                    <CollectionSummaryCard
-                        loading={loading}
-                        pendingRequests={pendingRequests}
-                        collectedPlastic={collectedPlastic}
-                        unclaimedRequests={unclaimedRequests}
-                    />
+                    <ProfileCard />
+                    <CollectionSummaryCard />
                 </div>
-
-                <ActivityStatsTabs
-                    loading={loading}
-                    unclaimedRequests={unclaimedRequests}
-                    earnedPoints={userData.earnedPoints}
-                    onClaimedRewards={handleRewardsClaim}
-                    claimedRewards={claimedRewards}
-                    pendingRequests={pendingRequests}
-                    collectedPlastic={collectedPlastic}
-                    availableRewards={availableRewards}
-                />
+                <ActivityStatsTabs onClaimedRewards={handleRewardsClaim} />
             </main>
         </div>
     )
@@ -162,12 +114,12 @@ const CollectionHistoryTable = ({
     data,
     className,
 }: {
-    loading: RequestStatus
+    loading: boolean
     title: string
     data: ICollection[]
     className?: string
 }) => {
-    if (loading === "pending") {
+    if (loading) {
         return <CollectionHistoryTableSkeleton />
     }
 
@@ -179,7 +131,7 @@ const CollectionHistoryTable = ({
                     {data.length}
                 </Badge>
             </div>
-            {data && data.length > 0 ? (
+            {data.length > 0 ? (
                 <div className="rounded-lg border overflow-hidden">
                     <Table>
                         <TableHeader>
@@ -265,23 +217,26 @@ const DashboardHeader = ({ onLogout }: { onLogout: () => void }) => {
     )
 }
 
-const SummaryCards = ({
-    loading,
-    earnedPoints,
-    totalPlasticRecycled,
-    userBadges,
-}: {
-    loading: RequestStatus
-    earnedPoints: string
-    totalPlasticRecycled: string
-    userBadges: IUserbadge[]
-}) => {
-    const pointsPercentage = Math.min((+earnedPoints / 2000) * 100, 100)
-    const plasticPercentage = Math.min((+totalPlasticRecycled / 10) * 100, 100)
+const SummaryCards = () => {
+    const { isProfileDataLoading, userData, isfetchProfileDataError } =
+        useClientstats()
 
-    if (loading === "pending") {
+    if (isfetchProfileDataError) {
+        return <div>Can't load Summary, Please try again after sometime</div>
+    }
+
+    if (isProfileDataLoading) {
         return <SummaryCardSkeleton />
     }
+
+    if (!userData) {
+        return <div>User data not found!</div>
+    }
+
+    const pointsPercentage =
+        Math.min((+userData.earnedPoints / 2000) * 100, 100) ?? 0
+    const plasticPercentage =
+        Math.min((+userData.totalPlasticRecycled / 10) * 100, 100) ?? 0
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -293,10 +248,12 @@ const SummaryCards = ({
                     <Award className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{+earnedPoints}</div>
+                    <div className="text-2xl font-bold">
+                        {userData.earnedPoints}
+                    </div>
                     <Progress value={pointsPercentage} className="h-2 mt-2" />
                     <p className="text-xs text-muted-foreground mt-1">
-                        {+earnedPoints} points earned so far
+                        {userData.earnedPoints} points earned so far
                     </p>
                 </CardContent>
             </Card>
@@ -309,7 +266,7 @@ const SummaryCards = ({
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">
-                        {+totalPlasticRecycled} kg
+                        {userData.totalPlasticRecycled} kg
                     </div>
                     <Progress value={plasticPercentage} className="h-2 mt-2" />
                     <p className="text-xs text-muted-foreground mt-1">
@@ -325,46 +282,62 @@ const SummaryCards = ({
                     <Award className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">
-                        {userBadges?.length || 0}
-                    </div>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                        {userBadges?.length > 0 ? (
-                            userBadges.slice(0, 3).map((badge, index) => (
-                                <Badge key={index} variant="secondary">
-                                    {badge.name}
-                                </Badge>
-                            ))
-                        ) : (
-                            <p className="text-sm text-muted-foreground">
-                                No badges earned yet
-                            </p>
-                        )}
-                        {userBadges?.length > 3 && (
-                            <Badge variant="outline">
-                                +{userBadges.length - 3} more
-                            </Badge>
-                        )}
-                    </div>
+                    <UserBadges />
                 </CardContent>
             </Card>
         </div>
     )
 }
 
-const CollectionSummaryCard = ({
-    loading,
-    collectedPlastic,
-    unclaimedRequests,
-    pendingRequests,
-}: {
-    loading: RequestStatus
-    collectedPlastic: ICollection[]
-    unclaimedRequests: ICollection[]
-    pendingRequests: ICollection[]
-}) => {
-    if (loading === "pending") {
+const UserBadges = () => {
+    const { userBadges, isUserBadgesLoading, isfetchUserBadgesError } =
+        useClientstats()
+
+    if (isUserBadgesLoading) {
+        return <span>Loading badges...</span>
+    }
+
+    if (isfetchUserBadgesError) {
+        return <div>Can't load badges, Please try again after sometime</div>
+    }
+
+    return (
+        <>
+            <div className="text-2xl font-bold">{userBadges?.length || 0}</div>
+            <div className="flex flex-wrap gap-2 mt-2">
+                {userBadges && userBadges.length > 0 ? (
+                    userBadges.slice(0, 3).map((badge, index) => (
+                        <Badge key={index} variant="secondary">
+                            {badge.name}
+                        </Badge>
+                    ))
+                ) : (
+                    <p className="text-sm text-muted-foreground">
+                        No badges earned yet
+                    </p>
+                )}
+                {userBadges && userBadges.length > 3 && (
+                    <Badge variant="outline">
+                        +{userBadges.length - 3} more
+                    </Badge>
+                )}
+            </div>
+        </>
+    )
+}
+
+const CollectionSummaryCard = () => {
+    const { isRequestsLoading, isfetchRequestsError, requestsData } =
+        useClientstats()
+    const { pending_requests, completed_requests, unclaimed_requests } =
+        requestsData!
+
+    if (isRequestsLoading) {
         return <CollectionSummaryCardSkeleton />
+    }
+
+    if (isfetchRequestsError) {
+        return <div>Can't load Summary, Please try again after sometime</div>
     }
 
     return (
@@ -378,15 +351,15 @@ const CollectionSummaryCard = ({
                     <div className="flex justify-between">
                         <span className="text-sm">Pending</span>
                         <span className="text-sm font-medium">
-                            {pendingRequests.length}
+                            {pending_requests.length}
                         </span>
                     </div>
                     <Progress
                         value={
-                            (pendingRequests.length /
-                                (pendingRequests.length +
-                                    collectedPlastic.length +
-                                    unclaimedRequests.length || 1)) *
+                            (pending_requests.length /
+                                (pending_requests.length +
+                                    completed_requests.length +
+                                    unclaimed_requests.length || 1)) *
                             100
                         }
                         className="h-1.5"
@@ -396,15 +369,15 @@ const CollectionSummaryCard = ({
                     <div className="flex justify-between">
                         <span className="text-sm">Unclaimed</span>
                         <span className="text-sm font-medium">
-                            {unclaimedRequests.length}
+                            {unclaimed_requests.length}
                         </span>
                     </div>
                     <Progress
                         value={
-                            (unclaimedRequests.length /
-                                (pendingRequests.length +
-                                    collectedPlastic.length +
-                                    unclaimedRequests.length || 1)) *
+                            (unclaimed_requests.length /
+                                (pending_requests.length +
+                                    completed_requests.length +
+                                    unclaimed_requests.length || 1)) *
                             100
                         }
                         className="h-1.5"
@@ -414,15 +387,15 @@ const CollectionSummaryCard = ({
                     <div className="flex justify-between">
                         <span className="text-sm">Completed</span>
                         <span className="text-sm font-medium">
-                            {collectedPlastic.length}
+                            {completed_requests.length}
                         </span>
                     </div>
                     <Progress
                         value={
-                            (collectedPlastic.length /
-                                (pendingRequests.length +
-                                    collectedPlastic.length +
-                                    unclaimedRequests.length || 1)) *
+                            (completed_requests.length /
+                                (pending_requests.length +
+                                    completed_requests.length +
+                                    unclaimed_requests.length || 1)) *
                             100
                         }
                         className="h-1.5"
@@ -434,9 +407,9 @@ const CollectionSummaryCard = ({
                         Recent Activity
                     </h3>
                     {[
-                        ...collectedPlastic,
-                        ...pendingRequests,
-                        ...unclaimedRequests,
+                        ...completed_requests,
+                        ...pending_requests,
+                        ...unclaimed_requests,
                     ]
                         .sort(
                             (a, b) =>
@@ -465,26 +438,38 @@ const CollectionSummaryCard = ({
 }
 
 const ActivityStatsTabs = ({
-    loading,
-    availableRewards,
-    collectedPlastic,
-    pendingRequests,
-    unclaimedRequests,
-    claimedRewards,
-    earnedPoints,
     onClaimedRewards,
 }: {
-    loading: RequestStatus
-    availableRewards: IAvailableRewards[]
-    collectedPlastic: ICollection[]
-    unclaimedRequests: ICollection[]
-    pendingRequests: ICollection[]
-    earnedPoints: string
-    claimedRewards: IClaimedRewards[]
     onClaimedRewards: (id: string, expense: number) => Promise<void>
 }) => {
-    if (loading === "pending") {
+    const {
+        claimedRewards,
+        availableRewards,
+        userData,
+        isfetchClaimedRewardsError,
+        isAvailableRewardsLoading,
+        isLoadingClaimedRewards,
+        requestsData,
+        isRequestsLoading,
+    } = useClientstats()
+    const { earnedPoints } = userData as IUserData
+    const { unclaimed_requests, completed_requests, pending_requests } =
+        requestsData!
+
+    if (
+        isAvailableRewardsLoading ||
+        isLoadingClaimedRewards ||
+        isRequestsLoading
+    ) {
         return <ActivityStatsTabsSkeleton />
+    }
+
+    if (isfetchClaimedRewardsError) {
+        return (
+            <div>
+                Can't load Activity Stats, Please try again after sometime
+            </div>
+        )
     }
 
     return (
@@ -570,7 +555,7 @@ const ActivityStatsTabs = ({
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            {claimedRewards.length === 0 ? (
+                            {claimedRewards?.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-8 text-center">
                                     <Award className="h-12 w-12 text-muted-foreground mb-4" />
                                     <h3 className="text-lg font-medium">
@@ -582,7 +567,7 @@ const ActivityStatsTabs = ({
                                 </div>
                             ) : (
                                 <div className="space-y-4">
-                                    {claimedRewards.map((reward, index) => (
+                                    {claimedRewards?.map((reward, index) => (
                                         <div
                                             key={index}
                                             className="flex items-center justify-between p-4 rounded-lg border"
@@ -626,20 +611,20 @@ const ActivityStatsTabs = ({
                     <CardContent>
                         <div className="space-y-8">
                             <CollectionHistoryTable
-                                loading={loading}
+                                loading={isRequestsLoading}
                                 title="Unclaimed Requests"
-                                data={unclaimedRequests}
+                                data={unclaimed_requests}
                             />
                             <CollectionHistoryTable
-                                loading={loading}
+                                loading={isRequestsLoading}
                                 title="Completed Requests"
-                                data={collectedPlastic}
+                                data={completed_requests}
                                 className="pt-4 border-t"
                             />
                             <CollectionHistoryTable
-                                loading={loading}
+                                loading={isRequestsLoading}
                                 title="Pending Requests"
-                                data={pendingRequests}
+                                data={pending_requests}
                                 className="pt-4 border-t"
                             />
                         </div>

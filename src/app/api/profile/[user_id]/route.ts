@@ -30,7 +30,13 @@ export async function GET(
                 userId,
             },
             include: {
-                user: true,
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                    },
+                },
             },
         })
 
@@ -56,7 +62,7 @@ export async function PATCH(
 ) {
     const params = await props.params
     try {
-        const [, requestBody] = await Promise.all([checkAuth(), req.json()])
+        const [_, requestBody] = await Promise.all([checkAuth(), req.json()])
 
         const { success, data, error } =
             updateProfileSchema.safeParse(requestBody)

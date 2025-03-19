@@ -1,5 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+"use client"
 
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { createContext, useContext, ReactNode } from "react"
 interface IRequests {
     id: string
     amount: string
@@ -7,15 +9,41 @@ interface IRequests {
 }
 
 interface IRequestsCollection {
-    pending_requests: IRequests[]
-    claimed_requests: IRequests[]
+    pendingRequests: IRequests[]
+    claimedRequests: IRequests[]
 }
 
-export const useAgent = (agentId: string | undefined) => {
+/**
+ *  context type of the agent context hook
+ */
+
+interface AgentContextType {
+    requests: IRequestsCollection
+    updateRequestStatus: any
+    totalWasteCollected: number
+    matches: IRequests[]
+    acceptCollectionRequest: any
+    isError: boolean
+    isLoading: boolean
+}
+
+const AgentContext = createContext<AgentContextType | null>(null)
+
+/**
+ * Context Provider that will wrap the layout
+ */
+
+export const AgentProvider = ({
+    children,
+    agentId,
+}: {
+    children: ReactNode
+    agentId: string | undefined
+}) => {
     const queryClient = useQueryClient()
 
     const {
-        data: requests = { pending_requests: [], claimed_requests: [] },
+        data: requests = { pendingRequests: [], claimedRequests: [] },
         isLoading: isLoadingRequests,
         isError: isErrorRequests,
     } = useQuery<IRequestsCollection>({
@@ -42,12 +70,12 @@ export const useAgent = (agentId: string | undefined) => {
         enabled: !!agentId,
     })
 
-    const totalWasteCollected = requests.claimed_requests.reduce(
+    const totalWasteCollected = requests.claimedRequests.reduce(
         (acc, curr) => acc + Number(curr.amount),
         0
     )
 
-    const updateRequestStatus = useMutation({
+    const updateRequestStatusMutation = useMutation({
         mutationFn: async (collectionId: string) => {
             const response = await fetch(
                 `/api/agent/${agentId}/claim?collection_id=${collectionId}`,
@@ -82,7 +110,7 @@ export const useAgent = (agentId: string | undefined) => {
                 queryClient.setQueryData(["agentRequests", agentId], {
                     ...previousRequests,
                     pending_requests: [
-                        ...(previousRequests?.pending_requests || []),
+                        ...(previousRequests?.pendingRequests || []),
                         requestToMove,
                     ],
                 })
@@ -109,7 +137,7 @@ export const useAgent = (agentId: string | undefined) => {
         },
     })
 
-    const acceptCollectionRequest = useMutation({
+    const acceptCollectionRequestMutation = useMutation({
         mutationFn: async (collectionId: string) => {
             const response = await fetch(
                 `/api/agent/${agentId}/collect?collection_id=${collectionId}`,
@@ -127,17 +155,17 @@ export const useAgent = (agentId: string | undefined) => {
                     "agentRequests",
                     agentId,
                 ])
-            const requestToComplete = requests.pending_requests.find(
+            const requestToComplete = requests.pendingRequests.find(
                 req => req.id === collectionId
             )
 
             if (requestToComplete) {
                 queryClient.setQueryData(["agentRequests", agentId], {
-                    pending_requests: requests.pending_requests.filter(
+                    pending_requests: requests.pendingRequests.filter(
                         req => req.id !== collectionId
                     ),
-                    completed_requests: [
-                        ...requests.claimed_requests,
+                    claimed_requests: [
+                        ...requests.claimedRequests,
                         requestToComplete,
                     ],
                 })
@@ -157,13 +185,31 @@ export const useAgent = (agentId: string | undefined) => {
         },
     })
 
-    return {
+    const contextValue: AgentContextType = {
         requests,
-        updateRequestStatus: updateRequestStatus.mutate,
+        updateRequestStatus: updateRequestStatusMutation.mutate,
         totalWasteCollected,
         matches,
-        acceptCollectionRequest: acceptCollectionRequest.mutate,
+        acceptCollectionRequest: acceptCollectionRequestMutation.mutate,
         isError: isErrorRequests || isErrorMatches,
         isLoading: isLoadingRequests || isLoadingMatches,
     }
+
+    return (
+        <AgentContext.Provider value={contextValue}>
+            {children}
+        </AgentContext.Provider>
+    )
+}
+
+/**
+ * useAgent hook
+ */
+
+export const useAgent = () => {
+    const context = useContext(AgentContext)
+    if (!context) {
+        throw new Error("useAgent must be used within an AgentProvider")
+    }
+    return context
 }

@@ -20,12 +20,22 @@ import dynamic from "next/dynamic"
 const Time = dynamic(() => import("@/components/time"), { ssr: false })
 
 export default function NotificationPopup() {
-    const [open, setOpen] = useState(false)
+    const [open, setOpen] = useState<boolean>(false)
 
     const { data: session } = useSession()
 
-    const { unreadCount, markAllAsRead, markAsRead, notifications, loading } =
-        useNotifications(session?.user?.id as string)
+    const {
+        unreadCount,
+        markAllAsRead,
+        markAsRead,
+        notifications,
+        isNotificationsLoading,
+        isNotificationsFetchError,
+    } = useNotifications(session?.user?.id as string)
+
+    if (isNotificationsFetchError) {
+        return <div>Cannot fetch notifications</div>
+    }
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
@@ -33,10 +43,10 @@ export default function NotificationPopup() {
                 <Button
                     variant="outline"
                     size="icon"
-                    className="relative rounded-full border-gray-700"
+                    className="relative rounded-full border-none"
                 >
                     <Bell className="h-[1.2rem] w-[1.2rem]" />
-                    {unreadCount > 0 && (
+                    {unreadCount && unreadCount > 0 && (
                         <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full dark:bg-white bg-black text-xs dark:text-black text-white border border-gray-700 flex items-center justify-center animate-pulse">
                             {unreadCount}
                         </span>
@@ -44,8 +54,10 @@ export default function NotificationPopup() {
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[400px] p-0 rounded-xl border-gray-700">
-                {loading ? (
-                    <span>loading....</span>
+                {isNotificationsLoading ? (
+                    <div className="h-screen w-screen flex items-center justify-center">
+                        <span>loading....</span>
+                    </div>
                 ) : (
                     <Card className="border-gray-700 bg-white dark:bg-black">
                         <div className="flex justify-between items-center p-4 border-b border-gray-700 bg-gray-100 dark:bg-black rounded-t-xl">
@@ -55,11 +67,11 @@ export default function NotificationPopup() {
                                     Notifications
                                 </h2>
                             </div>
-                            {notifications.length > 0 && (
+                            {notifications && notifications.length > 0 && (
                                 <Button
                                     variant="secondary"
                                     size="sm"
-                                    onClick={markAllAsRead}
+                                    onClick={() => markAllAsRead.mutate()}
                                     className="text-xs"
                                 >
                                     Mark all as read
@@ -67,7 +79,7 @@ export default function NotificationPopup() {
                             )}
                         </div>
                         <ScrollArea className="h-[400px]">
-                            {notifications.length === 0 ? (
+                            {notifications && notifications.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-[200px] text-gray-100">
                                     <Bell className="h-8 w-8 mb-2 opacity-50" />
                                     <p className="text-sm">
@@ -76,49 +88,50 @@ export default function NotificationPopup() {
                                 </div>
                             ) : (
                                 <ul className="divide-y divide-gray-700">
-                                    {notifications.map(notification => (
-                                        <li
-                                            key={notification.id}
-                                            className={`p-4  duration-200 ${
-                                                notification.is_read
-                                                    ? "bg-white dark:bg-black"
-                                                    : "bg-gray-100 dark:bg-muted"
-                                            }`}
-                                        >
-                                            <div className="flex flex-col gap-2">
-                                                <p className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">
-                                                    {notification.message}
-                                                </p>
-                                                <div className="flex items-center justify-between mt-2">
-                                                    <div className="flex items-center gap-1 text-gray-500">
-                                                        <Clock className="h-3 w-3" />
-                                                        <span className="text-xs">
-                                                            <Time
-                                                                timeStamp={
-                                                                    notification.notification_date
+                                    {notifications &&
+                                        notifications.map(notification => (
+                                            <li
+                                                key={notification.id}
+                                                className={`p-4  duration-200 ${
+                                                    notification.is_read
+                                                        ? "bg-white dark:bg-black"
+                                                        : "bg-gray-100 dark:bg-muted"
+                                                }`}
+                                            >
+                                                <div className="flex flex-col gap-2">
+                                                    <p className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">
+                                                        {notification.message}
+                                                    </p>
+                                                    <div className="flex items-center justify-between mt-2">
+                                                        <div className="flex items-center gap-1 text-gray-500">
+                                                            <Clock className="h-3 w-3" />
+                                                            <span className="text-xs">
+                                                                <Time
+                                                                    timeStamp={
+                                                                        notification.notification_date
+                                                                    }
+                                                                />
+                                                            </span>
+                                                        </div>
+                                                        {!notification.is_read && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() =>
+                                                                    markAsRead.mutate(
+                                                                        notification.id
+                                                                    )
                                                                 }
-                                                            />
-                                                        </span>
+                                                                className="text-xs text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white"
+                                                            >
+                                                                <Check className="h-3 w-3 mr-1" />
+                                                                Mark as read
+                                                            </Button>
+                                                        )}
                                                     </div>
-                                                    {!notification.is_read && (
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() =>
-                                                                markAsRead(
-                                                                    notification.id
-                                                                )
-                                                            }
-                                                            className="text-xs text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
-                                                        >
-                                                            <Check className="h-3 w-3 mr-1" />
-                                                            Mark as read
-                                                        </Button>
-                                                    )}
                                                 </div>
-                                            </div>
-                                        </li>
-                                    ))}
+                                            </li>
+                                        ))}
                                 </ul>
                             )}
                         </ScrollArea>

@@ -19,11 +19,11 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
+import { Eye, EyeOff } from "lucide-react"
 
 /**
- * validation schema for the the User form
+ * validation schema for the User form
  */
-
 export const formSchema = z.object({
     username: z.string().min(3, {
         message: "Username must be at least 3 characters.",
@@ -48,12 +48,12 @@ export type AdminUserCreateForm = z.infer<typeof formSchema>
 /**
  * User form Component
  *
- * @param user : all the user properties with optional values
+ * @param userId : all the user properties with optional values
  */
-
 export function UserForm({ userId }: { userId?: string }) {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
     const { toast } = useToast()
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -73,7 +73,7 @@ export function UserForm({ userId }: { userId?: string }) {
         try {
             if (!userId) {
                 const firstName = creds.name.split(" ")[0]
-                const lastName = creds.name.split(" ")[1]
+                const lastName = creds.name.split(" ")[1] || ""
                 const createdUserResp = await fetch("/api/auth/register", {
                     headers: {
                         "Content-Type": "application/json",
@@ -97,7 +97,7 @@ export function UserForm({ userId }: { userId?: string }) {
             } else {
                 console.log("update block executed")
                 const firstName = creds.name.split(" ")[0]
-                const lastName = creds.name.split(" ")[1]
+                const lastName = creds.name.split(" ")[1] || ""
                 const updateUserResp = await fetch(`/api/user/${userId}`, {
                     headers: {
                         "Content-Type": "application/json",
@@ -140,9 +140,9 @@ export function UserForm({ userId }: { userId?: string }) {
                 .catch(err => {
                     console.error(err)
                 })
-            setIsLoading(false)
+                .finally(() => setIsLoading(false))
         }
-    }, [userId])
+    }, [userId, form])
 
     return (
         <Card>
@@ -221,11 +221,35 @@ export function UserForm({ userId }: { userId?: string }) {
                                         <FormItem>
                                             <FormLabel>Password</FormLabel>
                                             <FormControl>
-                                                <Input
-                                                    type="password"
-                                                    placeholder="••••••••"
-                                                    {...field}
-                                                />
+                                                <div className="relative">
+                                                    <Input
+                                                        type={
+                                                            showPassword
+                                                                ? "text"
+                                                                : "password"
+                                                        }
+                                                        placeholder="••••••••"
+                                                        {...field}
+                                                        className="pr-10"
+                                                    />
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="absolute right-0 top-1/2 -translate-y-1/2 h-7 w-7"
+                                                        onClick={() =>
+                                                            setShowPassword(
+                                                                prev => !prev
+                                                            )
+                                                        }
+                                                    >
+                                                        {showPassword ? (
+                                                            <EyeOff className="h-4 w-4" />
+                                                        ) : (
+                                                            <Eye className="h-4 w-4" />
+                                                        )}
+                                                    </Button>
+                                                </div>
                                             </FormControl>
                                             <FormDescription>
                                                 Must be at least 8 characters.

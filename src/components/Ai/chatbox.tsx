@@ -300,7 +300,7 @@ export default function FloatingChat() {
                                     className={cn(
                                         "flex-1 min-h-[40px] max-h-[100px] resize-none border-none focus-visible:ring-0 rounded-lg text-sm",
                                         theme === "dark"
-                                            ? "bg-[#0f1014] text-white placeholder-gray-400"
+                                            ? "bg-muted/50 text-white placeholder-gray-400"
                                             : "bg-[#e5e5e5] text-black placeholder-gray-600"
                                     )}
                                     disabled={status === "streaming"}
@@ -340,7 +340,7 @@ export default function FloatingChat() {
                                     ) : (
                                         <Send
                                             className={cn(
-                                                "h-4 w-4",
+                                                "h-full w-full",
                                                 theme === "dark"
                                                     ? "text-black"
                                                     : "text-white"

@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { signIn } from "next-auth/react"
-import { Loader2 } from "lucide-react"
+import { Loader2, Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
 import { useState } from "react"
@@ -21,6 +21,7 @@ export function LoginForm() {
         password: "",
     })
     const [isLoading, setLoading] = useState<boolean>(false)
+    const [showPassword, setShowPassword] = useState(false)
     const { toast } = useToast()
     const router = useRouter()
 
@@ -91,20 +92,35 @@ export function LoginForm() {
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="password">Password</Label>
-                    <Input
-                        id="password"
-                        type="password"
-                        placeholder="password..."
-                        className="p-4 rounded-xl"
-                        value={creds.password}
-                        onChange={e => {
-                            setCreds({ ...creds, password: e.target.value })
-                        }}
-                        required
-                    />
+                    <div className="relative">
+                        <Input
+                            id="password"
+                            type={showPassword ? "text" : "password"}
+                            placeholder="password..."
+                            className="p-4 rounded-xl pr-10"
+                            value={creds.password}
+                            onChange={e => {
+                                setCreds({ ...creds, password: e.target.value })
+                            }}
+                            required
+                        />
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-0 top-1/2 -translate-y-1/2 h-7 w-7"
+                            onClick={() => setShowPassword(prev => !prev)}
+                        >
+                            {showPassword ? (
+                                <EyeOff className="h-4 w-4" />
+                            ) : (
+                                <Eye className="h-4 w-4" />
+                            )}
+                        </Button>
+                    </div>
                 </div>
                 <Button
-                    type="button" // Changed from submit to button since we're handling submission manually
+                    type="button"
                     onClick={handleSubmission}
                     disabled={isLoading}
                     className="w-full font-bold rounded-xl"

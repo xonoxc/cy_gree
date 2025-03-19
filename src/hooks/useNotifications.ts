@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useState } from "react"
+import { logErrors } from "@/utils/errors/errorLogs"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+
+/**
+ * this is a custom responsable for handling notification component details
+ * @param userId string | undefined
+ * notifications concerned about a perticular user with
+ */
 
 interface Notification {
     id: string
@@ -8,81 +15,108 @@ interface Notification {
 }
 
 export const useNotifications = (userId: string | undefined) => {
-    const [notifications, setNotifications] = useState<Notification[] | []>([])
-    const [loading, setLoading] = useState<boolean>(false)
+    const queryClient = useQueryClient()
 
-    const unreadCount = notifications.filter(noti => !noti.is_read).length
-
-    const fetchInitialNotifications = useCallback(async () => {
-        if (!userId) return
-        try {
-            setLoading(true)
+    const {
+        data: notifications,
+        isError: isNotificationsFetchError,
+        isLoading: isNotificationsLoading,
+    } = useQuery<Notification[] | []>({
+        queryKey: ["notifications", userId],
+        queryFn: async () => {
             const response = await fetch(`/api/notifications/${userId}`)
 
-            if (response.status === 200) {
-                const jsonResponse = (await response.json()) as {
-                    notifications: Notification[] | []
-                }
+            if (!response.ok)
+                throw new Error("Error fetching initial notifications")
 
-                setNotifications(jsonResponse.notifications)
+            const jsonResponse = (await response.json()) as {
+                notifications: Notification[] | []
             }
-        } catch (e) {
-            console.error("Error fetching initial notifications", e)
-        } finally {
-            setLoading(false)
-        }
-    }, [userId])
 
-    const markAsRead = useCallback(
-        async (id: string) => {
-            if (!userId) return
-            try {
-                setLoading(true)
-                const statusResponse = await fetch(
-                    `/api/notifications/${userId}/read?notification_id=${id}`,
-                    {
-                        method: "PATCH",
-                    }
-                )
-
-                if (statusResponse.status === 200) {
-                    setNotifications(prevNotifications =>
-                        prevNotifications.filter(noti => noti.id !== id)
-                    )
-                    await fetchInitialNotifications()
-                }
-            } catch (e) {
-                console.error("erorr while updating notifications", e)
-            } finally {
-                setLoading(false)
-            }
+            return jsonResponse.notifications
         },
-        [userId]
-    )
+        enabled: !!userId,
+    })
 
-    const markAllAsRead = useCallback(async () => {
-        if (!userId) return
-        try {
-            setLoading(true)
-            const response = await fetch(
-                `/api/notifications/${userId}/read/all`,
+    let unreadCount = notifications?.filter(noti => !noti.is_read).length
+
+    const markAsRead = useMutation({
+        mutationFn: async (id: string) => {
+            const statusResponse = await fetch(
+                `/api/notifications/${userId}/read?notification_id=${id}`,
                 {
                     method: "PATCH",
                 }
             )
+            if (!statusResponse.ok)
+                throw new Error("Error while updating notifications")
+        },
+        onMutate: async notificationId => {
+            await queryClient.cancelQueries({
+                queryKey: ["notifications", userId],
+            })
 
-            if (response.status === 200) {
-                setNotifications([])
-                await fetchInitialNotifications()
+            const previousNotifications = queryClient.getQueryData<
+                Notification[] | []
+            >(["notifications", userId])
+
+            if (!previousNotifications || previousNotifications.length === 0)
+                return
+            const unreadNotifications = previousNotifications?.filter(
+                noti => noti.id !== notificationId
+            )
+
+            queryClient.setQueryData<Notification[] | []>(
+                ["notifications", userId],
+                unreadNotifications
+            )
+
+            if (unreadCount) {
+                unreadCount = unreadCount - 1
             }
-        } catch (e) {
-            console.log("error while updating notifications", e)
-        } finally {
-            setLoading(false)
-        }
-    }, [userId])
 
-    const sendNotification = useCallback(async () => {
+            return { previousNotifications }
+        },
+        onError: (_, __, context) => {
+            queryClient.setQueryData(
+                ["notifications", userId],
+                context?.previousNotifications
+            )
+        },
+    })
+
+    const markAllAsRead = useMutation({
+        mutationFn: async () => {
+            if (!userId) return
+            await fetch(`/api/notifications/${userId}/read/all`, {
+                method: "PATCH",
+            })
+        },
+        onMutate: async () => {
+            await queryClient.cancelQueries({
+                queryKey: ["notifications", userId],
+            })
+
+            const previousNotifications = queryClient.getQueryData<
+                Notification[] | []
+            >(["notifications", userId])
+
+            queryClient.setQueryData(["notifications", userId], [])
+
+            unreadCount = 0
+
+            return { previousNotifications }
+        },
+        onError: (_, __, context) => {
+            queryClient.setQueryData(
+                ["notifications", userId],
+                context?.previousNotifications
+            )
+        },
+    })
+
+    /* probably simple enough that no need to use Query*/
+    const sendNotification = async () => {
         if (!userId) return
         try {
             const response = await fetch(`/api/notifications/${userId}/send`)
@@ -93,23 +127,18 @@ export const useNotifications = (userId: string | undefined) => {
 
             return false
         } catch (e) {
-            console.error("Error while sending notification", e)
+            logErrors(e)
             return false
         }
-    }, [userId])
-
-    useEffect(() => {
-        ;(async () => {
-            await fetchInitialNotifications()
-        })()
-    }, [userId])
+    }
 
     return {
         markAsRead,
         markAllAsRead,
         notifications,
         unreadCount,
-        loading,
+        isNotificationsFetchError,
+        isNotificationsLoading,
         sendNotification,
     }
 }

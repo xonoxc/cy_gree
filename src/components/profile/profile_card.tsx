@@ -17,11 +17,16 @@ import { useToast } from "@/hooks/use-toast"
 import { Edit, Save } from "lucide-react"
 import { ProfileCardSkeleton } from "./profile_sekeleton"
 
-const ProfileCard = ({ userId }: { userId: string | undefined }) => {
+const ProfileCard = () => {
     const [editing, setEditing] = useState(false)
     const [avatar, _] = useState<string | null>(null)
-    const { handleProfileUpdate, userData, handleInputChange, loading } =
-        useClientstats(userId)
+    const {
+        handleProfileUpdate,
+        userData,
+        handleInputChange,
+        isProfileDataLoading,
+        isfetchProfileDataError,
+    } = useClientstats()
     const { toast } = useToast()
 
     const handleEditToggle = useCallback(async () => {
@@ -45,9 +50,9 @@ const ProfileCard = ({ userId }: { userId: string | undefined }) => {
         }
     }, [editing, avatar, handleProfileUpdate, toast])
 
-    if (loading === "pending") return <ProfileCardSkeleton />
+    if (isProfileDataLoading) return <ProfileCardSkeleton />
 
-    if (loading === "error") return <div>Error loading profile data.</div>
+    if (isfetchProfileDataError) return <div>Error loading profile data.</div>
 
     if (!userData) return null
 
@@ -74,10 +79,10 @@ const ProfileCard = ({ userId }: { userId: string | undefined }) => {
                         <Avatar className="h-20 w-20">
                             <AvatarImage
                                 src={userData.profilePic}
-                                alt={userData.name}
+                                alt={userData.user.name}
                             />
                             <AvatarFallback>
-                                {userData.name
+                                {userData.user.name
                                     .split(" ")
                                     .map(n => n[0])
                                     .join("")}
@@ -85,7 +90,9 @@ const ProfileCard = ({ userId }: { userId: string | undefined }) => {
                         </Avatar>
                     )}
                     <div>
-                        <h2 className="text-2xl font-bold">{userData.name}</h2>
+                        <h2 className="text-2xl font-bold">
+                            {userData.user.name}
+                        </h2>
                         <Badge variant="outline" className="mt-1">
                             User
                         </Badge>
@@ -117,7 +124,7 @@ const ProfileCard = ({ userId }: { userId: string | undefined }) => {
                         <Input
                             id="email"
                             name="email"
-                            value={userData.email}
+                            value={userData.user.email}
                             onChange={handleInputChange}
                             disabled={!editing}
                         />
@@ -125,8 +132,8 @@ const ProfileCard = ({ userId }: { userId: string | undefined }) => {
                     <div className="space-y-2">
                         <Label htmlFor="phone_number">Phone</Label>
                         <Input
-                            id="phone_number"
-                            name="phone_number"
+                            id="phoneNumber"
+                            name="phoneNumber"
                             type="text"
                             maxLength={10}
                             value={userData.phoneNumber}

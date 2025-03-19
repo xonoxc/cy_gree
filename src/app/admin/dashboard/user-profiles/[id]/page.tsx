@@ -1,14 +1,14 @@
-import { UserDetails } from "@/components/admin/dashboard/users/user-details"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Edit } from "lucide-react"
 import Link from "next/link"
+import { UserProfileDetails } from "@/components/admin/dashboard/user-profiles/user-profile-details"
 
 export default async function UserPage({
     params,
 }: {
-    params: Promise<{ userId: string }>
+    params: Promise<{ id: string }>
 }) {
-    const { userId } = await params
+    const { id: profileId } = await params
 
     return (
         <div className="space-y-6">
@@ -23,14 +23,14 @@ export default async function UserPage({
                         User Details
                     </h1>
                 </div>
-                <Link href={`/admin/dashboard/users/${userId}/edit`}>
+                <Link href={`/admin/dashboard/users/${profileId}/edit`}>
                     <Button>
                         <Edit className="mr-2 h-4 w-4" />
                         Edit User
                     </Button>
                 </Link>
             </div>
-            <UserDetails userId={userId} />
+            <UserProfileDetails profileId={profileId} />
         </div>
     )
 }

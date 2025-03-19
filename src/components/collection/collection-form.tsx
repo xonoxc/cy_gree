@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { IKImage, IKUpload } from "imagekitio-next"
 import { useCallback, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -17,7 +16,6 @@ import {
 import { useClientstats } from "@/hooks/useClientstats"
 import { useToast } from "@/hooks/use-toast"
 import { Plus } from "lucide-react"
-import { useSession } from "next-auth/react"
 import { Card } from "@/components/ui/card"
 import { IKUploadResponse } from "imagekitio-next/dist/types/components/IKUpload/props"
 import { Progress } from "../ui/progress"
@@ -30,12 +28,7 @@ export default function PlasticCollectionModalForm() {
     const [progress, setProgress] = useState<number>(0)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const { toast } = useToast()
-
-    const { data: session } = useSession()
-
-    const { handleCollectionCreate, loading } = useClientstats(
-        session?.user?.id
-    )
+    const { handleCollectionCreate } = useClientstats()
 
     useEffect(() => {
         if (!open) {
@@ -56,52 +49,33 @@ export default function PlasticCollectionModalForm() {
 
             setIsSubmitting(true)
             try {
-                const created = await handleCollectionCreate(
-                    amount_collected,
-                    picture
-                )
-
-                if (created) {
-                    toast({
-                        title: "Collection Created Successfully!",
-                    })
-                    setOpen(false)
-                    setAmountCollected("")
-                    setPicture(null)
-                }
+                await handleCollectionCreate(amount_collected, picture)
+                toast({ title: "Collection Created Successfully!" })
+                setOpen(false)
+                setAmountCollected("")
+                setPicture(null)
             } catch (e: any) {
                 toast({
-                    title: e.message || "Error creating collection",
+                    title: "Error creating collection",
                     variant: "destructive",
                 })
             } finally {
                 setIsSubmitting(false)
             }
         },
-        [picture, amount_collected, toast]
+        [picture, amount_collected, toast, handleCollectionCreate]
     )
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                {loading !== "pending" ? (
-                    <Button
-                        variant="outline"
-                        className="dark:bg-white dark:text-black font-bold mb-5 flex items-center rounded-xl p-4"
-                    >
-                        <Plus className="mr-2 h-4 w-4" />
-                        <span>Add Collection</span>
-                    </Button>
-                ) : (
-                    <Button
-                        variant="outline"
-                        className="dark:bg-black dark:text-black font-bold mb-5 flex items-center animate-pulse"
-                        disabled
-                    >
-                        <div className="mr-2 h-4 w-4 bg-gray-300 dark:bg-gray-600 rounded-full" />
-                        <div className="h-5 w-24 bg-gray-300 dark:bg-gray-600 rounded" />
-                    </Button>
-                )}
+                <Button
+                    variant="outline"
+                    className="dark:bg-white dark:text-black font-bold mb-5 flex items-center rounded-xl p-4"
+                >
+                    <Plus className="mr-2 h-4 w-4" />
+                    <span>Add Collection</span>
+                </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden">
                 <DialogHeader className="p-6 pb-2">
@@ -150,7 +124,6 @@ export default function PlasticCollectionModalForm() {
                                     {imageUploadError && (
                                         <div>{imageUploadError}</div>
                                     )}
-
                                     <IKUpload
                                         folder={"collections"}
                                         className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
@@ -171,7 +144,6 @@ export default function PlasticCollectionModalForm() {
                                         }
                                     />
                                 </div>
-
                                 <div className="w-full items-center justify-center flex">
                                     {progress > 0 && progress < 100 ? (
                                         <Progress
@@ -179,18 +151,16 @@ export default function PlasticCollectionModalForm() {
                                             className="w-[90%]"
                                         />
                                     ) : (
-                                        <>
-                                            {picture && (
-                                                <Card className="p-2 mt-2 overflow-hidden">
-                                                    <div className="relative aspect-video w-full overflow-hidden rounded-md bg-muted">
-                                                        <IKImage
-                                                            path={picture}
-                                                            alt="uploaded image"
-                                                        />
-                                                    </div>
-                                                </Card>
-                                            )}
-                                        </>
+                                        picture && (
+                                            <Card className="p-2 mt-2 overflow-hidden">
+                                                <div className="relative aspect-video w-full overflow-hidden rounded-md bg-muted">
+                                                    <IKImage
+                                                        path={picture}
+                                                        alt="uploaded image"
+                                                    />
+                                                </div>
+                                            </Card>
+                                        )
                                     )}
                                 </div>
                             </div>

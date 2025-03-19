@@ -28,7 +28,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Loader2 } from "lucide-react"
 
-// Mock data for a single profile
 const mockProfile = {
     id: "1",
     userId: "user1",
@@ -44,7 +43,6 @@ const mockProfile = {
     earnedPoints: 1250.0,
 }
 
-// Mock data for states
 const states = [
     "Andhra_Pradesh",
     "Arunachal_Pradesh",

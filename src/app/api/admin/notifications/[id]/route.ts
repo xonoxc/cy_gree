@@ -52,3 +52,52 @@ export async function DELETE(
         await prisma.$disconnect()
     }
 }
+
+export async function PATCH(
+    _: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    await checkAuth()
+    try {
+        const { id: notificationId } = await params
+
+        const idValidationRes = idValidationSchema.safeParse(notificationId)
+        if (!idValidationRes.success)
+            return NextResponse.json(
+                {
+                    error: "Invalid notificationId",
+                },
+                { status: 400 }
+            )
+
+        const existingNotification = await prisma.notification.findUnique({
+            where: { id: notificationId },
+        })
+
+        if (!existingNotification)
+            return NextResponse.json(
+                { error: "Notification not found" },
+                { status: 404 }
+            )
+
+        await prisma.notification.update({
+            where: {
+                id: notificationId,
+            },
+            data: {
+                isRead: !existingNotification.isRead,
+            },
+        })
+
+        return NextResponse.json(
+            { message: "Notification marked as read successfully" },
+            { status: 200 }
+        )
+    } catch (e) {
+        logErrors(e)
+        return NextResponse.json(
+            { message: "Internal server error" },
+            { status: 500 }
+        )
+    }
+}

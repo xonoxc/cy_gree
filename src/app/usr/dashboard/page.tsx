@@ -40,6 +40,11 @@ import { ProfileCardSkeleton } from "@/components/profile/profile_sekeleton"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CollectionBtnSkeleton } from "@/components/collection/collection.skeleton"
 
+/**
+ * Dynamically imported components
+ *
+ */
+
 const Time = dynamic(() => import("@/components/time"), {
     ssr: false,
     loading: () => <Skeleton className="h-4 w-1/2" />,
@@ -58,6 +63,9 @@ const ProfileCard = dynamic(() => import("@/components/profile/profile_card"), {
     loading: () => <ProfileCardSkeleton />,
 })
 
+/**
+ * Main Component
+ */
 export default function UserDashboard() {
     const { status } = useSession()
     const { handelClaimReward } = useClientstats()

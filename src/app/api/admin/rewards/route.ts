@@ -196,23 +196,20 @@ export default async function POST(req: NextRequest) {
             },
             { status: 200 }
         )
-    } catch (error) {
-        console.error("Error claiming reward:", error)
+    } catch (e) {
+        logErrors(e)
 
-        if (error instanceof z.ZodError) {
+        if (e instanceof z.ZodError) {
             return NextResponse.json({
                 success: false,
                 message: "Invalid request data",
-                errors: error.errors,
+                errors: e.errors,
             })
         }
 
         return NextResponse.json({
             success: false,
-            message:
-                error instanceof Error
-                    ? error.message
-                    : "Failed to claim reward",
+            message: e instanceof Error ? e.message : "Failed to claim reward",
         })
     } finally {
         await prisma.$disconnect()

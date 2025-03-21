@@ -45,7 +45,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Time from "@/components/time"
 
 const ITEMS_PER_PAGE = 10
-
 interface Notification {
     id: string
     userId: string
@@ -67,10 +66,10 @@ interface ApiResponse {
 }
 
 export function NotificationsTable() {
-    const [searchQuery, setSearchQuery] = useState("")
-    const [currentPage, setCurrentPage] = useState(1)
-    const [importanceFilter, setImportanceFilter] = useState("all")
-    const [readFilter, setReadFilter] = useState("all")
+    const [searchQuery, setSearchQuery] = useState<string>("")
+    const [currentPage, setCurrentPage] = useState<number>(1)
+    const [importanceFilter, setImportanceFilter] = useState<string>("all")
+    const [readFilter, setReadFilter] = useState<string>("all")
 
     const queryClient = useQueryClient()
 
@@ -131,7 +130,40 @@ export function NotificationsTable() {
             )
         },
         onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: ["notifications"] })
+            queryClient.invalidateQueries({ queryKey: getQueryKey() })
+        },
+    })
+
+    const toggleReadStatusMutation = useMutation({
+        mutationFn: toggleMarkRead,
+        onMutate: async (notificationId: string) => {
+            await queryClient.cancelQueries({ queryKey: getQueryKey() })
+
+            const previousNotifications =
+                queryClient.getQueryData<ApiResponse>(getQueryKey())
+
+            if (!previousNotifications) return
+
+            const modifiedNotifications =
+                previousNotifications.notifications.map(notification => {
+                    if (notification.id === notificationId) {
+                        return { ...notification, isRead: !notification.isRead }
+                    }
+                    return notification
+                })
+
+            queryClient.setQueryData(getQueryKey(), {
+                ...previousNotifications,
+                notifications: modifiedNotifications,
+            })
+
+            return { previousNotifications }
+        },
+        onError: (_, __, context) => {
+            queryClient.setQueryData(
+                getQueryKey(),
+                context?.previousNotifications
+            )
         },
     })
 
@@ -152,7 +184,9 @@ export function NotificationsTable() {
                 <div className="flex flex-col sm:flex-row gap-4">
                     <Select
                         value={importanceFilter}
-                        onValueChange={setImportanceFilter}
+                        onValueChange={(value: string) =>
+                            setImportanceFilter(value)
+                        }
                     >
                         <SelectTrigger className="w-full sm:w-40">
                             <SelectValue placeholder="Importance" />
@@ -219,7 +253,7 @@ export function NotificationsTable() {
                                     colSpan={6}
                                     className="h-24 text-center"
                                 >
-                                    Error:{" "}
+                                    Error:
                                     {(error as Error)?.message ||
                                         "Something went wrong"}
                                 </TableCell>
@@ -324,13 +358,25 @@ export function NotificationsTable() {
                                                     </DropdownMenuLabel>
                                                     <DropdownMenuSeparator />
                                                     {!notification.isRead && (
-                                                        <DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            onClick={() =>
+                                                                toggleReadStatusMutation.mutate(
+                                                                    notification.id
+                                                                )
+                                                            }
+                                                        >
                                                             <CheckCircle className="mr-2 h-4 w-4" />
                                                             Mark as Read
                                                         </DropdownMenuItem>
                                                     )}
                                                     {notification.isRead && (
-                                                        <DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            onClick={() =>
+                                                                toggleReadStatusMutation.mutate(
+                                                                    notification.id
+                                                                )
+                                                            }
+                                                        >
                                                             <Bell className="mr-2 h-4 w-4" />
                                                             Mark as Unread
                                                         </DropdownMenuItem>
@@ -425,6 +471,8 @@ export function NotificationsTable() {
     )
 }
 
+/* helping functions  */
+
 async function fetchNotifications({
     page,
     search,
@@ -469,16 +517,16 @@ async function handleDeleteNotification(notificationId: string) {
     return response.json()
 }
 
-async function handleMarkAsReadClick(notificationId: string) {
-    const response = await fetch(
-        `/api/admin/notifications/${notificationId}/mark-as-read`,
-        {
-            method: "PATCH",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        }
-    )
+async function toggleMarkRead(notificationId: string) {
+    const response = await fetch(`/api/admin/notifications/${notificationId}`, {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    })
+    if (!response.ok) {
+        throw new Error("Failed to mark notification as read")
+    }
 }
 
 function getImportanceDetails(level: string) {

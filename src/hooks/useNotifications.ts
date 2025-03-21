@@ -21,6 +21,7 @@ export const useNotifications = (userId: string | undefined) => {
         data: notifications,
         isError: isNotificationsFetchError,
         isLoading: isNotificationsLoading,
+        refetch: refetchNotifications,
     } = useQuery<Notification[] | []>({
         queryKey: ["notifications", userId],
         queryFn: async () => {
@@ -140,5 +141,6 @@ export const useNotifications = (userId: string | undefined) => {
         isNotificationsFetchError,
         isNotificationsLoading,
         sendNotification,
+        refetchNotifications,
     }
 }

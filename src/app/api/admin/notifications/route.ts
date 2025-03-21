@@ -148,7 +148,7 @@ export async function POST(req: NextRequest) {
                             user: { isActive: true },
                         },
                         {
-                            id: { not: toUserId },
+                            id: { not: senderProfile.id },
                         },
                     ],
                 },
@@ -213,7 +213,7 @@ export async function POST(req: NextRequest) {
     }
 }
 
-export async function PUT(req: NextRequest) {
+export async function PATCH(req: NextRequest) {
     await checkAuth()
 
     const { notificationId: id } = Object.fromEntries(

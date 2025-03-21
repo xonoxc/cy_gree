@@ -89,9 +89,18 @@ const updateProfileSchema = z.object({
     country: z.string().trim().optional(),
 })
 
+/*
+ *  claim reward schema
+ */
+const claimRewardSchema = z.object({
+    userId: z.string().uuid(),
+    rewardId: z.string().uuid(),
+})
+
 export {
     registerUserCredValidationSchema,
     loginUserSchemaValidation,
     userUpdateValidationSchema,
+    claimRewardSchema,
     updateProfileSchema,
 }

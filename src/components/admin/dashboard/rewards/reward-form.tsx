@@ -26,49 +26,7 @@ import {
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Gift, Tag, Percent } from "lucide-react"
-
-// Mock data for users
-const users = [
-    { id: "user1", name: "John Doe" },
-    { id: "user2", name: "Jane Smith" },
-    { id: "user3", name: "Mike Johnson" },
-    { id: "user4", name: "Sarah Williams" },
-    { id: "user5", name: "David Brown" },
-]
-
-// Mock data for available rewards
-const availableRewards = [
-    {
-        id: "reward1",
-        title: "10% Discount Coupon",
-        pointsRequired: 500,
-        rewardType: "Gift_Coupon",
-    },
-    {
-        id: "reward2",
-        title: "₹100 Cashback",
-        pointsRequired: 1000,
-        rewardType: "Cash",
-    },
-    {
-        id: "reward3",
-        title: "Free Eco-friendly Bag",
-        pointsRequired: 750,
-        rewardType: "Gift_Coupon",
-    },
-    {
-        id: "reward4",
-        title: "Buy 1 Get 1 Free",
-        pointsRequired: 1200,
-        rewardType: "Offer",
-    },
-    {
-        id: "reward5",
-        title: "₹250 Cashback",
-        pointsRequired: 2000,
-        rewardType: "Cash",
-    },
-]
+import { useMutation } from "@tanstack/react-query"
 
 const formSchema = z.object({
     userId: z.string({
@@ -79,9 +37,25 @@ const formSchema = z.object({
     }),
 })
 
+const claimReward = async (data: { userId: string; rewardId: string }) => {
+    const response = await fetch("/api/rewards/claim", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+    })
+
+    if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || "Failed to claim reaward")
+    }
+
+    return response.json()
+}
+
 export function RewardForm({ reward }: { reward?: any }) {
     const router = useRouter()
-    const [isLoading, setIsLoading] = useState(false)
     const [selectedUser, setSelectedUser] = useState<string | null>(null)
     const [userPoints, setUserPoints] = useState<number>(0)
 
@@ -90,6 +64,29 @@ export function RewardForm({ reward }: { reward?: any }) {
         defaultValues: {
             userId: reward?.userId || "",
             rewardId: reward?.rewardId || "",
+        },
+    })
+
+    const claimRewardMutation = useMutation({
+        mutationFn: claimReward,
+        onSuccess: () => {
+            toast({
+                title: reward ? "Claimed reward updated" : "Reward claimed",
+                description: reward
+                    ? "The claimed reward has been updated successfully."
+                    : "The reward has been claimed successfully.",
+            })
+            router.push("/admin/dashboard/rewards")
+        },
+        onError: error => {
+            toast({
+                title: "Something went wrong.",
+                description:
+                    error instanceof Error
+                        ? error.message
+                        : "Your reward claim was not processed. Please try again.",
+                variant: "destructive",
+            })
         },
     })
 
@@ -116,8 +113,6 @@ export function RewardForm({ reward }: { reward?: any }) {
             return
         }
 
-        setIsLoading(true)
-
         try {
             // Here you would normally send the data to your API
             console.log(values)
@@ -140,8 +135,6 @@ export function RewardForm({ reward }: { reward?: any }) {
                     "Your reward claim was not processed. Please try again.",
                 variant: "destructive",
             })
-        } finally {
-            setIsLoading(false)
         }
     }
 

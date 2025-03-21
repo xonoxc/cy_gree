@@ -98,28 +98,6 @@ export function NotificationsTable() {
     const totalPages = data?.totalPages || 1
     const totalNotifications = data?.total || 0
 
-    const getImportanceDetails = (level: string) => {
-        switch (level) {
-            case "Low":
-                return {
-                    variant: "outline",
-                    icon: <Bell className="h-4 w-4 mr-1" />,
-                }
-            case "Medium":
-                return {
-                    variant: "warning",
-                    icon: <AlertCircle className="h-4 w-4 mr-1" />,
-                }
-            case "High":
-                return {
-                    variant: "destructive",
-                    icon: <AlertTriangle className="h-4 w-4 mr-1" />,
-                }
-            default:
-                return { variant: "secondary", icon: null }
-        }
-    }
-
     const deleteMutation = useMutation({
         mutationFn: handleDeleteNotification,
         onMutate: async (notificationId: string) => {
@@ -501,4 +479,26 @@ async function handleMarkAsReadClick(notificationId: string) {
             },
         }
     )
+}
+
+function getImportanceDetails(level: string) {
+    switch (level) {
+        case "Low":
+            return {
+                variant: "outline",
+                icon: <Bell className="h-4 w-4 mr-1" />,
+            }
+        case "Medium":
+            return {
+                variant: "warning",
+                icon: <AlertCircle className="h-4 w-4 mr-1" />,
+            }
+        case "High":
+            return {
+                variant: "destructive",
+                icon: <AlertTriangle className="h-4 w-4 mr-1" />,
+            }
+        default:
+            return { variant: "secondary", icon: null }
+    }
 }

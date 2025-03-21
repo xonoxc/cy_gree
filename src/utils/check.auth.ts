@@ -13,7 +13,7 @@ export async function checkAuth() {
     const user = session?.user
 
     if (!user) {
-        NextResponse.json(
+        return NextResponse.json(
             {
                 error: "Unauthorized Request",
             },
@@ -21,7 +21,6 @@ export async function checkAuth() {
                 status: 401,
             }
         )
-        return null
     }
 
     return user

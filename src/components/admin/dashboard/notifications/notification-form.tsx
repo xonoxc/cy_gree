@@ -29,6 +29,7 @@ import { Badge } from "@/components/ui/badge"
 import { Bell, AlertCircle, AlertTriangle, Users } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { adminNotificationSchema } from "@/types/admin/notifications"
+import { useQueryClient } from "@tanstack/react-query"
 
 interface User {
     id: string
@@ -39,6 +40,8 @@ export function NotificationForm({ notification }: { notification?: any }) {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
     const [users, setUsers] = useState<User[]>([])
+
+    const queryClient = useQueryClient()
 
     const form = useForm<z.infer<typeof adminNotificationSchema>>({
         resolver: zodResolver(adminNotificationSchema),
@@ -53,22 +56,23 @@ export function NotificationForm({ notification }: { notification?: any }) {
 
     const sendToAll = form.watch("sendToAll")
 
-    useEffect(() => {
-        async function fetchUsers() {
-            try {
-                const response = await fetch("/api/user")
-                if (!response.ok) throw new Error("Failed to fetch users")
-                const data = await response.json()
-                setUsers(data.users)
-            } catch (error) {
-                console.error("Error fetching users:", error)
-                toast({
-                    title: "Error",
-                    description: "Failed to load users. Please try again.",
-                    variant: "destructive",
-                })
-            }
+    async function fetchUsers() {
+        try {
+            const response = await fetch("/api/user")
+            if (!response.ok) throw new Error("Failed to fetch users")
+            const data = await response.json()
+            setUsers(data.users)
+        } catch (error) {
+            console.error("Error fetching users:", error)
+            toast({
+                title: "Error",
+                description: "Failed to load users. Please try again.",
+                variant: "destructive",
+            })
         }
+    }
+
+    useEffect(() => {
         fetchUsers()
     }, [])
 
@@ -106,6 +110,11 @@ export function NotificationForm({ notification }: { notification?: any }) {
                     ? "The notification has been updated successfully."
                     : "The notification has been sent successfully.",
             })
+
+            await queryClient.invalidateQueries([
+                "notifications",
+                values.userId,
+            ])
 
             router.push("/admin/dashboard/notifications")
         } catch (error) {

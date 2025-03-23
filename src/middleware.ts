@@ -3,8 +3,12 @@ import { getToken } from "next-auth/jwt"
 
 export { default } from "next-auth/middleware"
 
-const publicRoutes = ["/", "/sign-in", "/sign-up"]
-const privateRoutes = ["/usr/dashboard", "/agent/dashboard", "/admin/dashboard"]
+const privateRoutes = ["/usr", "/agent", "/admin"]
+const rolePrefixes = {
+    Client: "usr",
+    Agent: "agent",
+    Admin: "admin",
+}
 
 export async function middleware(request: NextRequest) {
     const token = await getToken({
@@ -12,23 +16,30 @@ export async function middleware(request: NextRequest) {
         secret: process.env.NEXT_AUTH_SECRET,
     })
 
-    const role = token?.role
     const pathName = request.nextUrl.pathname
 
-    if (token && role && publicRoutes.includes(pathName)) {
-        return NextResponse.redirect(
-            new URL(
-                `/${role === "Client" ? "usr" : role === "Admin" ? "admin" : "agent"}/dashboard`,
-                request.url
-            )
-        )
-    }
+    const isPrivateRoute = privateRoutes.some(route =>
+        pathName.startsWith(route)
+    )
 
-    if (!token && privateRoutes.includes(pathName)) {
+    if (!token && isPrivateRoute) {
         return NextResponse.redirect(new URL("/sign-in", request.url))
     }
+
+    if (token) {
+        const role = token.role
+        const dashboardPath = `/${rolePrefixes[role]}/dashboard`
+
+        if (!pathName.startsWith(dashboardPath) && isPrivateRoute) {
+            return NextResponse.redirect(new URL(dashboardPath, request.url))
+        }
+    }
+
+    return NextResponse.next()
 }
 
-export const matcher = [
-    "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
-]
+export const config = {
+    matcher: [
+        "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+    ],
+}

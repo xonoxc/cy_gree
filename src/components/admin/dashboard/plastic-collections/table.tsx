@@ -255,7 +255,7 @@ export function PlasticCollectionsTable() {
                                                     <DropdownMenuSeparator />
                                                     <DropdownMenuItem asChild>
                                                         <Link
-                                                            href={`/dashboard/plastic-collections/${collection.id}`}
+                                                            href={`/admin/dashboard/plastic-collections/${collection.id}`}
                                                         >
                                                             <Eye className="mr-2 h-4 w-4" />
                                                             View
@@ -263,7 +263,7 @@ export function PlasticCollectionsTable() {
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem asChild>
                                                         <Link
-                                                            href={`/dashboard/plastic-collections/${collection.id}/edit`}
+                                                            href={`/admin/dashboard/plastic-collections/${collection.id}/edit`}
                                                         >
                                                             <Edit className="mr-2 h-4 w-4" />
                                                             Edit

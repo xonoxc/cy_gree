@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -26,45 +26,29 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Clock, AlertCircle, CheckCircle } from "lucide-react"
-import Image from "next/image"
+import { Clock, AlertCircle, CheckCircle, Loader2 } from "lucide-react"
+import { PlasticCollection, User } from "@prisma/client"
+import { Label } from "@/components/ui/label"
+import { IKImage, IKUpload } from "imagekitio-next"
+import { IKUploadResponse } from "imagekitio-next/dist/types/components/IKUpload/props"
+import { Progress } from "@/components/ui/progress"
+import { adminCollcetionCreateSchema } from "@/utils/validation/collection/collection"
 
-const users = [
-    { id: "user1", name: "John Doe" },
-    { id: "user2", name: "Jane Smith" },
-    { id: "user3", name: "Mike Johnson" },
-    { id: "user4", name: "Sarah Williams" },
-    { id: "user5", name: "David Brown" },
-]
-
-const agents = [
-    { id: "agent1", name: "Agent 1" },
-    { id: "agent2", name: "Agent 2" },
-    { id: "agent3", name: "Agent 3" },
-]
-
-const formSchema = z.object({
-    userId: z.string({
-        required_error: "Please select a user.",
-    }),
-    imagePath: z.string().min(1, {
-        message: "Please provide an image URL.",
-    }),
-    amount: z.coerce.number().min(0.1, {
-        message: "Amount must be at least 0.1 kg.",
-    }),
-    status: z.enum(["Pending", "Claimed", "Collected"], {
-        required_error: "Please select a status.",
-    }),
-    claimedBy: z.string().optional(),
-})
-
-export function PlasticCollectionForm({ collection }: { collection?: any }) {
+export function PlasticCollectionForm({
+    collectionId,
+}: {
+    collectionId?: string
+}) {
     const router = useRouter()
-    const [isLoading, setIsLoading] = useState(false)
+    const [users, setUsers] = useState<User[]>([])
+    const [agents, setAgents] = useState<User[]>([])
+    const [collection, setCollection] = useState<PlasticCollection | null>(null)
+    const [isLoading, setIsLoading] = useState<boolean>(false)
+    const [imageUploadError, setImageUploadError] = useState<string>("")
+    const [imageUploadProgress, setImageUploadProgress] = useState<number>(0)
 
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+    const form = useForm<z.infer<typeof adminCollcetionCreateSchema>>({
+        resolver: zodResolver(adminCollcetionCreateSchema),
         defaultValues: {
             userId: collection?.userId || "",
             imagePath:
@@ -76,19 +60,26 @@ export function PlasticCollectionForm({ collection }: { collection?: any }) {
         },
     })
 
-    // Watch for status changes to update form behavior
     const status = form.watch("status")
 
-    async function onSubmit(values: z.infer<typeof formSchema>) {
+    async function onSubmit(
+        values: z.infer<typeof adminCollcetionCreateSchema>
+    ) {
         setIsLoading(true)
-
         try {
-            // Here you would normally send the data to your API
-            console.log(values)
+            const collectionCreateResult = await fetch(
+                "/api/admin/plastic-collections",
+                {
+                    method: "POST",
+                    body: JSON.stringify({
+                        ...values,
+                    }),
+                }
+            )
 
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1000))
-
+            if (!collectionCreateResult.ok) {
+                throw new Error("Failed to create collection")
+            }
             toast({
                 title: collection ? "Collection updated" : "Collection added",
                 description: collection
@@ -96,40 +87,87 @@ export function PlasticCollectionForm({ collection }: { collection?: any }) {
                     : "The plastic collection has been added successfully.",
             })
 
-            router.push("/dashboard/plastic-collections")
+            router.push("/admin/dashboard/plastic-collections")
         } catch (e) {
-            toast({
-                title: "Something went wrong.",
-                description: "Your collection was not saved. Please try again.",
-                variant: "destructive",
-            })
+            if (e instanceof Error) {
+                toast({
+                    title: e.message || "Something went wrong.",
+                    description:
+                        "Your collection was not saved. Please try again.",
+                    variant: "destructive",
+                })
+            } else {
+                console.error("error while creating collection:", e)
+            }
         } finally {
             setIsLoading(false)
         }
     }
 
-    // Status badge variant and icon
-    const getStatusDetails = (status: string) => {
-        switch (status.toLowerCase()) {
-            case "pending":
-                return {
-                    variant: "warning",
-                    icon: <Clock className="h-4 w-4 mr-1" />,
-                }
-            case "claimed":
-                return {
-                    variant: "outline",
-                    icon: <AlertCircle className="h-4 w-4 mr-1" />,
-                }
-            case "collected":
-                return {
-                    variant: "success",
-                    icon: <CheckCircle className="h-4 w-4 mr-1" />,
-                }
-            default:
-                return { variant: "secondary", icon: null }
+    async function fetchUsers() {
+        try {
+            const response = await fetch("/api/user")
+            if (!response.ok) throw new Error("Failed to fetch users")
+            const data = await response.json()
+
+            setUsers(data.users)
+        } catch (e) {
+            console.error("Error fetching users:", e)
+            toast({
+                title: "Error",
+                description: "Failed to load users. Please try again.",
+                variant: "destructive",
+            })
         }
     }
+
+    async function fetchAgents() {
+        try {
+            const agentfetchResults = await fetch("/api/admin/agents")
+            if (!agentfetchResults.ok) {
+                throw new Error("Failed to fetch agents")
+            }
+            const jsonAgents = await agentfetchResults.json()
+            setAgents(jsonAgents.agents)
+        } catch (e) {
+            console.error("Error fetching users:", e)
+            toast({
+                title: "Error",
+                description: "Failed to load users. Please try again.",
+                variant: "destructive",
+            })
+        }
+    }
+
+    async function fetchCollection() {
+        try {
+            const currentCollection = await fetch(
+                `/api/admin/plastic-collections/${collectionId}`
+            )
+            if (!currentCollection.ok) {
+                throw new Error("Failed to fetch agents")
+            }
+            const jsonAgents = await currentCollection.json()
+            setCollection(jsonAgents.collection)
+        } catch (e) {
+            console.error("Error fetching users:", e)
+            toast({
+                title: "Error",
+                description: "Failed to load users. Please try again.",
+                variant: "destructive",
+            })
+        }
+    }
+
+    useEffect(() => {
+        ;(async () => {
+            const promises = [fetchUsers(), fetchAgents()]
+
+            if (collectionId) promises.push(fetchCollection())
+
+            await Promise.all(promises)
+        })()
+    }, [])
 
     return (
         <Card>
@@ -171,40 +209,62 @@ export function PlasticCollectionForm({ collection }: { collection?: any }) {
                             )}
                         />
 
-                        <FormField
-                            control={form.control}
-                            name="imagePath"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Image URL</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            placeholder="https://example.com/image.jpg"
-                                            {...field}
-                                        />
-                                    </FormControl>
-                                    <FormDescription>
-                                        URL of the image showing the plastic
-                                        collection.
-                                    </FormDescription>
-                                    <FormMessage />
-
-                                    {field.value && (
-                                        <div className="mt-2 relative h-40 w-full max-w-md rounded-md overflow-hidden border">
-                                            <Image
-                                                src={
-                                                    field.value ||
-                                                    "/placeholder.svg"
-                                                }
-                                                alt="Plastic collection preview"
-                                                fill
-                                                className="object-cover"
-                                            />
-                                        </div>
+                        <div className="space-y-2">
+                            <Label
+                                htmlFor="pic"
+                                className="text-sm font-medium"
+                            >
+                                Picture Upload *
+                            </Label>
+                            <div className="flex flex-col gap-2">
+                                <div className="relative">
+                                    {imageUploadError && (
+                                        <div>{imageUploadError}</div>
                                     )}
-                                </FormItem>
-                            )}
-                        />
+                                    <IKUpload
+                                        folder={"collections"}
+                                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                        onError={(e: any) =>
+                                            setImageUploadError(
+                                                JSON.stringify(e)
+                                            )
+                                        }
+                                        onSuccess={(resp: IKUploadResponse) =>
+                                            form.setValue(
+                                                "imagePath",
+                                                resp.filePath
+                                            )
+                                        }
+                                        onUploadProgress={(
+                                            e: ProgressEvent<XMLHttpRequestEventTarget>
+                                        ) =>
+                                            setImageUploadProgress(
+                                                (e.loaded / e.total) * 100
+                                            )
+                                        }
+                                    />
+                                </div>
+                                <div className="w-full items-center justify-center flex">
+                                    {form.getValues("imagePath") ? (
+                                        <Card className="p-2 mt-2 overflow-hidden">
+                                            <div className="relative aspect-video w-full overflow-hidden rounded-md bg-muted">
+                                                <IKImage
+                                                    path={form.getValues(
+                                                        "imagePath"
+                                                    )}
+                                                    alt="uploaded image"
+                                                />
+                                            </div>
+                                        </Card>
+                                    ) : imageUploadProgress > 0 ? (
+                                        <Progress
+                                            value={imageUploadProgress}
+                                            className="w-[90%]"
+                                        />
+                                    ) : null}
+                                </div>
+                            </div>
+                        </div>
 
                         <FormField
                             control={form.control}
@@ -392,7 +452,7 @@ export function PlasticCollectionForm({ collection }: { collection?: any }) {
                         <Button type="submit" disabled={isLoading}>
                             {isLoading ? (
                                 <span className="flex items-center gap-1">
-                                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                     Saving...
                                 </span>
                             ) : collection ? (
@@ -406,4 +466,26 @@ export function PlasticCollectionForm({ collection }: { collection?: any }) {
             </Form>
         </Card>
     )
+}
+
+function getStatusDetails(status: string) {
+    switch (status.toLowerCase()) {
+        case "pending":
+            return {
+                variant: "warning",
+                icon: <Clock className="h-4 w-4 mr-1" />,
+            }
+        case "claimed":
+            return {
+                variant: "outline",
+                icon: <AlertCircle className="h-4 w-4 mr-1" />,
+            }
+        case "collected":
+            return {
+                variant: "success",
+                icon: <CheckCircle className="h-4 w-4 mr-1" />,
+            }
+        default:
+            return { variant: "secondary", icon: null }
+    }
 }

@@ -103,7 +103,7 @@ export async function GET(req: NextRequest) {
     }
 }
 
-export default async function POST(req: NextRequest) {
+export async function POST(req: NextRequest) {
     try {
         const { userId, rewardId } = claimRewardSchema.parse(req.body)
 

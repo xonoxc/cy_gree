@@ -41,6 +41,7 @@ export async function POST(
         const collectionValidation = collectionCreateValidationSchema.safeParse(
             { amount_collected, pic }
         )
+
         if (!collectionValidation.success)
             return NextResponse.json(
                 {

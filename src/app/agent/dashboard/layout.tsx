@@ -12,7 +12,12 @@ export default function AgentLayout({
 }>) {
     const { data: session, status } = useSession()
 
-    if (status === "loading") return <div>loading .....</div>
+    if (status === "loading")
+        return (
+            <div className="h-screen w-screen flex justify-center items-center">
+                loading .....
+            </div>
+        )
 
     return (
         <AgentProvider agentId={session?.user.id}>

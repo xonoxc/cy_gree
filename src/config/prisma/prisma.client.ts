@@ -22,5 +22,4 @@ if (process.env.NODE_ENV === "development") {
     globalPrismaInstance.prisma = prisma
 }
 
-
 export default prisma

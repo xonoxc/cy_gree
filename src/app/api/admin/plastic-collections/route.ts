@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/config/prisma/prisma.client"
 import { checkAuth } from "@/utils/check.auth"
 import { Record } from "@prisma/client/runtime/library"
+import { logErrors } from "@/utils/errors/errorLogs"
+import { adminCollcetionCreateSchema } from "@/utils/validation/collection/collection"
+import { capitalizeFirstLetter } from "@/utils/capitalize"
 
 export async function GET(req: NextRequest) {
     await checkAuth()
@@ -52,7 +55,7 @@ export async function GET(req: NextRequest) {
         }
 
         if (status !== "all") {
-            searchFilter.status = status
+            searchFilter.status = capitalizeFirstLetter(status)
         }
 
         const totalCollections = await prisma.plasticCollection.count({
@@ -100,9 +103,67 @@ export async function GET(req: NextRequest) {
             },
             { status: 200 }
         )
-    } catch (error) {
-        console.error("Error fetching plastic collections:", error)
+    } catch (e) {
+        logErrors(e)
         NextResponse.json({ message: "Internal server error" }, { status: 500 })
+    } finally {
+        await prisma.$disconnect()
+    }
+}
+
+export async function POST(req: NextRequest) {
+    await checkAuth()
+    try {
+        const body = await req.json()
+
+        const collectionValidation = adminCollcetionCreateSchema.safeParse(body)
+        if (!collectionValidation.success)
+            return NextResponse.json(
+                {
+                    error: "Invalid body!",
+                    message: collectionValidation.error.flatten().fieldErrors,
+                },
+                { status: 400 }
+            )
+
+        console.log("validation passed")
+
+        const { imagePath, amount, status, claimedBy, userId } =
+            collectionValidation.data
+
+        const existingUser = await prisma.user.findUnique({
+            where: { id: userId },
+        })
+
+        if (!existingUser) {
+            return NextResponse.json(
+                { error: "User profile not found" },
+                { status: 404 }
+            )
+        }
+
+        const createdCollection = await prisma.plasticCollection.create({
+            data: {
+                amount,
+                userId,
+                status,
+                imagePath,
+                claimedBy,
+            },
+        })
+
+        if (!createdCollection) throw Error("Error creating collection !")
+
+        return NextResponse.json(
+            { message: "Collection created successfully!" },
+            { status: 201 }
+        )
+    } catch (e) {
+        logErrors(e)
+        return NextResponse.json(
+            { error: "error creating collection" },
+            { status: 500 }
+        )
     } finally {
         await prisma.$disconnect()
     }

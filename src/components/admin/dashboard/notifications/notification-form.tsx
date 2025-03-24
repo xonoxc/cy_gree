@@ -38,7 +38,7 @@ interface User {
 
 export function NotificationForm({ notification }: { notification?: any }) {
     const router = useRouter()
-    const [isLoading, setIsLoading] = useState(false)
+    const [isLoading, setIsLoading] = useState<boolean>(false)
     const [users, setUsers] = useState<User[]>([])
 
     const queryClient = useQueryClient()
@@ -111,10 +111,9 @@ export function NotificationForm({ notification }: { notification?: any }) {
                     : "The notification has been sent successfully.",
             })
 
-            await queryClient.invalidateQueries([
-                "notifications",
-                values.userId,
-            ])
+            await queryClient.invalidateQueries({
+                queryKey: ["notifications"],
+            })
 
             router.push("/admin/dashboard/notifications")
         } catch (error) {

@@ -89,7 +89,12 @@ export default function RecyclingAgentDashboard() {
 
     if (isError)
         return <div className="p-4 text-center">Error loading data</div>
-    if (isLoading) return <div className="p-4 text-center">Loading...</div>
+    if (isLoading)
+        return (
+            <div className="h-screen w-screen flex items-center justify-center p-4 text-center">
+                Loading...
+            </div>
+        )
 
     return (
         <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#161617] to-black">

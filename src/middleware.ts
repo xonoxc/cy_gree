@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getToken } from "next-auth/jwt"
 
-export { default } from "next-auth/middleware"
-
-const privateRoutes = ["/usr", "/agent", "/admin"]
+const publicRoutes = ["/", "/sign-in", "/sign-up"]
+const privateRoutes = ["/usr/dashboard", "/agent/dashboard", "/admin/dashboard"]
 const rolePrefixes = {
     Client: "usr",
     Agent: "agent",
@@ -16,30 +15,29 @@ export async function middleware(request: NextRequest) {
         secret: process.env.NEXT_AUTH_SECRET,
     })
 
+    const role = token?.role as "Admin" | "Client" | "Agent"
     const pathName = request.nextUrl.pathname
 
-    const isPrivateRoute = privateRoutes.some(route =>
-        pathName.startsWith(route)
-    )
+    if (token && publicRoutes.includes(pathName)) {
+        return NextResponse.redirect(
+            new URL(`/${rolePrefixes[role]}/dashboard`, request.url)
+        )
+    }
 
-    if (!token && isPrivateRoute) {
+    if (!token && privateRoutes.includes(pathName)) {
         return NextResponse.redirect(new URL("/sign-in", request.url))
     }
 
-    if (token) {
-        const role = token.role
-        const dashboardPath = `/${rolePrefixes[role]}/dashboard`
-
-        if (!pathName.startsWith(dashboardPath) && isPrivateRoute) {
-            return NextResponse.redirect(new URL(dashboardPath, request.url))
-        }
+    if (token && privateRoutes.includes(pathName)) {
+        if (!pathName.startsWith(`/${rolePrefixes[role]}`))
+            return NextResponse.redirect(
+                new URL(`/${rolePrefixes[role]}/dashboard`, request.url)
+            )
     }
 
     return NextResponse.next()
 }
 
-export const config = {
-    matcher: [
-        "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
-    ],
-}
+export const matcher = [
+    "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+]

@@ -13,8 +13,12 @@ export async function POST(
     request: NextRequest,
     props: { params: Promise<{ user_id: string }> }
 ) {
+    const currentUser = (await checkAuth()) as {
+        id: string
+        role: string
+    }
+
     const params = await props.params
-    const currentUserId = await checkAuth()
 
     try {
         const { user_id: userId } = params
@@ -45,7 +49,7 @@ export async function POST(
 
         const createdNotification = await prisma.notification.create({
             data: {
-                userId: currentUserId!.id,
+                userId: currentUser.id,
                 toUserId: userId,
                 message,
                 importanceLevel: importance_level,

@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-// import { useRouter } from "next/navigation"
 import {
     Table,
     TableBody,
@@ -49,10 +48,9 @@ import { RoleFilter } from "@/app/api/admin/profiles/route"
 import { ProfilesResp } from "@/app/api/admin/profiles/route"
 import { PaginatedResponse } from "@/types/response"
 import { useQuery } from "@tanstack/react-query"
+import { ITEMS_PER_PAGE } from "@/constants/pagination"
 
 type PaginatedProfilsResponse = PaginatedResponse<ProfilesResp[]>
-
-const ITEMS_PER_PAGE = 3
 
 export function UserProfilesTable() {
     const [searchQuery, setSearchQuery] = useState<string>("")

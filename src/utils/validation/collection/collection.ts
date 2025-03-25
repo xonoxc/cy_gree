@@ -27,3 +27,15 @@ export const adminCollcetionCreateSchema = z.object({
     }),
     claimedBy: z.string().optional(),
 })
+
+/**
+ * Update collection validation schema
+ */
+
+export const updateCollectionSchema = z.object({
+    userId: z.string().optional(),
+    imagePath: z.string().optional(),
+    amount: z.number().optional(),
+    status: z.enum(["Pending", "Claimed", "Collected"]).optional(),
+    claimedBy: z.string().optional(),
+})

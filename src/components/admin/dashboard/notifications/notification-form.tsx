@@ -28,7 +28,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Bell, AlertCircle, AlertTriangle, Users } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
-import { adminNotificationSchema } from "@/types/admin/notifications"
+import { adminNotificationSchema } from "@/types/admin/notifications.types"
 import { useQueryClient } from "@tanstack/react-query"
 
 interface User {

@@ -97,7 +97,7 @@ export default function RecyclingAgentDashboard() {
         )
 
     return (
-        <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#161617] to-black">
+        <div className="flex flex-col min-h-screen bg-[#0f0f12] to-black">
             <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                 <h1 className="text-xl font-semibold">Agent Dashboard</h1>
                 <div className="ml-auto flex items-center gap-4">

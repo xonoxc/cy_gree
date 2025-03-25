@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/utils/check.auth"
 import prisma from "@/config/prisma/prisma.client"
+import { logErrors } from "@/utils/errors/errorLogs"
+import { listRewardFormSchema } from "@/utils/validation/list-rewards"
 
 export async function GET(req: NextRequest) {
     await checkAuth()
@@ -70,6 +72,41 @@ export async function GET(req: NextRequest) {
     } catch (error) {
         console.error("Error fetching list rewards:", error)
         NextResponse.json({ message: "Internal server error" }, { status: 500 })
+    } finally {
+        await prisma.$disconnect()
+    }
+}
+
+export async function POST(req: NextRequest) {
+    await checkAuth()
+    try {
+        const body = await req.json()
+        const listRewardValidationRes = listRewardFormSchema.safeParse(body)
+        if (!listRewardValidationRes.success) {
+            return NextResponse.json(
+                { error: listRewardValidationRes.error.format() },
+                { status: 400 }
+            )
+        }
+
+        const { title, pointsRequired, rewardType } =
+            listRewardValidationRes.data
+
+        const newReward = await prisma.listReward.create({
+            data: {
+                title,
+                pointsRequired,
+                rewardType,
+            },
+        })
+
+        return NextResponse.json(newReward, { status: 201 })
+    } catch (e) {
+        logErrors(e)
+        return NextResponse.json(
+            { message: "Cannot create reward" },
+            { status: 500 }
+        )
     } finally {
         await prisma.$disconnect()
     }

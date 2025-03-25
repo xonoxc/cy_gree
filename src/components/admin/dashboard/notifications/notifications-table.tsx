@@ -43,8 +43,8 @@ import {
 } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Time from "@/components/time"
+import { ITEMS_PER_PAGE } from "@/constants/pagination"
 
-const ITEMS_PER_PAGE = 10
 interface Notification {
     id: string
     userId: string

@@ -1,5 +1,5 @@
-import { PlasticCollectionForm } from "@/components/admin/dashboard/plastic-collections/pcollection-form"
 import { Button } from "@/components/ui/button"
+import { PlasticCollectionForm } from "@/components/admin/dashboard/plastic-collections/pcollection-form"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
@@ -22,7 +22,7 @@ export default async function NewPlasticCollectionPage({
                     Add Plastic Collection
                 </h1>
             </div>
-            <PlasticCollectionForm collection={collection_id} />
+            <PlasticCollectionForm collectionId={collection_id} />
         </div>
     )
 }

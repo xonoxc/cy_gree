@@ -47,6 +47,8 @@ import { useDebounceValue } from "usehooks-ts"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 
+import { ITEMS_PER_PAGE } from "@/constants/pagination"
+
 type PaginatedUsers = PaginatedResponse<UsersResp[]>
 type ActiveStatus = "all" | "active" | "inactive"
 
@@ -58,8 +60,6 @@ type ActiveStatus = "all" | "active" | "inactive"
 
 const Time = dynamic(() => import("@/components/time"), { ssr: false })
 
-const itemsPerPage = 2
-
 const fetchUsers = async (
     page = 1,
     searchQuery: string = "",
@@ -67,7 +67,7 @@ const fetchUsers = async (
 ): Promise<PaginatedUsers> => {
     const searchParams = new URLSearchParams({
         page: page.toString(),
-        limit: itemsPerPage.toString(),
+        limit: ITEMS_PER_PAGE.toString(),
         search: searchQuery,
         status: statusFilter,
     })
@@ -291,12 +291,12 @@ export function UsersTable() {
                         Showing{" "}
                         {Math.min(
                             paginatedUsers.data?.length,
-                            (page - 1) * itemsPerPage + 1
+                            (page - 1) * ITEMS_PER_PAGE + 1
                         )}{" "}
                         to{" "}
                         {Math.min(
                             paginatedUsers.data?.length,
-                            page * itemsPerPage
+                            page * ITEMS_PER_PAGE
                         )}{" "}
                         of {paginatedUsers.data?.length} users
                     </div>

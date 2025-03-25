@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { checkAuth } from "@/utils/check.auth"
 import prisma from "@/config/prisma/prisma.client"
 import { logErrors } from "@/utils/errors/errorLogs"
-import { adminNotificationSchema } from "@/types/admin/notifications"
+import { adminNotificationSchema } from "@/types/admin/notifications.types"
 
 export async function GET(req: NextRequest) {
     await checkAuth()
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
         const bodyValidationRes = adminNotificationSchema.safeParse(body)
         if (!bodyValidationRes.success) {
             return NextResponse.json(
-                { error: bodyValidationRes.error.flatten() },
+                { error: bodyValidationRes.error.format() },
                 { status: 400 }
             )
         }
@@ -234,7 +234,7 @@ export async function PATCH(req: NextRequest) {
         const bodyValidationRes = adminNotificationSchema.safeParse(body)
         if (!bodyValidationRes.success) {
             return NextResponse.json(
-                { error: bodyValidationRes.error.flatten() },
+                { error: bodyValidationRes.error.format() },
                 { status: 400 }
             )
         }

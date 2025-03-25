@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json(
                 {
                     error: "Invalid body!",
-                    message: collectionValidation.error.flatten().fieldErrors,
+                    message: collectionValidation.error.format(),
                 },
                 { status: 400 }
             )

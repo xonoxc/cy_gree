@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import {
     Table,
     TableBody,
@@ -43,6 +43,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
+import { logErrors } from "@/utils/errors/errorLogs"
 
 const itemsPerPage = 10
 
@@ -90,6 +92,10 @@ export function ListRewardsTable() {
     const [currentPage, setCurrentPage] = useState(1)
     const [typeFilter, setTypeFilter] = useState("all")
 
+    const { toast } = useToast()
+
+    const queryClient = useQueryClient()
+
     const { data, isLoading, isError, error } = useQuery({
         queryKey: ["list-rewards", currentPage, searchQuery, typeFilter],
         queryFn: () =>
@@ -104,25 +110,27 @@ export function ListRewardsTable() {
     const rewards = data?.rewards || []
     const totalPages = data?.totalPages || 1
 
-    const getTypeDetails = (type: string) => {
-        switch (type) {
-            case "Gift_Coupon":
-                return {
-                    variant: "default",
-                    icon: <Gift className="h-4 w-4 mr-1" />,
-                }
-            case "Cash":
-                return {
-                    variant: "success",
-                    icon: <Tag className="h-4 w-4 mr-1" />,
-                }
-            case "Offer":
-                return {
-                    variant: "warning",
-                    icon: <Percent className="h-4 w-4 mr-1" />,
-                }
-            default:
-                return { variant: "secondary", icon: null }
+    const deleteReward = async (id: string) => {
+        try {
+            const deleteRes = await fetch(`/api/admin/list-rewards/${id}`, {
+                method: "DELETE",
+            })
+
+            if (!deleteRes.ok) throw new Error("Failed to delete reward")
+
+            await queryClient.invalidateQueries({
+                queryKey: ["list-rewards"],
+            })
+
+            toast({
+                title: "Reward deleted successfully",
+            })
+        } catch (e) {
+            logErrors(e)
+            toast({
+                title: "Cannot delete reward",
+                description: "An error occurred while deleting the reward",
+            })
         }
     }
 
@@ -250,13 +258,20 @@ export function ListRewardsTable() {
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem asChild>
                                                         <Link
-                                                            href={`/dashboard/list-rewards/${reward.id}/edit`}
+                                                            href={`/admin/dashboard/list-rewards/${reward.id}/edit`}
                                                         >
                                                             <Edit className="mr-2 h-4 w-4" />
                                                             Edit
                                                         </Link>
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem className="text-destructive">
+                                                    <DropdownMenuItem
+                                                        className="text-destructive"
+                                                        onClick={() =>
+                                                            deleteReward(
+                                                                reward.id
+                                                            )
+                                                        }
+                                                    >
                                                         <Trash className="mr-2 h-4 w-4" />
                                                         Delete
                                                     </DropdownMenuItem>
@@ -333,4 +348,26 @@ export function ListRewardsTable() {
             )}
         </div>
     )
+}
+
+const getTypeDetails = (type: string) => {
+    switch (type) {
+        case "Gift_Coupon":
+            return {
+                variant: "default",
+                icon: <Gift className="h-4 w-4 mr-1" />,
+            }
+        case "Cash":
+            return {
+                variant: "success",
+                icon: <Tag className="h-4 w-4 mr-1" />,
+            }
+        case "Offer":
+            return {
+                variant: "warning",
+                icon: <Percent className="h-4 w-4 mr-1" />,
+            }
+        default:
+            return { variant: "secondary", icon: null }
+    }
 }

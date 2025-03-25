@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -25,30 +25,15 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Award, Medal, Leaf, Shield, Recycle } from "lucide-react"
-
-const users = [
-    { id: "user1", name: "John Doe" },
-    { id: "user2", name: "Jane Smith" },
-    { id: "user3", name: "Mike Johnson" },
-    { id: "user4", name: "Sarah Williams" },
-    { id: "user5", name: "David Brown" },
-]
-
-const formSchema = z.object({
-    userId: z.string({
-        required_error: "Please select a user.",
-    }),
-    name: z.enum(
-        ["Recycler", "Eco_Warrior", "Green_Ambassador", "Sustainability_Hero"],
-        {
-            required_error: "Please select a badge type.",
-        }
-    ),
-})
+import { badgeAdminFormSchema as formSchema } from "@/utils/validation/badge"
+import { useQueryClient } from "@tanstack/react-query"
 
 export function BadgeForm() {
+    const queryClient = useQueryClient()
+
     const router = useRouter()
-    const [isLoading, setIsLoading] = useState(false)
+    const [users, setUsers] = useState<{ id: string; name: string }[]>([])
+    const [isLoading, setIsLoading] = useState<boolean>(false)
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -58,22 +43,31 @@ export function BadgeForm() {
         },
     })
 
+    const formatBadgeName = (name: string) => {
+        return name.replace(/_/g, " ")
+    }
+
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsLoading(true)
 
         try {
-            // Here you would normally send the data to your API
-            console.log(values)
+            const badgeCreateRes = await fetch("/api/admin/badges", {
+                method: "POST",
+                body: JSON.stringify(values),
+            })
 
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1000))
+            if (!badgeCreateRes.ok) throw new Error("Failed to award badge.")
 
             toast({
                 title: "Badge awarded",
                 description: "The badge has been awarded successfully.",
             })
 
-            router.push("/dashboard/badges")
+            await queryClient.invalidateQueries({
+                queryKey: ["badges"],
+            })
+
+            router.push("/admin/dashboard/badges")
         } catch (e) {
             toast({
                 title: "Something went wrong.",
@@ -85,41 +79,11 @@ export function BadgeForm() {
         }
     }
 
-    // Badge icon and color
-    const getBadgeDetails = (badgeType: string) => {
-        switch (badgeType) {
-            case "Recycler":
-                return {
-                    icon: <Recycle className="h-5 w-5 mr-2" />,
-                    color: "text-green-500",
-                }
-            case "Eco_Warrior":
-                return {
-                    icon: <Shield className="h-5 w-5 mr-2" />,
-                    color: "text-blue-500",
-                }
-            case "Green_Ambassador":
-                return {
-                    icon: <Leaf className="h-5 w-5 mr-2" />,
-                    color: "text-emerald-500",
-                }
-            case "Sustainability_Hero":
-                return {
-                    icon: <Medal className="h-5 w-5 mr-2" />,
-                    color: "text-amber-500",
-                }
-            default:
-                return {
-                    icon: <Award className="h-5 w-5 mr-2" />,
-                    color: "text-gray-500",
-                }
-        }
-    }
-
-    // Format badge name for display
-    const formatBadgeName = (name: string) => {
-        return name.replace(/_/g, " ")
-    }
+    useEffect(() => {
+        fetch("/api/user")
+            .then(res => res.json())
+            .then(data => setUsers(data.users || []))
+    }, [])
 
     return (
         <Card>
@@ -243,16 +207,12 @@ export function BadgeForm() {
                                         </span>
                                     </div>
                                     <p className="text-sm text-muted-foreground">
-                                        {form.watch("name") === "Recycler" &&
-                                            "Awarded to users who have started their recycling journey."}
-                                        {form.watch("name") === "Eco_Warrior" &&
-                                            "Awarded to users who have recycled more than 10kg of plastic."}
+                                        {form.watch("name") === "Recycler"}
+                                        {form.watch("name") === "Eco_Warrior"}
                                         {form.watch("name") ===
-                                            "Green_Ambassador" &&
-                                            "Awarded to users who have recycled more than 25kg of plastic and have been active for at least 3 months."}
+                                            "Green_Ambassador"}
                                         {form.watch("name") ===
-                                            "Sustainability_Hero" &&
-                                            "Awarded to users who have recycled more than 50kg of plastic and have been active for at least 6 months."}
+                                            "Sustainability_Hero"}
                                     </p>
                                 </div>
                             )}
@@ -281,4 +241,34 @@ export function BadgeForm() {
             </Form>
         </Card>
     )
+}
+
+const getBadgeDetails = (badgeType: string) => {
+    switch (badgeType) {
+        case "Recycler":
+            return {
+                icon: <Recycle className="h-5 w-5 mr-2" />,
+                color: "text-green-500",
+            }
+        case "Eco_Warrior":
+            return {
+                icon: <Shield className="h-5 w-5 mr-2" />,
+                color: "text-blue-500",
+            }
+        case "Green_Ambassador":
+            return {
+                icon: <Leaf className="h-5 w-5 mr-2" />,
+                color: "text-emerald-500",
+            }
+        case "Sustainability_Hero":
+            return {
+                icon: <Medal className="h-5 w-5 mr-2" />,
+                color: "text-amber-500",
+            }
+        default:
+            return {
+                icon: <Award className="h-5 w-5 mr-2" />,
+                color: "text-gray-500",
+            }
+    }
 }

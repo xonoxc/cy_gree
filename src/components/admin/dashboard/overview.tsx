@@ -1,13 +1,6 @@
 "use client"
 
-import {
-    Bar,
-    BarChart,
-    ResponsiveContainer,
-    XAxis,
-    YAxis,
-    Tooltip,
-} from "recharts"
+import { Bar, BarChart, XAxis, YAxis, Tooltip } from "recharts"
 import { useQuery } from "@tanstack/react-query"
 
 /**

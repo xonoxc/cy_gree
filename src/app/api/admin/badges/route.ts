@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/config/prisma/prisma.client"
+import { logErrors } from "@/utils/errors/errorLogs"
+import { checkAuth } from "@/utils/check.auth"
+import { badgeAdminFormSchema as awardBageReqBodySchema } from "@/utils/validation/badge"
+import { idValidationSchema } from "@/utils/validation/user"
 
 export async function GET(req: NextRequest) {
     try {
@@ -77,10 +81,104 @@ export async function GET(req: NextRequest) {
             },
             { status: 200 }
         )
-    } catch (error) {
-        console.error("Error fetching badges:", error)
+    } catch (e) {
+        logErrors(e)
         return NextResponse.json(
             { message: "Internal server error" },
+            { status: 500 }
+        )
+    } finally {
+        await prisma.$disconnect()
+    }
+}
+
+export async function POST(req: NextRequest) {
+    await checkAuth()
+    try {
+        const body = await req.json()
+
+        const bodyValidationRes = awardBageReqBodySchema.safeParse(body)
+        if (!bodyValidationRes.success)
+            return NextResponse.json(
+                { error: bodyValidationRes.error.format() },
+                { status: 400 }
+            )
+
+        const { userId, name } = bodyValidationRes.data
+
+        const existingUser = await prisma.userProfile.findUnique({
+            where: {
+                userId,
+            },
+            select: {
+                id: true,
+            },
+        })
+
+        if (!existingUser)
+            return NextResponse.json(
+                {
+                    error: "User not found",
+                },
+                { status: 404 }
+            )
+
+        await prisma.badge.create({
+            data: {
+                userId: existingUser.id,
+                name,
+            },
+        })
+
+        return NextResponse.json(
+            { message: "Badge created successfully" },
+            { status: 201 }
+        )
+    } catch (e) {
+        logErrors(e)
+        return NextResponse.json(
+            {
+                error: "Something went wrong while creating reward",
+            },
+            { status: 500 }
+        )
+    } finally {
+        await prisma.$disconnect()
+    }
+}
+
+export async function DELETE(req: NextRequest) {
+    await checkAuth()
+    try {
+        const id = req.nextUrl.searchParams.get("badgeId")
+
+        const idValidationRes = idValidationSchema.safeParse(id)
+        if (!idValidationRes.success)
+            return NextResponse.json(
+                {
+                    error: idValidationRes.error.format(),
+                },
+                { status: 400 }
+            )
+
+        const badgeId = idValidationRes.data
+
+        await prisma.badge.delete({
+            where: {
+                id: badgeId,
+            },
+        })
+
+        return NextResponse.json(
+            {
+                message: "Badge revoked successfully",
+            },
+            { status: 200 }
+        )
+    } catch (e) {
+        logErrors(e)
+        return NextResponse.json(
+            { error: "Error while revoking reward" },
             { status: 500 }
         )
     } finally {

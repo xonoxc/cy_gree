@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import {
     Table,
     TableBody,
@@ -42,8 +42,9 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-
-const ITEMS_PER_PAGE = 10
+import { logErrors } from "@/utils/errors/errorLogs"
+import { useToast } from "@/hooks/use-toast"
+import { ITEMS_PER_PAGE } from "@/constants/pagination"
 
 interface Badge {
     id: string
@@ -86,9 +87,13 @@ async function fetchBadges({
 }
 
 export function BadgesTable() {
-    const [searchQuery, setSearchQuery] = useState("")
-    const [currentPage, setCurrentPage] = useState(1)
-    const [badgeFilter, setBadgeFilter] = useState("all")
+    const queryClient = useQueryClient()
+
+    const [searchQuery, setSearchQuery] = useState<string>("")
+    const [currentPage, setCurrentPage] = useState<number>(1)
+    const [badgeFilter, setBadgeFilter] = useState<string>("all")
+
+    const { toast } = useToast()
 
     const { data, isLoading, isError, error } = useQuery({
         queryKey: ["badges", currentPage, searchQuery, badgeFilter],
@@ -104,33 +109,32 @@ export function BadgesTable() {
     const badges = data?.badges || []
     const totalPages = data?.totalPages || 1
 
-    const getBadgeDetails = (badgeType: string) => {
-        switch (badgeType) {
-            case "Recycler":
-                return {
-                    icon: <Recycle className="h-4 w-4 mr-1" />,
-                    color: "text-green-500",
+    const deleteBadge = async (id: string) => {
+        try {
+            const deleteResponse = await fetch(
+                `/api/admin/badges?badgeId=${id}`,
+                {
+                    method: "DELETE",
                 }
-            case "Eco_Warrior":
-                return {
-                    icon: <Shield className="h-4 w-4 mr-1" />,
-                    color: "text-blue-500",
-                }
-            case "Green_Ambassador":
-                return {
-                    icon: <Leaf className="h-4 w-4 mr-1" />,
-                    color: "text-emerald-500",
-                }
-            case "Sustainability_Hero":
-                return {
-                    icon: <Medal className="h-4 w-4 mr-1" />,
-                    color: "text-amber-500",
-                }
-            default:
-                return {
-                    icon: <Award className="h-4 w-4 mr-1" />,
-                    color: "text-gray-500",
-                }
+            )
+
+            if (!deleteResponse.ok) throw new Error("Failed to delete badge")
+
+            await queryClient.invalidateQueries({
+                queryKey: ["badges"],
+            })
+
+            toast({
+                title: "Success",
+                description: "Badge revoked successfully",
+            })
+        } catch (e) {
+            logErrors(e)
+            toast({
+                title: "Error",
+                description: "Failed to delete badge",
+                variant: "destructive",
+            })
         }
     }
 
@@ -262,7 +266,14 @@ export function BadgesTable() {
                                                         Actions
                                                     </DropdownMenuLabel>
                                                     <DropdownMenuSeparator />
-                                                    <DropdownMenuItem className="text-destructive">
+                                                    <DropdownMenuItem
+                                                        className="text-destructive"
+                                                        onClick={() =>
+                                                            deleteBadge(
+                                                                badge.id
+                                                            )
+                                                        }
+                                                    >
                                                         <Trash className="mr-2 h-4 w-4" />
                                                         Revoke Badge
                                                     </DropdownMenuItem>
@@ -343,4 +354,34 @@ export function BadgesTable() {
             )}
         </div>
     )
+}
+
+const getBadgeDetails = (badgeType: string) => {
+    switch (badgeType) {
+        case "Recycler":
+            return {
+                icon: <Recycle className="h-4 w-4 mr-1" />,
+                color: "text-green-500",
+            }
+        case "Eco_Warrior":
+            return {
+                icon: <Shield className="h-4 w-4 mr-1" />,
+                color: "text-blue-500",
+            }
+        case "Green_Ambassador":
+            return {
+                icon: <Leaf className="h-4 w-4 mr-1" />,
+                color: "text-emerald-500",
+            }
+        case "Sustainability_Hero":
+            return {
+                icon: <Medal className="h-4 w-4 mr-1" />,
+                color: "text-amber-500",
+            }
+        default:
+            return {
+                icon: <Award className="h-4 w-4 mr-1" />,
+                color: "text-gray-500",
+            }
+    }
 }

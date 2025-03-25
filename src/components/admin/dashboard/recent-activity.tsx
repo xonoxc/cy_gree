@@ -61,7 +61,12 @@ export function RecentActivity() {
                                 src={`/placeholder.svg?height=36&width=36&text=${grabInitials(activity.name)}`}
                                 alt={activity.name}
                             />
-                            <AvatarFallback>{activity.name}</AvatarFallback>
+                            <AvatarFallback>
+                                {activity.name
+                                    .split(" ")[0]
+                                    .charAt(0)
+                                    .toUpperCase()}
+                            </AvatarFallback>
                         </Avatar>
                         <div className="space-y-1">
                             <p className="text-sm font-medium leading-none">

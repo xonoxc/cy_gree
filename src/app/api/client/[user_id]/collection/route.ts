@@ -46,7 +46,7 @@ export async function POST(
             return NextResponse.json(
                 {
                     error: "Invalid body!",
-                    message: collectionValidation.error.flatten().fieldErrors,
+                    message: collectionValidation.error.format(),
                 },
                 { status: 400 }
             )

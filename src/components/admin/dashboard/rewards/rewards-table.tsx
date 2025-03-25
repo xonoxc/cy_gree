@@ -42,8 +42,7 @@ import {
 } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { RoleFilter } from "@/app/api/admin/profiles/route"
-
-const itemsPerPage = 10
+import { ITEMS_PER_PAGE } from "@/constants/pagination"
 
 interface Reward {
     id: string
@@ -99,7 +98,7 @@ export function RewardsTable() {
                 page: currentPage,
                 search: searchQuery,
                 type: typeFilter,
-                limit: itemsPerPage,
+                limit: ITEMS_PER_PAGE,
             }),
     })
 
@@ -291,10 +290,13 @@ export function RewardsTable() {
                         Showing{" "}
                         {Math.min(
                             data?.total || 0,
-                            (currentPage - 1) * itemsPerPage + 1
+                            (currentPage - 1) * ITEMS_PER_PAGE + 1
                         )}{" "}
                         to{" "}
-                        {Math.min(data?.total || 0, currentPage * itemsPerPage)}{" "}
+                        {Math.min(
+                            data?.total || 0,
+                            currentPage * ITEMS_PER_PAGE
+                        )}{" "}
                         of {data?.total || 0} claimed rewards
                     </div>
                     <div className="flex items-center space-x-2">

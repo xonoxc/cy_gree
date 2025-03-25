@@ -73,7 +73,7 @@ export async function PATCH(
             return NextResponse.json(
                 {
                     error: "Invalid update data",
-                    details: error.flatten().fieldErrors,
+                    details: error.format(),
                 },
                 { status: 400 }
             )

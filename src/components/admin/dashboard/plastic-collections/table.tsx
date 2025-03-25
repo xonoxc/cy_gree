@@ -46,10 +46,9 @@ import {
 import Image from "next/image"
 import dynamic from "next/dynamic"
 import { RoleFilter } from "@/app/api/admin/profiles/route"
+import { ITEMS_PER_PAGE } from "@/constants/pagination"
 
 const Time = dynamic(() => import("@/components/time"), { ssr: false })
-
-const ITEMS_PER_PAGE = 10
 
 /**
  * Plastic collection datatype

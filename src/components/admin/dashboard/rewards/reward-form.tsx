@@ -1,22 +1,38 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { zodResolver } from "@hookform/resolvers/zod"
+import { useMutation, useQuery } from "@tanstack/react-query"
 import { useForm } from "react-hook-form"
-import * as z from "zod"
+import type { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useRouter } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
+import { useEffect, useState } from "react"
+import {
+    Award,
+    CheckCircle2,
+    Coins,
+    Loader2,
+    ShieldAlert,
+    User,
+} from "lucide-react"
+
 import { Button } from "@/components/ui/button"
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card"
 import {
     Form,
     FormControl,
-    FormDescription,
     FormField,
     FormItem,
     FormLabel,
     FormMessage,
 } from "@/components/ui/form"
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import { toast } from "@/hooks/use-toast"
 import {
     Select,
     SelectContent,
@@ -25,62 +41,50 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Gift, Tag, Percent } from "lucide-react"
-import { useMutation } from "@tanstack/react-query"
+import { Skeleton } from "@/components/ui/skeleton"
+import { rwardFormValidationSchema as formSchema } from "@/utils/validation/rewards"
+import type { IUserData } from "@/hooks/useClientstats"
 
-const formSchema = z.object({
-    userId: z.string({
-        required_error: "Please select a user.",
-    }),
-    rewardId: z.string({
-        required_error: "Please select a reward.",
-    }),
-})
-
-const claimReward = async (data: { userId: string; rewardId: string }) => {
-    const response = await fetch("/api/rewards/claim", {
+async function claimReward(data: z.infer<typeof formSchema>) {
+    const response = await fetch("/api/admin/rewards", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
     })
-
+    const result = await response.json()
     if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || "Failed to claim reaward")
+        throw new Error(result.message || "Failed to claim reward")
     }
-
-    return response.json()
+    return result
 }
 
-export function RewardForm({ reward }: { reward?: any }) {
-    const router = useRouter()
-    const [selectedUser, setSelectedUser] = useState<string | null>(null)
-    const [userPoints, setUserPoints] = useState<number>(0)
+export default function RewardForm() {
+    const [users, setUsers] = useState<{ id: string; name: string }[]>([])
+    const [availableRewards, setAvailableRewards] = useState<
+        {
+            id: string
+            title: string
+            pointsRequired: string
+        }[]
+    >([])
+    const [isLoadingData, setIsLoadingData] = useState(true)
 
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-            userId: reward?.userId || "",
-            rewardId: reward?.rewardId || "",
-        },
-    })
+    const router = useRouter()
+    const { toast } = useToast()
 
     const claimRewardMutation = useMutation({
         mutationFn: claimReward,
         onSuccess: () => {
             toast({
-                title: reward ? "Claimed reward updated" : "Reward claimed",
-                description: reward
-                    ? "The claimed reward has been updated successfully."
-                    : "The reward has been claimed successfully.",
+                title: "Reward claimed successfully",
+                description: "The reward has been added to the user's account.",
+                variant: "default",
             })
             router.push("/admin/dashboard/rewards")
         },
         onError: error => {
             toast({
-                title: "Something went wrong.",
+                title: "Claim failed",
                 description:
                     error instanceof Error
                         ? error.message
@@ -90,340 +94,269 @@ export function RewardForm({ reward }: { reward?: any }) {
         },
     })
 
-    // Watch for userId changes to update available points
-    const watchedUserId = form.watch("userId")
-    if (watchedUserId !== selectedUser) {
-        setSelectedUser(watchedUserId)
-        // In a real app, you would fetch the user's points from your API
-        // For now, we'll simulate it with random points between 500 and 3000
-        setUserPoints(Math.floor(Math.random() * 2500) + 500)
+    const { isPending } = claimRewardMutation
+
+    const form = useForm<z.infer<typeof formSchema>>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            userId: "",
+            rewardId: "",
+        },
+    })
+
+    const selectedUserId = form.watch("userId")
+    const selectedRewardId = form.watch("rewardId")
+
+    const { data: userProfile, isLoading: isLoadingProfile } =
+        useQuery<IUserData>({
+            queryKey: ["userProfile", selectedUserId],
+            queryFn: async () => {
+                const res = await fetch(`/api/profile/${selectedUserId}`)
+                return res.json()
+            },
+            enabled: !!selectedUserId,
+        })
+
+    const userPoints = userProfile
+        ? Number.parseInt(userProfile.earnedPoints)
+        : 0
+
+    const selectedReward = availableRewards.find(r => r.id === selectedRewardId)
+    const requiredPoints = selectedReward
+        ? Number.parseInt(selectedReward.pointsRequired)
+        : 0
+    const canClaimReward = userPoints >= requiredPoints
+    const pointsNeeded = requiredPoints - userPoints
+
+    function onSubmit(values: z.infer<typeof formSchema>) {
+        claimRewardMutation.mutate(values)
     }
 
-    async function onSubmit(values: z.infer<typeof formSchema>) {
-        const selectedReward = availableRewards.find(
-            r => r.id === values.rewardId
-        )
+    useEffect(() => {
+        const fetchData = async () => {
+            setIsLoadingData(true)
+            try {
+                const [usersResponse, rewardsResponse] = await Promise.all([
+                    fetch("/api/user"),
+                    fetch("/api/admin/rewards/available"),
+                ])
 
-        if (selectedReward && userPoints < selectedReward.pointsRequired) {
-            toast({
-                title: "Insufficient points",
-                description: `User does not have enough points to claim this reward. Required: ${selectedReward.pointsRequired}, Available: ${userPoints}`,
-                variant: "destructive",
-            })
-            return
+                const usersData = await usersResponse.json()
+                const rewardsData = await rewardsResponse.json()
+
+                setUsers(usersData.users)
+                setAvailableRewards(rewardsData.availableRewards)
+            } catch (error) {
+                console.error("Error fetching data:", error)
+                toast({
+                    title: "Error loading data",
+                    description:
+                        "Failed to load users or rewards. Please refresh the page.",
+                    variant: "destructive",
+                })
+            } finally {
+                setIsLoadingData(false)
+            }
         }
 
-        try {
-            // Here you would normally send the data to your API
-            console.log(values)
-
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1000))
-
-            toast({
-                title: reward ? "Claimed reward updated" : "Reward claimed",
-                description: reward
-                    ? "The claimed reward has been updated successfully."
-                    : "The reward has been claimed successfully.",
-            })
-
-            router.push("/dashboard/rewards")
-        } catch (e) {
-            toast({
-                title: "Something went wrong.",
-                description:
-                    "Your reward claim was not processed. Please try again.",
-                variant: "destructive",
-            })
-        }
-    }
-
-    // Type badge variant and icon
-    const getTypeDetails = (type: string) => {
-        switch (type) {
-            case "Gift_Coupon":
-                return {
-                    variant: "default",
-                    icon: <Gift className="h-4 w-4 mr-1" />,
-                }
-            case "Cash":
-                return {
-                    variant: "success",
-                    icon: <Tag className="h-4 w-4 mr-1" />,
-                }
-            case "Offer":
-                return {
-                    variant: "warning",
-                    icon: <Percent className="h-4 w-4 mr-1" />,
-                }
-            default:
-                return { variant: "secondary", icon: null }
-        }
-    }
-
-    // Format reward type for display
-    const formatRewardType = (type: string) => {
-        return type.replace(/_/g, " ")
-    }
-
-    // Check if user has enough points for a reward
-    const canClaimReward = (pointsRequired: number) => {
-        return userPoints >= pointsRequired
-    }
+        fetchData()
+    }, [toast])
 
     return (
-        <Card>
+        <Card className="w-full  mx-auto shadow-lg space-y-8">
+            <CardHeader className="space-y-1">
+                <div className="flex items-center gap-2">
+                    <Award className="h-5 w-5 text-primary" />
+                    <CardTitle>Claim Reward</CardTitle>
+                </div>
+                <CardDescription>
+                    Assign rewards to users based on their earned points
+                </CardDescription>
+            </CardHeader>
+
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <CardContent className="space-y-6 pt-6">
-                        <FormField
-                            control={form.control}
-                            name="userId"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>User</FormLabel>
-                                    <Select
-                                        onValueChange={field.onChange}
-                                        defaultValue={field.value}
-                                    >
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select a user" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {users.map(user => (
-                                                <SelectItem
-                                                    key={user.id}
-                                                    value={user.id}
-                                                >
-                                                    {user.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormDescription>
-                                        The user who is claiming this reward.
-                                    </FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        {selectedUser && (
-                            <div className="rounded-lg border p-4 bg-muted/20">
-                                <h3 className="font-medium mb-2">
-                                    User Points
-                                </h3>
-                                <div className="text-2xl font-bold">
-                                    {userPoints.toLocaleString()}
+                    <CardContent className="space-y-8  w-full">
+                        {isLoadingData ? (
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Skeleton className="h-4 w-20" />
+                                    <Skeleton className="h-10 w-full" />
                                 </div>
-                                <p className="text-sm text-muted-foreground">
-                                    Available points for{" "}
-                                    {
-                                        users.find(u => u.id === selectedUser)
-                                            ?.name
-                                    }
-                                </p>
+                                <div className="space-y-2">
+                                    <Skeleton className="h-4 w-20" />
+                                    <Skeleton className="h-10 w-full" />
+                                </div>
                             </div>
-                        )}
-
-                        <FormField
-                            control={form.control}
-                            name="rewardId"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Reward</FormLabel>
-                                    <Select
-                                        onValueChange={field.onChange}
-                                        defaultValue={field.value}
-                                    >
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select a reward" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {availableRewards.map(reward => {
-                                                const typeDetails =
-                                                    getTypeDetails(
-                                                        reward.rewardType
-                                                    )
-                                                const isClaimable =
-                                                    canClaimReward(
-                                                        reward.pointsRequired
-                                                    )
-
-                                                return (
-                                                    <SelectItem
-                                                        key={reward.id}
-                                                        value={reward.id}
-                                                        disabled={
-                                                            !isClaimable &&
-                                                            !field.value
-                                                        }
-                                                    >
-                                                        <div className="flex items-center justify-between w-full">
-                                                            <div className="flex items-center">
-                                                                <Badge
-                                                                    variant={
-                                                                        typeDetails.variant as any
-                                                                    }
-                                                                    className="flex items-center mr-2"
-                                                                >
-                                                                    {
-                                                                        typeDetails.icon
-                                                                    }
-                                                                    {formatRewardType(
-                                                                        reward.rewardType
-                                                                    )}
-                                                                </Badge>
+                        ) : (
+                            <>
+                                <FormField
+                                    control={form.control}
+                                    name="userId"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Select User</FormLabel>
+                                            <Select
+                                                onValueChange={field.onChange}
+                                                defaultValue={field.value}
+                                            >
+                                                <FormControl>
+                                                    <SelectTrigger className="w-full">
+                                                        <SelectValue placeholder="Select a user" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {users.map(user => (
+                                                        <SelectItem
+                                                            key={user.id}
+                                                            value={user.id}
+                                                        >
+                                                            <div className="flex items-center gap-2">
+                                                                <User className="h-4 w-4" />
                                                                 <span>
-                                                                    {
-                                                                        reward.title
-                                                                    }
+                                                                    {user.name}
                                                                 </span>
                                                             </div>
-                                                            <span
-                                                                className={`text-xs ${isClaimable ? "text-green-500" : "text-red-500"}`}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                {selectedUserId && (
+                                    <div className="rounded-2xl bg-muted p-3 flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <Coins className="h-5 w-5 text-amber-500" />
+                                            <span className="font-medium">
+                                                Available Points
+                                            </span>
+                                        </div>
+                                        {isLoadingProfile ? (
+                                            <Skeleton className="h-6 w-16" />
+                                        ) : (
+                                            <Badge
+                                                variant="secondary"
+                                                className="text-sm font-bold"
+                                            >
+                                                {userPoints} points
+                                            </Badge>
+                                        )}
+                                    </div>
+                                )}
+
+                                <FormField
+                                    control={form.control}
+                                    name="rewardId"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Select Reward</FormLabel>
+                                            <Select
+                                                onValueChange={field.onChange}
+                                                defaultValue={field.value}
+                                            >
+                                                <FormControl>
+                                                    <SelectTrigger className="w-full">
+                                                        <SelectValue placeholder="Select a reward" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {availableRewards.map(
+                                                        reward => (
+                                                            <SelectItem
+                                                                key={reward.id}
+                                                                value={
+                                                                    reward.id
+                                                                }
                                                             >
-                                                                {
-                                                                    reward.pointsRequired
-                                                                }{" "}
-                                                                pts
-                                                            </span>
-                                                        </div>
-                                                    </SelectItem>
-                                                )
-                                            })}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormDescription>
-                                        The reward that the user is claiming.
-                                    </FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                                                                <div className="flex items-center justify-between w-full">
+                                                                    <span>
+                                                                        {
+                                                                            reward.title
+                                                                        }
+                                                                    </span>
+                                                                    <Badge
+                                                                        variant="outline"
+                                                                        className="ml-2"
+                                                                    >
+                                                                        {
+                                                                            reward.pointsRequired
+                                                                        }{" "}
+                                                                        points
+                                                                    </Badge>
+                                                                </div>
+                                                            </SelectItem>
+                                                        )
+                                                    )}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
 
-                        {form.watch("rewardId") && (
-                            <div className="rounded-lg border p-4 bg-muted/20">
-                                <h3 className="font-medium mb-2">
-                                    Reward Details
-                                </h3>
-                                {(() => {
-                                    const selectedReward =
-                                        availableRewards.find(
-                                            r => r.id === form.watch("rewardId")
-                                        )
-                                    if (!selectedReward) return null
-
-                                    const typeDetails = getTypeDetails(
-                                        selectedReward.rewardType
-                                    )
-                                    const isClaimable = canClaimReward(
-                                        selectedReward.pointsRequired
-                                    )
-
-                                    return (
-                                        <div className="space-y-2">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center">
-                                                    <Badge
-                                                        variant={
-                                                            typeDetails.variant as any
-                                                        }
-                                                        className="flex items-center mr-2"
-                                                    >
-                                                        {typeDetails.icon}
-                                                        {formatRewardType(
-                                                            selectedReward.rewardType
-                                                        )}
-                                                    </Badge>
-                                                    <span className="font-semibold">
-                                                        {selectedReward.title}
+                                {selectedUserId &&
+                                    selectedRewardId &&
+                                    !isLoadingProfile && (
+                                        <div
+                                            className={`rounded-2xl p-3 flex items-center gap-2 ${canClaimReward ? "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300" : "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300"}`}
+                                        >
+                                            {canClaimReward ? (
+                                                <>
+                                                    <CheckCircle2 className="h-5 w-5" />
+                                                    <span>
+                                                        User has enough points
+                                                        to claim this reward
                                                     </span>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-sm">
-                                                    Points Required:
-                                                </span>
-                                                <span
-                                                    className={`font-medium ${isClaimable ? "text-green-500" : "text-red-500"}`}
-                                                >
-                                                    {selectedReward.pointsRequired.toLocaleString()}
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-sm">
-                                                    User Points:
-                                                </span>
-                                                <span className="font-medium">
-                                                    {userPoints.toLocaleString()}
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-sm">
-                                                    Points After Claim:
-                                                </span>
-                                                <span className="font-medium">
-                                                    {Math.max(
-                                                        0,
-                                                        userPoints -
-                                                            selectedReward.pointsRequired
-                                                    ).toLocaleString()}
-                                                </span>
-                                            </div>
-                                            {!isClaimable && (
-                                                <div className="text-xs text-red-500 font-medium mt-2">
-                                                    User does not have enough
-                                                    points to claim this reward.
-                                                </div>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <ShieldAlert className="h-5 w-5" />
+                                                    <span>
+                                                        User needs{" "}
+                                                        {pointsNeeded} more
+                                                        points to claim this
+                                                        reward
+                                                    </span>
+                                                </>
                                             )}
                                         </div>
-                                    )
-                                })()}
-                            </div>
+                                    )}
+                            </>
                         )}
                     </CardContent>
-                    <CardFooter className="flex justify-between border-t px-6 py-4">
+
+                    <CardFooter className="flex justify-between border-t pt-6">
                         <Button
                             variant="outline"
-                            onClick={() => router.push("/dashboard/rewards")}
-                            disabled={isLoading}
+                            type="button"
+                            onClick={() => router.back()}
                         >
                             Cancel
                         </Button>
                         <Button
                             type="submit"
                             disabled={
-                                isLoading ||
-                                !form.watch("userId") ||
-                                !form.watch("rewardId") ||
-                                (() => {
-                                    const selectedReward =
-                                        availableRewards.find(
-                                            r => r.id === form.watch("rewardId")
-                                        )
-                                    return (
-                                        selectedReward &&
-                                        !canClaimReward(
-                                            selectedReward.pointsRequired
-                                        )
-                                    )
-                                })()
+                                isPending ||
+                                isLoadingData ||
+                                isLoadingProfile ||
+                                !selectedUserId ||
+                                !selectedRewardId ||
+                                !canClaimReward
                             }
                         >
-                            {isLoading ? (
-                                <span className="flex items-center gap-1">
-                                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                            {isPending ? (
+                                <span className="flex items-center gap-2">
+                                    <Loader2 className="h-4 w-4 animate-spin" />
                                     Processing...
                                 </span>
-                            ) : reward ? (
-                                "Update Claimed Reward"
                             ) : (
-                                "Claim Reward"
+                                <span className="flex items-center gap-2">
+                                    <Award className="h-4 w-4" />
+                                    Claim Reward
+                                </span>
                             )}
                         </Button>
                     </CardFooter>

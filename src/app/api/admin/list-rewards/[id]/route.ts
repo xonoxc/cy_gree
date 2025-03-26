@@ -3,6 +3,80 @@ import prisma from "@/config/prisma/prisma.client"
 import { checkAuth } from "@/utils/check.auth"
 import { rwardUpdateValidationSchema } from "@/utils/validation/list-rewards"
 import { logErrors } from "@/utils/errors/errorLogs"
+import { idValidationSchema } from "@/utils/validation/user"
+
+export async function GET(
+    _: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    const { id } = await params
+    try {
+        const idValidationRes = idValidationSchema.safeParse(id)
+        if (!idValidationRes.success)
+            return NextResponse.json(
+                {
+                    error: idValidationRes.error.format(),
+                },
+                { status: 400 }
+            )
+
+        const rewardId = idValidationRes.data
+
+        const reward = await prisma.listReward.findUnique({
+            where: {
+                id: rewardId,
+            },
+            include: {
+                rewards: {
+                    include: {
+                        user: {
+                            include: {
+                                user: {
+                                    select: {
+                                        name: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        })
+
+        if (!reward)
+            return NextResponse.json(
+                { error: "Reward not found" },
+                { status: 404 }
+            )
+
+        const claims = reward.rewards.map(r => ({
+            id: r.id,
+            userId: r.userId,
+            userName: r.user.user.name,
+            claimedData: r.claimedDate.toISOString(),
+        }))
+
+        return NextResponse.json({
+            reward: {
+                id: reward.id,
+                title: reward.title,
+                pointsRequired: reward.pointsRequired,
+                issuedDate: reward.issuedDate.toISOString(),
+                rewardType: reward.rewardType,
+                totalClaimed: reward.rewards.length,
+            },
+            claims,
+        })
+    } catch (e) {
+        console.error(e)
+        return NextResponse.json(
+            { error: "Cannot fetch reward" },
+            { status: 500 }
+        )
+    } finally {
+        await prisma.$disconnect()
+    }
+}
 
 export async function PATCH(
     req: NextRequest,

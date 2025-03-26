@@ -45,8 +45,7 @@ import {
 } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { logErrors } from "@/utils/errors/errorLogs"
-
-const itemsPerPage = 10
+import { ITEMS_PER_PAGE } from "@/constants/pagination"
 
 interface ListReward {
     id: string
@@ -88,9 +87,9 @@ async function fetchListRewards({
 }
 
 export function ListRewardsTable() {
-    const [searchQuery, setSearchQuery] = useState("")
-    const [currentPage, setCurrentPage] = useState(1)
-    const [typeFilter, setTypeFilter] = useState("all")
+    const [searchQuery, setSearchQuery] = useState<string>("")
+    const [currentPage, setCurrentPage] = useState<number>(1)
+    const [typeFilter, setTypeFilter] = useState<string>("all")
 
     const { toast } = useToast()
 
@@ -103,7 +102,7 @@ export function ListRewardsTable() {
                 page: currentPage,
                 search: searchQuery,
                 type: typeFilter,
-                limit: itemsPerPage,
+                limit: ITEMS_PER_PAGE,
             }),
     })
 
@@ -250,7 +249,7 @@ export function ListRewardsTable() {
                                                     <DropdownMenuSeparator />
                                                     <DropdownMenuItem asChild>
                                                         <Link
-                                                            href={`/dashboard/list-rewards/${reward.id}`}
+                                                            href={`/admin/dashboard/list-rewards/${reward.id}`}
                                                         >
                                                             <Eye className="mr-2 h-4 w-4" />
                                                             View
@@ -301,10 +300,13 @@ export function ListRewardsTable() {
                         Showing{" "}
                         {Math.min(
                             data?.total || 0,
-                            (currentPage - 1) * itemsPerPage + 1
+                            (currentPage - 1) * ITEMS_PER_PAGE + 1
                         )}{" "}
                         to{" "}
-                        {Math.min(data?.total || 0, currentPage * itemsPerPage)}{" "}
+                        {Math.min(
+                            data?.total || 0,
+                            currentPage * ITEMS_PER_PAGE
+                        )}{" "}
                         of {data?.total || 0} rewards
                     </div>
                     <div className="flex items-center space-x-2">

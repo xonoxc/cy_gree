@@ -4,6 +4,12 @@ import { z } from "zod"
  */
 
 export const rwardFormValidationSchema = z.object({
-    userId: z.string().min(1, "Please select a user"),
-    rewardId: z.string().min(1, "Please select a reward"),
+    userId: z
+        .string()
+        .min(1, "Please select a user")
+        .uuid({ message: "Invalid user id" }),
+    rewardId: z
+        .string()
+        .min(1, "Please select a reward")
+        .uuid({ message: "Invalid Reward id" }),
 })

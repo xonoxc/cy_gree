@@ -104,8 +104,21 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+    await checkAuth()
     try {
-        const { userId, rewardId } = claimRewardSchema.parse(req.body)
+        const requestBody = await req.json()
+        const claimRewardSchemaValidationRes =
+            claimRewardSchema.safeParse(requestBody)
+
+        if (!claimRewardSchemaValidationRes.success)
+            return NextResponse.json(
+                {
+                    errors: claimRewardSchemaValidationRes.error.format(),
+                },
+                { status: 400 }
+            )
+
+        const { userId, rewardId } = claimRewardSchemaValidationRes.data
 
         const result = await prisma.$transaction(async tx => {
             const userProfile = await tx.userProfile.findUnique({
@@ -154,10 +167,26 @@ export async function POST(req: NextRequest) {
                 throw new Error("Reward already claimed by this user")
             }
 
+            const profile = await tx.userProfile.findUnique({
+                where: {
+                    userId,
+                },
+            })
+
+            if (!profile) throw new Error("User profile not found")
+
+            const listReward = await tx.listReward.findUnique({
+                where: {
+                    id: rewardId,
+                },
+            })
+
+            if (!listReward) throw new Error("Reward not found")
+
             const newReward = await tx.reward.create({
                 data: {
-                    userId,
-                    rewardId,
+                    userId: profile.id,
+                    rewardId: listReward.id,
                 },
             })
 
@@ -172,7 +201,7 @@ export async function POST(req: NextRequest) {
 
             await tx.notification.create({
                 data: {
-                    userId,
+                    userId: profile.id,
                     message: `You've successfully claimed "${reward.title}" reward!`,
                     importanceLevel: "Medium",
                 },

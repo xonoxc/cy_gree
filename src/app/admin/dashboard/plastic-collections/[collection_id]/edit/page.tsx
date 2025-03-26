@@ -1,7 +1,5 @@
-import { Button } from "@/components/ui/button"
 import { PlasticCollectionForm } from "@/components/admin/dashboard/plastic-collections/pcollection-form"
-import { ArrowLeft } from "lucide-react"
-import Link from "next/link"
+import BackBtn from "@/components/Backbtn"
 
 export default async function NewPlasticCollectionPage({
     params,
@@ -13,11 +11,7 @@ export default async function NewPlasticCollectionPage({
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-2">
-                <Link href="/admin/dashboard/plastic-collections">
-                    <Button variant="ghost" size="icon">
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                </Link>
+                <BackBtn link={"/admin/dashboard/plastic-collections"} />
                 <h1 className="text-3xl font-bold tracking-tight">
                     Add Plastic Collection
                 </h1>

@@ -1,17 +1,11 @@
 import { UserForm } from "@/components/admin/dashboard/users/users-form"
-import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
-import Link from "next/link"
+import BackBtn from "@/components/Backbtn"
 
 export default function NewUserPage() {
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-2">
-                <Link href="/admin/dashboard/users">
-                    <Button variant="ghost" size="icon">
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                </Link>
+                <BackBtn link={"/admin/dashboard/users"} />
                 <h1 className="text-3xl font-bold tracking-tight">
                     Create New User
                 </h1>

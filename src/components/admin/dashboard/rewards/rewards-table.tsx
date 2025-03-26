@@ -105,28 +105,6 @@ export function RewardsTable() {
     const rewards = data?.rewards || []
     const totalPages = data?.totalPages || 1
 
-    const getTypeDetails = (type: string) => {
-        switch (type) {
-            case "Gift_Coupon":
-                return {
-                    variant: "default",
-                    icon: <Gift className="h-4 w-4 mr-1" />,
-                }
-            case "Cash":
-                return {
-                    variant: "success",
-                    icon: <Tag className="h-4 w-4 mr-1" />,
-                }
-            case "Offer":
-                return {
-                    variant: "warning",
-                    icon: <Percent className="h-4 w-4 mr-1" />,
-                }
-            default:
-                return { variant: "secondary", icon: null }
-        }
-    }
-
     const formatRewardType = (type: string) => {
         return type.replace(/_/g, " ")
     }
@@ -340,4 +318,26 @@ export function RewardsTable() {
             )}
         </div>
     )
+}
+
+const getTypeDetails = (type: string) => {
+    switch (type) {
+        case "Gift_Coupon":
+            return {
+                variant: "default",
+                icon: <Gift className="h-4 w-4 mr-1" />,
+            }
+        case "Cash":
+            return {
+                variant: "success",
+                icon: <Tag className="h-4 w-4 mr-1" />,
+            }
+        case "Offer":
+            return {
+                variant: "warning",
+                icon: <Percent className="h-4 w-4 mr-1" />,
+            }
+        default:
+            return { variant: "secondary", icon: null }
+    }
 }

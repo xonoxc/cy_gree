@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Edit } from "lucide-react"
+import { Edit } from "lucide-react"
 import Link from "next/link"
 import { UserProfileDetails } from "@/components/admin/dashboard/user-profiles/user-profile-details"
+import BackBtn from "@/components/Backbtn"
 
 export default async function UserPage({
     params,
@@ -14,11 +15,7 @@ export default async function UserPage({
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <Link href="/admin/dashboard/users">
-                        <Button variant="ghost" size="icon">
-                            <ArrowLeft className="h-4 w-4" />
-                        </Button>
-                    </Link>
+                    <BackBtn link={"/admin/dashboard/users"} />
                     <h1 className="text-3xl font-bold tracking-tight">
                         User Details
                     </h1>

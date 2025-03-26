@@ -1,6 +1,6 @@
 "use client"
 
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useForm } from "react-hook-form"
 import type { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -45,21 +45,11 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { rwardFormValidationSchema as formSchema } from "@/utils/validation/rewards"
 import type { IUserData } from "@/hooks/useClientstats"
 
-async function claimReward(data: z.infer<typeof formSchema>) {
-    const response = await fetch("/api/admin/rewards", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-    })
-    const result = await response.json()
-    if (!response.ok) {
-        throw new Error(result.message || "Failed to claim reward")
-    }
-    return result
-}
-
 export default function RewardForm() {
+    const qureryClient = useQueryClient()
+
     const [users, setUsers] = useState<{ id: string; name: string }[]>([])
+    const [isPending, setIsPending] = useState<boolean>(false)
     const [availableRewards, setAvailableRewards] = useState<
         {
             id: string
@@ -72,29 +62,38 @@ export default function RewardForm() {
     const router = useRouter()
     const { toast } = useToast()
 
-    const claimRewardMutation = useMutation({
-        mutationFn: claimReward,
-        onSuccess: () => {
-            toast({
-                title: "Reward claimed successfully",
-                description: "The reward has been added to the user's account.",
-                variant: "default",
+    async function claimReward(data: z.infer<typeof formSchema>) {
+        setIsPending(true)
+        try {
+            const response = await fetch("/api/admin/rewards", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
             })
-            router.push("/admin/dashboard/rewards")
-        },
-        onError: error => {
+
+            if (!response.ok) throw new Error("Failed to claim reward")
+
+            await qureryClient.invalidateQueries({
+                queryKey: ["rewards"],
+            })
+
             toast({
-                title: "Claim failed",
+                title: "Reward claimed",
+                description: "Reward has been successfully claimed",
+            })
+        } catch (e) {
+            toast({
+                title: "Cannot claim reward",
                 description:
-                    error instanceof Error
-                        ? error.message
-                        : "Your reward claim was not processed. Please try again.",
+                    e instanceof Error
+                        ? e.message
+                        : "something went wrong please try again later",
                 variant: "destructive",
             })
-        },
-    })
-
-    const { isPending } = claimRewardMutation
+        } finally {
+            setIsPending(false)
+        }
+    }
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -129,7 +128,7 @@ export default function RewardForm() {
     const pointsNeeded = requiredPoints - userPoints
 
     function onSubmit(values: z.infer<typeof formSchema>) {
-        claimRewardMutation.mutate(values)
+        claimReward(values)
     }
 
     useEffect(() => {

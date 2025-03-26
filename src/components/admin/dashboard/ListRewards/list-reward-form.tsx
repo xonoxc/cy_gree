@@ -28,32 +28,11 @@ import { Gift, Tag, Percent } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { listRewardFormSchema as formSchema } from "@/utils/validation/list-rewards"
 import { useQueryClient } from "@tanstack/react-query"
-
-const getTypeDetails = (type: string) => {
-    switch (type) {
-        case "Gift_Coupon":
-            return {
-                variant: "default",
-                icon: <Gift className="h-4 w-4 mr-1" />,
-            }
-        case "Cash":
-            return {
-                variant: "success",
-                icon: <Tag className="h-4 w-4 mr-1" />,
-            }
-        case "Offer":
-            return {
-                variant: "warning",
-                icon: <Percent className="h-4 w-4 mr-1" />,
-            }
-        default:
-            return { variant: "secondary", icon: null }
-    }
-}
+import { ApiResponse } from "./list-rewards-details"
 
 const formatRewardType = (type: string) => type.replace(/_/g, " ")
 
-export function ListRewardForm({ reward }: { reward?: any }) {
+export function ListRewardForm({ rewardId }: { rewardId?: any }) {
     const queryClient = useQueryClient()
 
     const router = useRouter()
@@ -62,28 +41,36 @@ export function ListRewardForm({ reward }: { reward?: any }) {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            title: reward?.title || "",
-            pointsRequired: reward?.pointsRequired || 100,
-            rewardType: reward?.rewardType || "Gift_Coupon",
+            title: "",
+            pointsRequired: 100,
+            rewardType: "Gift_Coupon",
         },
     })
 
     useEffect(() => {
-        if (reward) {
-            form.reset({
-                title: reward.title,
-                pointsRequired: Number(reward.pointsRequired),
-                rewardType: reward.rewardType,
-            })
-        }
-    }, [reward, form])
+        ;(async () => {
+            const res = await fetch(`/api/admin/list-rewards/${rewardId}`)
+            if (!res.ok) {
+                throw new Error("Failed to fetch reward")
+            }
+            const { reward } = (await res.json()) as ApiResponse
+
+            if (reward) {
+                form.reset({
+                    title: reward.title,
+                    pointsRequired: Number(reward.pointsRequired),
+                    rewardType: reward.rewardType,
+                })
+            }
+        })()
+    }, [rewardId, form])
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsLoading(true)
         try {
-            const method = reward ? "PATCH" : "POST"
-            const url = reward
-                ? `/api/admin/list-rewards/${reward.id}`
+            const method = rewardId ? "PATCH" : "POST"
+            const url = rewardId
+                ? `/api/admin/list-rewards/${rewardId}`
                 : "/api/admin/list-rewards"
             const response = await fetch(url, {
                 method,
@@ -93,7 +80,7 @@ export function ListRewardForm({ reward }: { reward?: any }) {
 
             if (!response.ok) {
                 throw new Error(
-                    `Failed to ${reward ? "update" : "create"} reward`
+                    `Failed to ${rewardId ? "update" : "create"} reward`
                 )
             }
 
@@ -102,8 +89,8 @@ export function ListRewardForm({ reward }: { reward?: any }) {
             })
 
             toast({
-                title: reward ? "Reward updated" : "Reward created",
-                description: reward
+                title: rewardId ? "Reward updated" : "Reward created",
+                description: rewardId
                     ? "The reward has been updated successfully."
                     : "The reward has been created successfully.",
             })
@@ -155,7 +142,7 @@ export function ListRewardForm({ reward }: { reward?: any }) {
                                             {...field}
                                         />
                                     </FormControl>
-                                    <FormMessage />
+                                    symbol <FormMessage />
                                 </FormItem>
                             )}
                         />
@@ -261,7 +248,7 @@ export function ListRewardForm({ reward }: { reward?: any }) {
                                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                                     Saving...
                                 </span>
-                            ) : reward ? (
+                            ) : rewardId ? (
                                 "Update Reward"
                             ) : (
                                 "Create Reward"
@@ -272,4 +259,26 @@ export function ListRewardForm({ reward }: { reward?: any }) {
             </Form>
         </Card>
     )
+}
+
+const getTypeDetails = (type: string) => {
+    switch (type) {
+        case "Gift_Coupon":
+            return {
+                variant: "default",
+                icon: <Gift className="h-4 w-4 mr-1" />,
+            }
+        case "Cash":
+            return {
+                variant: "success",
+                icon: <Tag className="h-4 w-4 mr-1" />,
+            }
+        case "Offer":
+            return {
+                variant: "warning",
+                icon: <Percent className="h-4 w-4 mr-1" />,
+            }
+        default:
+            return { variant: "secondary", icon: null }
+    }
 }

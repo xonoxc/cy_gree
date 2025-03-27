@@ -43,6 +43,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { RoleFilter } from "@/app/api/admin/profiles/route"
 import { ITEMS_PER_PAGE } from "@/constants/pagination"
+import { useDebounceValue } from "usehooks-ts"
 
 interface Reward {
     id: string
@@ -87,9 +88,11 @@ async function fetchRewards({
 }
 
 export function RewardsTable() {
-    const [searchQuery, setSearchQuery] = useState<string>("")
+    const [inputSearchQuery, setInputSearchQuery] = useState<string>("")
     const [currentPage, setCurrentPage] = useState<number>(1)
     const [typeFilter, setTypeFilter] = useState<RoleFilter>("all")
+
+    const [searchQuery] = useDebounceValue<string>(inputSearchQuery, 1000)
 
     const { data, isLoading, isError, error } = useQuery({
         queryKey: ["rewards", currentPage, searchQuery, typeFilter],
@@ -118,8 +121,8 @@ export function RewardsTable() {
                         type="search"
                         placeholder="Search claimed rewards..."
                         className="w-full pl-8 bg-background"
-                        value={searchQuery}
-                        onChange={e => setSearchQuery(e.target.value)}
+                        value={inputSearchQuery}
+                        onChange={e => setInputSearchQuery(e.target.value)}
                     />
                 </div>
                 <Select

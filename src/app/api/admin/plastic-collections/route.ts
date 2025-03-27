@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/config/prisma/prisma.client"
 import { checkAuth } from "@/utils/check.auth"
-import { Record } from "@prisma/client/runtime/library"
+import { Status } from "@prisma/client"
 import { logErrors } from "@/utils/errors/errorLogs"
 import { adminCollcetionCreateSchema } from "@/utils/validation/collection/collection"
 import { capitalizeFirstLetter } from "@/utils/capitalize"
@@ -27,35 +27,44 @@ export async function GET(req: NextRequest) {
         const itemsPerPage = parseInt(limit as string) || 10
         const skip = (currentPage - 1) * itemsPerPage
 
-        const searchFilter: Record<string, object[] | string> = {}
+        const searchFilter: any = {}
 
         if (search) {
             searchFilter.OR = [
                 {
                     user: {
-                        name: {
-                            contains: search as string,
-                            mode: "insensitive",
+                        user: {
+                            name: {
+                                contains: search,
+                                mode: "insensitive",
+                            },
                         },
                     },
                 },
                 {
                     id: {
-                        contains: search as string,
+                        contains: search,
                         mode: "insensitive",
                     },
                 },
                 {
                     claimedBy: {
-                        contains: search as string,
+                        contains: search,
                         mode: "insensitive",
                     },
                 },
             ]
         }
 
-        if (status !== "all") {
-            searchFilter.status = capitalizeFirstLetter(status)
+        if (status && status !== "all") {
+            const statusEnum = capitalizeFirstLetter(status) as Status
+            if (!Object.values(Status).includes(statusEnum)) {
+                return NextResponse.json(
+                    { error: "Invalid status value" },
+                    { status: 400 }
+                )
+            }
+            searchFilter.status = statusEnum
         }
 
         const totalCollections = await prisma.plasticCollection.count({
@@ -71,7 +80,7 @@ export async function GET(req: NextRequest) {
             },
             include: {
                 user: {
-                    select: {
+                    include: {
                         user: {
                             select: {
                                 name: true,
@@ -105,7 +114,10 @@ export async function GET(req: NextRequest) {
         )
     } catch (e) {
         logErrors(e)
-        NextResponse.json({ message: "Internal server error" }, { status: 500 })
+        return NextResponse.json(
+            { message: "Internal server error" },
+            { status: 500 }
+        )
     } finally {
         await prisma.$disconnect()
     }

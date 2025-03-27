@@ -45,6 +45,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { logErrors } from "@/utils/errors/errorLogs"
 import { useToast } from "@/hooks/use-toast"
 import { ITEMS_PER_PAGE } from "@/constants/pagination"
+import { useDebounceValue } from "usehooks-ts"
 
 interface Badge {
     id: string
@@ -89,9 +90,11 @@ async function fetchBadges({
 export function BadgesTable() {
     const queryClient = useQueryClient()
 
-    const [searchQuery, setSearchQuery] = useState<string>("")
+    const [inputSearchQuery, setInputSearchQuery] = useState<string>("")
     const [currentPage, setCurrentPage] = useState<number>(1)
     const [badgeFilter, setBadgeFilter] = useState<string>("all")
+
+    const [searchQuery] = useDebounceValue<string>(inputSearchQuery, 1000)
 
     const { toast } = useToast()
 
@@ -152,8 +155,8 @@ export function BadgesTable() {
                         type="search"
                         placeholder="Search badges..."
                         className="w-full pl-8 bg-background"
-                        value={searchQuery}
-                        onChange={e => setSearchQuery(e.target.value)}
+                        value={inputSearchQuery}
+                        onChange={e => setInputSearchQuery(e.target.value)}
                     />
                 </div>
                 <Select value={badgeFilter} onValueChange={setBadgeFilter}>

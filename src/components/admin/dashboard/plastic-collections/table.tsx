@@ -47,6 +47,7 @@ import Image from "next/image"
 import dynamic from "next/dynamic"
 import { RoleFilter } from "@/app/api/admin/profiles/route"
 import { ITEMS_PER_PAGE } from "@/constants/pagination"
+import { useDebounceValue } from "usehooks-ts"
 
 const Time = dynamic(() => import("@/components/time"), { ssr: false })
 
@@ -81,9 +82,11 @@ interface ApiResponse {
  * Main component for rendering the plastic collections table
  */
 export function PlasticCollectionsTable() {
-    const [searchQuery, setSearchQuery] = useState<string>("")
+    const [inputSearchQuery, setInputSearchQuery] = useState<string>("")
     const [currentPage, setCurrentPage] = useState<number>(1)
     const [statusFilter, setStatusFilter] = useState<RoleFilter>("all")
+
+    const [searchQuery] = useDebounceValue<string>(inputSearchQuery, 1000)
 
     const { data, isLoading, isError, error } = useQuery({
         queryKey: ["collections", currentPage, searchQuery, statusFilter],
@@ -130,8 +133,8 @@ export function PlasticCollectionsTable() {
                         type="search"
                         placeholder="Search collections..."
                         className="w-full pl-8 bg-background"
-                        value={searchQuery}
-                        onChange={e => setSearchQuery(e.target.value)}
+                        value={inputSearchQuery}
+                        onChange={e => setInputSearchQuery(e.target.value)}
                     />
                 </div>
                 <Select

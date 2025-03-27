@@ -44,6 +44,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Time from "@/components/time"
 import { ITEMS_PER_PAGE } from "@/constants/pagination"
+import { useDebounceValue } from "usehooks-ts"
 
 interface Notification {
     id: string
@@ -66,10 +67,12 @@ interface ApiResponse {
 }
 
 export function NotificationsTable() {
-    const [searchQuery, setSearchQuery] = useState<string>("")
+    const [inputSearchQuery, setInputSearchQuery] = useState<string>("")
     const [currentPage, setCurrentPage] = useState<number>(1)
     const [importanceFilter, setImportanceFilter] = useState<string>("all")
     const [readFilter, setReadFilter] = useState<string>("all")
+
+    const [searchQuery] = useDebounceValue<string>(inputSearchQuery, 1000)
 
     const queryClient = useQueryClient()
 
@@ -177,8 +180,8 @@ export function NotificationsTable() {
                         type="search"
                         placeholder="Search notifications..."
                         className="w-full pl-8 bg-background"
-                        value={searchQuery}
-                        onChange={e => setSearchQuery(e.target.value)}
+                        value={inputSearchQuery}
+                        onChange={e => setInputSearchQuery(e.target.value)}
                     />
                 </div>
                 <div className="flex flex-col sm:flex-row gap-4">

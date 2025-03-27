@@ -68,6 +68,7 @@ export function Sidebar() {
 
     const handleLogout = async () => {
         await signOut()
+        console.log("Logged out")
         router.push("/sign-in")
     }
 
@@ -102,7 +103,7 @@ export function Sidebar() {
                     ))}
                 </div>
             </div>
-            <div className="px-3 py-2 border-t">
+            <div className="px-3 py-2 my-4 border-t">
                 <div className="space-y-1 pt-2">
                     <Link
                         href="/admin/dashboard/settings"

@@ -10,7 +10,7 @@ export default function SignIn() {
     return (
         <div className="min-h-screen bg-gradient-to-b from-[#161617] to-black">
             <div className="p-6 hidden sm:block">
-                <BackBtn />
+                <BackBtn link={"/"} />
             </div>
             <div className="py-44">
                 <LoginForm />

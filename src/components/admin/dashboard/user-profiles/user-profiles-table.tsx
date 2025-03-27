@@ -49,13 +49,16 @@ import { ProfilesResp } from "@/app/api/admin/profiles/route"
 import { PaginatedResponse } from "@/types/response"
 import { useQuery } from "@tanstack/react-query"
 import { ITEMS_PER_PAGE } from "@/constants/pagination"
+import { useDebounceValue } from "usehooks-ts"
 
 type PaginatedProfilsResponse = PaginatedResponse<ProfilesResp[]>
 
 export function UserProfilesTable() {
-    const [searchQuery, setSearchQuery] = useState<string>("")
+    const [inputSearchQuery, setInputSearchQuery] = useState<string>("")
     const [currentPage, setCurrentPage] = useState<number>(1)
     const [roleFilter, setRoleFilter] = useState<RoleFilter>("all")
+
+    const [searchQuery] = useDebounceValue<string>(inputSearchQuery, 1000)
 
     // const router = useRouter()
 
@@ -94,9 +97,9 @@ export function UserProfilesTable() {
                         type="search"
                         placeholder="Search profiles..."
                         className="w-full pl-8 bg-background"
-                        value={searchQuery}
+                        value={inputSearchQuery}
                         onChange={e => {
-                            setSearchQuery(e.target.value)
+                            setInputSearchQuery(e.target.value)
                             setCurrentPage(1)
                         }}
                     />

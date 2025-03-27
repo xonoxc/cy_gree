@@ -4,7 +4,6 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { ModeToggle } from "@/components/mode_toggle"
 import { Logo } from "../logo"
 import { Menu, X } from "lucide-react"
 

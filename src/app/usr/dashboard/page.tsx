@@ -38,6 +38,7 @@ import {
 import { ProfileCardSkeleton } from "@/components/profile/profile_sekeleton"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CollectionBtnSkeleton } from "@/components/collection/collection.skeleton"
+import { Logo } from "@/components/logo"
 
 /**
  * Dynamically imported components
@@ -206,8 +207,8 @@ const CollectionHistoryTable = ({
 
 const DashboardHeader = ({ onLogout }: { onLogout: () => void }) => {
     return (
-        <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <h1 className="text-xl font-semibold">User Dashboard</h1>
+        <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-10">
+            <Logo />
             <div className="ml-auto flex items-center gap-4">
                 <NotificationPopup />
                 <Button

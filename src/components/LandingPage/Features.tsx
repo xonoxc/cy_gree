@@ -121,11 +121,13 @@ const features = [
 
 export function FeaturesSection() {
     return (
-        <BentoGrid className="lg:grid-rows-3">
-            {features.map(feature => (
-                <BentoCard key={feature.name as string} {...feature} />
-            ))}
-        </BentoGrid>
+        <section id="features" className="mb-16">
+            <BentoGrid className="lg:grid-rows-3">
+                {features.map(feature => (
+                    <BentoCard key={feature.name as string} {...feature} />
+                ))}
+            </BentoGrid>
+        </section>
     )
 }
 

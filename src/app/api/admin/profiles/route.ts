@@ -1,10 +1,9 @@
 import prisma from "@/config/prisma/prisma.client"
 import { checkAuth } from "@/utils/check.auth"
 import { logErrors } from "@/utils/errors/errorLogs"
-import { Record } from "@prisma/client/runtime/library"
 import { NextRequest, NextResponse } from "next/server"
 import { PaginatedResponse } from "@/types/response"
-import { Role } from "@prisma/client"
+import { Role, State } from "@prisma/client"
 
 export type RoleFilter = Role | "all"
 
@@ -39,27 +38,49 @@ export async function GET(req: NextRequest) {
             { status: 400 }
         )
     }
+
     try {
         const pageInt = parseInt(page)
         const limitInt = parseInt(limit)
-
         const skip = (pageInt - 1) * limitInt
 
-        const searchFilter: Record<string, object[] | string> = {}
+        const searchFilter: any = {}
+
         if (search) {
+            const allStates = Object.values(State)
+            const matchingStates = allStates.filter(state =>
+                state.toLowerCase().includes(search.toLowerCase())
+            )
+
             searchFilter["OR"] = [
                 {
                     user: {
                         name: {
-                            contains: search as string,
+                            contains: search,
                             mode: "insensitive",
                         },
                     },
                 },
-                { city: { contains: search as string, mode: "insensitive" } },
-                { state: { contains: search as string, mode: "insensitive" } },
-                { phoneNumber: { contains: search as string } },
+                {
+                    city: {
+                        contains: search,
+                        mode: "insensitive",
+                    },
+                },
+                {
+                    phoneNumber: {
+                        contains: search,
+                    },
+                },
             ]
+
+            if (matchingStates.length > 0) {
+                searchFilter["OR"].push({
+                    state: {
+                        in: matchingStates,
+                    },
+                })
+            }
         }
 
         if (role && role !== "all") {
@@ -111,7 +132,7 @@ export async function GET(req: NextRequest) {
         logErrors(e)
         return NextResponse.json(
             {
-                error: "Soemthing went wrong while fetching user profiles",
+                error: "Something went wrong while fetching user profiles",
             },
             { status: 500 }
         )

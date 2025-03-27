@@ -14,7 +14,10 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en" suppressHydrationWarning>
-            <body className={`${sfpro.className} antialiased`}>
+            <body
+                className={`${sfpro.className} antialiased`}
+                suppressHydrationWarning
+            >
                 <Providers>
                     <Container>{children}</Container>
                 </Providers>

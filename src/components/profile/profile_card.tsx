@@ -24,6 +24,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "../ui/select"
+import React from "react"
 
 const ProfileCard = () => {
     const [editing, setEditing] = useState(false)

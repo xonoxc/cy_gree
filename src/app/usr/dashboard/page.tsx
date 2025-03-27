@@ -22,7 +22,6 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Award, Gift, History, LogOut, Recycle } from "lucide-react"
-import { ModeToggle } from "@/components/mode_toggle"
 import { useRouter } from "next/navigation"
 import { ICollection, IUserData, useClientstats } from "@/hooks/useClientstats"
 import NotificationPopup from "@/components/notifications/notification-popup"
@@ -211,7 +210,6 @@ const DashboardHeader = ({ onLogout }: { onLogout: () => void }) => {
             <h1 className="text-xl font-semibold">User Dashboard</h1>
             <div className="ml-auto flex items-center gap-4">
                 <NotificationPopup />
-                <ModeToggle />
                 <Button
                     variant="ghost"
                     size="icon"

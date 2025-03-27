@@ -13,11 +13,8 @@ export default function RootLayout({
     children: React.ReactNode
 }>) {
     return (
-        <html lang="en">
-            <body
-                className={`${sfpro.className} antialiased`}
-                suppressHydrationWarning
-            >
+        <html lang="en" suppressHydrationWarning>
+            <body className={`${sfpro.className} antialiased`}>
                 <Providers>
                     <Container>{children}</Container>
                 </Providers>

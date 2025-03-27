@@ -3,28 +3,15 @@
 import * as React from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
 import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
-import {
-    Facebook,
-    Instagram,
-    Linkedin,
-    Moon,
-    Send,
-    Sun,
-    Twitter,
-} from "lucide-react"
-import { useTheme } from "next-themes"
+import { Facebook, Instagram, Linkedin, Send, Twitter } from "lucide-react"
 
 const Footer = () => {
-    const { theme, setTheme } = useTheme()
-
     return (
         <footer className="relative dark:bg-black bg-white text-foreground transition-colors duration-300">
             <div className="container mx-auto px-4 py-12 md:px-6 lg:px-8">
@@ -184,24 +171,6 @@ const Footer = () => {
                                     </TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <Sun className="h-4 w-4" />
-                            <Switch
-                                id="dark-mode"
-                                checked={theme === "dark"}
-                                onCheckedChange={() => {
-                                    if (theme === "dark") {
-                                        setTheme("light")
-                                    } else {
-                                        setTheme("dark")
-                                    }
-                                }}
-                            />
-                            <Moon className="h-4 w-4" />
-                            <Label htmlFor="dark-mode" className="sr-only">
-                                Toggle dark mode
-                            </Label>
                         </div>
                     </div>
                 </div>

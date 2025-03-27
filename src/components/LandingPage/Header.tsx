@@ -15,7 +15,7 @@ const Header = () => {
     const toggleMobileNav = (): void => setIsMobileNavOpen(!isMobileNavOpen)
 
     return (
-        <header className="dark:bg-black  dark:border-b-gray-200 bg-white/50">
+        <header className="dark:bg-black  dark:border-b-gray-200">
             <div className="container mx-auto px-4 py-6 flex justify-between items-center">
                 <Logo />
                 <nav className="hidden md:flex">
@@ -40,7 +40,6 @@ const Header = () => {
                 </nav>
 
                 <div className="right flex items-center justify-center gap-3">
-                    <ModeToggle />
                     <Button
                         onClick={() => router.push("/sign-in")}
                         className="rounded-xl font-bold text-black bg-gradient-to-r from-white to-green-600 hidden md:block"

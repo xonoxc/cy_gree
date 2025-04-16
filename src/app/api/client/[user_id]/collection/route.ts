@@ -9,11 +9,15 @@ export async function POST(
     req: NextRequest,
     props: { params: Promise<{ user_id: string }> }
 ) {
-    const params = await props.params
-    await checkAuth()
     try {
+        const [_, params, reqBody] = await Promise.all([
+            checkAuth(),
+            props.params,
+            req.json(),
+        ])
+
         const { user_id: userId } = params
-        const { amount_collected, pic } = (await req.json()) as {
+        const { amount_collected, pic } = reqBody as {
             amount_collected: string
             pic: string
         }

@@ -11,10 +11,9 @@ export async function GET(
     _: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    await checkAuth()
+    const [__, paramsRes] = await Promise.all([checkAuth(), params])
     try {
-        const { id } = await params
-
+        const { id } = paramsRes
         const idValidationResult = idValidationSchema.safeParse(id)
         if (!idValidationResult.success)
             return NextResponse.json(
@@ -24,6 +23,15 @@ export async function GET(
 
         const user = await prisma.user.findUnique({
             where: { id },
+            select: {
+                id: true,
+                email: true,
+                isActive: true,
+                name: true,
+                joinedAt: true,
+                username: true,
+                profile: true,
+            },
         })
 
         if (!user) {

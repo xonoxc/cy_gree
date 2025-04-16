@@ -331,6 +331,7 @@ export default function RewardForm() {
                         <Button
                             variant="outline"
                             type="button"
+                            className="rounded-xl"
                             onClick={() => router.back()}
                         >
                             Cancel
@@ -345,6 +346,7 @@ export default function RewardForm() {
                                 !selectedRewardId ||
                                 !canClaimReward
                             }
+                            className="rounded-xl"
                         >
                             {isPending ? (
                                 <span className="flex items-center gap-2">

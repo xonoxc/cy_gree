@@ -96,36 +96,6 @@ export function UserProfileDetails({ profileId }: { profileId: string }) {
         return state ? state.replace(/_/g, " ") : ""
     }
 
-    const getBadgeDetails = (badgeType: string) => {
-        switch (badgeType) {
-            case "Recycler":
-                return {
-                    icon: <Recycle className="h-4 w-4 mr-1" />,
-                    color: "text-green-500",
-                }
-            case "Eco_Warrior":
-                return {
-                    icon: <Award className="h-4 w-4 mr-1" />,
-                    color: "text-blue-500",
-                }
-            case "Green_Ambassador":
-                return {
-                    icon: <Award className="h-4 w-4 mr-1" />,
-                    color: "text-emerald-500",
-                }
-            case "Sustainability_Hero":
-                return {
-                    icon: <Award className="h-4 w-4 mr-1" />,
-                    color: "text-amber-500",
-                }
-            default:
-                return {
-                    icon: <Award className="h-4 w-4 mr-1" />,
-                    color: "text-gray-500",
-                }
-        }
-    }
-
     if (isLoading) {
         return (
             <Card className="flex items-center justify-center p-8">
@@ -278,9 +248,9 @@ export function UserProfileDetails({ profileId }: { profileId: string }) {
                                                         "Collected"
                                                             ? "default"
                                                             : collection.status ===
-                                                                "Claimed"
-                                                              ? "outline"
-                                                              : "secondary"
+                                                              "Claimed"
+                                                            ? "outline"
+                                                            : "secondary"
                                                     }
                                                 >
                                                     {collection.status}
@@ -328,10 +298,10 @@ export function UserProfileDetails({ profileId }: { profileId: string }) {
                                                     "Gift_Coupon"
                                                         ? "default"
                                                         : reward.reward
-                                                                .rewardType ===
-                                                            "Cash"
-                                                          ? "default"
-                                                          : "secondary"
+                                                              .rewardType ===
+                                                          "Cash"
+                                                        ? "default"
+                                                        : "secondary"
                                                 }
                                             >
                                                 <Gift className="h-3 w-3 mr-1" />
@@ -405,4 +375,34 @@ export function UserProfileDetails({ profileId }: { profileId: string }) {
             </Tabs>
         </div>
     )
+}
+
+const getBadgeDetails = (badgeType: string) => {
+    switch (badgeType) {
+        case "Recycler":
+            return {
+                icon: <Recycle className="h-4 w-4 mr-1" />,
+                color: "text-green-500",
+            }
+        case "Eco_Warrior":
+            return {
+                icon: <Award className="h-4 w-4 mr-1" />,
+                color: "text-blue-500",
+            }
+        case "Green_Ambassador":
+            return {
+                icon: <Award className="h-4 w-4 mr-1" />,
+                color: "text-emerald-500",
+            }
+        case "Sustainability_Hero":
+            return {
+                icon: <Award className="h-4 w-4 mr-1" />,
+                color: "text-amber-500",
+            }
+        default:
+            return {
+                icon: <Award className="h-4 w-4 mr-1" />,
+                color: "text-gray-500",
+            }
+    }
 }

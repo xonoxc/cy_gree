@@ -27,86 +27,20 @@ import {
 } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Loader2 } from "lucide-react"
+import { AdminUserProfileCreateSchema as formSchema } from "@/utils/validation/profile"
 
-const mockProfile = {
-    id: "1",
-    userId: "user1",
-    userName: "John Doe",
-    profilePic: "/placeholder.svg?height=100&width=100&text=JD",
-    role: "Client",
-    address: "123 Main St",
-    city: "Mumbai",
-    state: "Maharashtra",
-    country: "India",
-    phoneNumber: "9876543210",
-    totalPlasticRecycled: 25.5,
-    earnedPoints: 1250.0,
-}
+import { states } from "@/constants/states/states"
+import { useMutation } from "@tanstack/react-query"
 
-const states = [
-    "Andhra_Pradesh",
-    "Arunachal_Pradesh",
-    "Assam",
-    "Bihar",
-    "Chhattisgarh",
-    "Goa",
-    "Gujarat",
-    "Haryana",
-    "Himachal_Pradesh",
-    "Jharkhand",
-    "Karnataka",
-    "Kerala",
-    "Madhya_Pradesh",
-    "Maharashtra",
-    "Manipur",
-    "Meghalaya",
-    "Mizoram",
-    "Nagaland",
-    "Odisha",
-    "Punjab",
-    "Rajasthan",
-    "Sikkim",
-    "Tamil_Nadu",
-    "Telangana",
-    "Tripura",
-    "Uttar_Pradesh",
-    "Uttarakhand",
-    "West_Bengal",
-    "Andaman_and_Nicobar_Islands",
-    "Chandigarh",
-    "Dadra_and_Nagar_Haveli_and_Daman_and_Diu",
-    "Lakshadweep",
-    "Delhi",
-    "Puducherry",
-    "Ladakh",
-    "Jammu_and_Kashmir",
-]
-
-const formSchema = z.object({
-    profilePic: z.string().optional(),
-    role: z.enum(["Client", "Agent"]),
-    address: z.string().optional(),
-    city: z.string().min(2, {
-        message: "City must be at least 2 characters.",
-    }),
-    state: z.string().optional(),
-    country: z.string().default("India"),
-    phoneNumber: z
-        .string()
-        .regex(/^\d{10}$/, {
-            message: "Phone number must be 10 digits.",
-        })
-        .optional(),
-    totalPlasticRecycled: z.coerce.number().min(0),
-    earnedPoints: z.coerce.number().min(0),
-})
+type ProfileData = z.infer<typeof formSchema>
 
 export function UserProfileForm({ profileId }: { profileId?: string }) {
     const router = useRouter()
-    const [isLoading, setIsLoading] = useState(false)
-    const [isLoadingProfile, setIsLoadingProfile] = useState(!!profileId)
+    const [isLoading, setIsLoading] = useState<boolean>(false)
+    const [isLoadingProfile, setIsLoadingProfile] =
+        useState<boolean>(!!profileId)
 
-    const form = useForm<z.infer<typeof formSchema>>({
+    const form = useForm<ProfileData>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             profilePic: "",
@@ -123,34 +57,34 @@ export function UserProfileForm({ profileId }: { profileId?: string }) {
 
     useEffect(() => {
         if (profileId) {
-            // Simulate API call to fetch profile data
             setIsLoadingProfile(true)
-            setTimeout(() => {
-                // In a real app, you would fetch the profile data from your API
-                form.reset({
-                    profilePic: mockProfile.profilePic,
-                    role: mockProfile.role as "Client" | "Agent",
-                    address: mockProfile.address || "",
-                    city: mockProfile.city,
-                    state: mockProfile.state,
-                    country: mockProfile.country,
-                    phoneNumber: mockProfile.phoneNumber || "",
-                    totalPlasticRecycled: mockProfile.totalPlasticRecycled,
-                    earnedPoints: mockProfile.earnedPoints,
-                })
-                setIsLoadingProfile(false)
-            }, 1000)
+            fetch(`/api/admin/profiles/${profileId}`)
+                .then(res => res.json())
+                .then((data: ProfileData) =>
+                    form.reset({
+                        profilePic: data.profilePic,
+                        role: data.role as "Client" | "Agent",
+                        address: data.address || "",
+                        city: data.city,
+                        state: data.state,
+                        country: data.country,
+                        phoneNumber: data.phoneNumber || "",
+                        totalPlasticRecycled: data.totalPlasticRecycled,
+                        earnedPoints: data.earnedPoints,
+                    })
+                )
+                .catch(e => console.log(e))
+
+            setIsLoadingProfile(false)
         }
     }, [profileId, form])
 
-    async function onSubmit(values: z.infer<typeof formSchema>) {
+    async function onSubmit(values: ProfileData) {
         setIsLoading(true)
 
         try {
-            // Here you would normally send the data to your API
             console.log(values)
 
-            // Simulate API call
             await new Promise(resolve => setTimeout(resolve, 1000))
 
             toast({
@@ -172,12 +106,13 @@ export function UserProfileForm({ profileId }: { profileId?: string }) {
         }
     }
 
-    // Format state name for display
-    const formatStateName = (state: string) => {
-        return state.replace(/_/g, " ")
-    }
+    const updateMutation = useMutation({
+        mutationFn: onSubmit,
+    })
 
-    if (isLoadingProfile) {
+    const formatStateName = (state: string) => state.replace(/_/g, " ")
+
+    if (isLoadingProfile)
         return (
             <Card className="flex items-center justify-center p-8">
                 <div className="flex flex-col items-center gap-2">
@@ -188,7 +123,6 @@ export function UserProfileForm({ profileId }: { profileId?: string }) {
                 </div>
             </Card>
         )
-    }
 
     return (
         <Card>

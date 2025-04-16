@@ -8,8 +8,7 @@ export async function POST(
     request: NextRequest,
     props: { params: Promise<{ user_id: string }> }
 ) {
-    const params = await props.params
-    await checkAuth()
+    const [_, params] = await Promise.all([checkAuth(), props.params])
     try {
         const { user_id: userId } = params
         const collectionId = request.nextUrl.searchParams.get("collection_id")

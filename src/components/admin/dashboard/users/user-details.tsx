@@ -109,10 +109,16 @@ export function UserDetails({ userId }: { userId: string }) {
             </Card>
 
             <Tabs defaultValue="overview" className="space-y-4">
-                <TabsList>
-                    <TabsTrigger value="overview">Overview</TabsTrigger>
-                    <TabsTrigger value="activity">Activity</TabsTrigger>
-                    <TabsTrigger value="security">Security</TabsTrigger>
+                <TabsList className="rounded-2xl">
+                    <TabsTrigger value="overview" className="rounded-xl">
+                        Overview
+                    </TabsTrigger>
+                    <TabsTrigger value="activity" className="rounded-xl">
+                        Activity
+                    </TabsTrigger>
+                    <TabsTrigger value="security" className="rounded-xl">
+                        Security
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="space-y-4">

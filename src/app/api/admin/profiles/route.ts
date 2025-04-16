@@ -4,6 +4,7 @@ import { logErrors } from "@/utils/errors/errorLogs"
 import { NextRequest, NextResponse } from "next/server"
 import { PaginatedResponse } from "@/types/response"
 import { Role, State } from "@prisma/client"
+import { AdminUserProfileCreateSchema } from "@/utils/validation/profile"
 
 export type RoleFilter = Role | "all"
 
@@ -138,5 +139,29 @@ export async function GET(req: NextRequest) {
         )
     } finally {
         await prisma.$disconnect()
+    }
+}
+
+export async function POST(req: NextRequest) {
+    await checkAuth()
+    try {
+        const body = await req.json()
+
+        const updateDataValidationRes =
+            AdminUserProfileCreateSchema.safeParse(body)
+
+        if (!updateDataValidationRes.success)
+            return NextResponse.json(
+                { error: updateDataValidationRes.error.format() },
+                { status: 400 }
+            )
+    } catch (e) {
+        logErrors(e)
+        return NextResponse.json(
+            {
+                error: "Error while creating profile",
+            },
+            { status: 500 }
+        )
     }
 }

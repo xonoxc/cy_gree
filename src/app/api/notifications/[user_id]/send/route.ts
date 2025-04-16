@@ -13,13 +13,12 @@ export async function POST(
     request: NextRequest,
     props: { params: Promise<{ user_id: string }> }
 ) {
-    const currentUser = (await checkAuth()) as {
+    const [user, params] = await Promise.all([checkAuth(), props.params])
+
+    const currentUser = user as {
         id: string
         role: string
     }
-
-    const params = await props.params
-
     try {
         const { user_id: userId } = params
 

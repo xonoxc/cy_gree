@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Logo } from "../logo"
 import { Menu, X } from "lucide-react"
 
-const Header = () => {
+const Header: React.FC = () => {
     const router = useRouter()
     const [isMobileNavOpen, setIsMobileNavOpen] = useState<boolean>(false)
 

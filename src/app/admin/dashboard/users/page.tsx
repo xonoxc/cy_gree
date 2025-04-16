@@ -14,7 +14,7 @@ export default function UsersPage() {
                     </p>
                 </div>
                 <Link href="/admin/dashboard/users/new">
-                    <Button>
+                    <Button className="rounded-xl">
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add User
                     </Button>

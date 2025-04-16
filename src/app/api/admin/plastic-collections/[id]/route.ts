@@ -3,15 +3,22 @@ import { checkAuth } from "@/utils/check.auth"
 import { logErrors } from "@/utils/errors/errorLogs"
 import { idValidationSchema } from "@/utils/validation/user"
 import { NextRequest, NextResponse } from "next/server"
+import { PlasticCollection } from "@prisma/client"
 import { updateCollectionSchema } from "@/utils/validation/collection/collection"
+
+interface ExtendedPlasticCollection extends PlasticCollection {
+    userName: string
+    claimedByName?: string
+}
 
 export async function GET(
     _: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    await checkAuth()
-    const { id: collectionId } = await params
+    const [__, props] = await Promise.all([checkAuth(), params])
     try {
+        const { id: collectionId } = props
+
         const idValidationRess = idValidationSchema.safeParse(collectionId)
         if (!idValidationRess.success) {
             return NextResponse.json(
@@ -22,17 +29,34 @@ export async function GET(
             )
         }
 
-        const resultantCollection = await prisma.plasticCollection.findUnique({
+        const resultantCollection = (await prisma.plasticCollection.findUnique({
             where: {
                 id: collectionId,
             },
-        })
+        })) as ExtendedPlasticCollection
 
         if (!resultantCollection) {
             return NextResponse.json(
                 { error: "Collection not found" },
                 { status: 404 }
             )
+        }
+
+        if (resultantCollection.status === "Claimed") {
+            const agent = (await prisma.user.findUnique({
+                where: {
+                    id: resultantCollection.userId,
+                },
+                select: {
+                    name: true,
+                },
+            })) as {
+                name: string
+            }
+
+            resultantCollection["claimedByName"] = agent.name
+
+            return NextResponse.json(resultantCollection, { status: 200 })
         }
 
         return NextResponse.json(resultantCollection, { status: 200 })
@@ -48,10 +72,10 @@ export async function PATCH(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    await checkAuth()
-    const { id: collectionId } = await params
-
+    const [__, props] = await Promise.all([checkAuth(), params])
     try {
+        const { id: collectionId } = props
+
         const idValidationRes = idValidationSchema.safeParse(collectionId)
         if (!idValidationRes.success) {
             return NextResponse.json(

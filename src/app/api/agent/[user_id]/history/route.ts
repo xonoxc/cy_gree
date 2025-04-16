@@ -9,8 +9,7 @@ export async function GET(
     _: NextRequest,
     props: { params: Promise<{ user_id: string }> }
 ) {
-    const params = await props.params
-    await checkAuth()
+    const [__, params] = await Promise.all([checkAuth(), props.params])
     try {
         const { user_id: agentId } = params
 

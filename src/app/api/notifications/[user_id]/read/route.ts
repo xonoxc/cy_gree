@@ -1,4 +1,5 @@
 import prisma from "@/config/prisma/prisma.client"
+import { checkAuth } from "@/utils/check.auth"
 import { idValidationSchema } from "@/utils/validation/user"
 import { NextRequest, NextResponse } from "next/server"
 
@@ -6,7 +7,7 @@ export async function PATCH(
     _: NextRequest,
     props: { params: Promise<{ notification_id: string }> }
 ) {
-    const params = await props.params
+    const [__, params] = await Promise.all([checkAuth(), props.params])
     try {
         const { notification_id: notificationId } = params
 

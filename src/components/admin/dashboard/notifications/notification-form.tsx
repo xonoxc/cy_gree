@@ -418,11 +418,16 @@ export function NotificationForm({ notification }: { notification?: any }) {
                             onClick={() =>
                                 router.push("/dashboard/notifications")
                             }
+                            className="rounded-xl"
                             disabled={isLoading}
                         >
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={isLoading}>
+                        <Button
+                            type="submit"
+                            disabled={isLoading}
+                            className="rounded-xl"
+                        >
                             {isLoading ? (
                                 <span className="flex items-center gap-1">
                                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />

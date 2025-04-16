@@ -1,3 +1,7 @@
+/**
+ * this is a list of months
+ */
+
 export const monthNames = [
     "Jan",
     "Feb",

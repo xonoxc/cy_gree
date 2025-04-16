@@ -16,12 +16,9 @@ export default async function UserPage({
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <BackBtn link={"/admin/dashboard/users"} />
-                    <h1 className="text-3xl font-bold tracking-tight">
-                        User Details
-                    </h1>
                 </div>
                 <Link href={`/admin/dashboard/users/${userId}/edit`}>
-                    <Button>
+                    <Button className="rounded-xl">
                         <Edit className="mr-2 h-4 w-4" />
                         Edit User
                     </Button>

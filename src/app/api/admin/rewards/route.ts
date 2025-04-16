@@ -78,7 +78,7 @@ export async function GET(req: NextRequest) {
             },
         })
 
-        const formattedRewards = rewards.map(reward => ({
+        const formattedRewards = rewards.map((reward) => ({
             id: reward.id,
             userId: reward.userId,
             userName: reward.user.user.name,

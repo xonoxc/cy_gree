@@ -14,21 +14,17 @@ import {
     MapPin,
 } from "lucide-react"
 import Image from "next/image"
+import { ICollection } from "@/types/plasticCollection/type.collection"
+import { useQuery } from "@tanstack/react-query"
 
-// Mock collection data
-const mockCollection = {
-    id: "1",
-    userId: "user1",
-    userName: "John Doe",
-    imagePath: "/placeholder.svg?height=300&width=400",
-    amount: 5.2,
-    status: "Collected",
-    claimedBy: "Agent2",
-    claimedByName: "Agent 2",
-    createdAt: "2023-06-15T10:30:00.000Z",
-    updatedAt: "2023-06-15T15:45:00.000Z",
-    location: "Mumbai, Maharashtra",
-    notes: "Plastic bottles and containers collected from local beach cleanup.",
+const fetchCollectionById = async (
+    collectionId: string
+): Promise<ICollection> => {
+    const result = await fetch("/api/admin/plastic-collections")
+    if (!result.ok) {
+        throw new Error(`cannot fetch collection by id :${collectionId}`)
+    }
+    return result.json()
 }
 
 export function PlasticCollectionDetails({
@@ -36,28 +32,11 @@ export function PlasticCollectionDetails({
 }: {
     collectionId: string
 }) {
-    const [isLoading, setIsLoading] = useState(true)
-    const [collection, setCollection] = useState<any>(null)
-
-    useEffect(() => {
-        // Simulate API call to fetch collection data
-        const fetchData = async () => {
-            setIsLoading(true)
-            try {
-                // In a real app, you would fetch data from your API
-                await new Promise(resolve => setTimeout(resolve, 1000))
-
-                // Set mock data
-                setCollection(mockCollection)
-            } catch (error) {
-                console.error("Error fetching collection data:", error)
-            } finally {
-                setIsLoading(false)
-            }
-        }
-
-        fetchData()
-    }, [collectionId])
+    const { data: collection, isLoading } = useQuery<ICollection>({
+        queryKey: ["collection", collectionId],
+        queryFn: () => fetchCollectionById(collectionId),
+        enabled: !!collectionId,
+    })
 
     if (isLoading) {
         return (
@@ -97,29 +76,6 @@ export function PlasticCollectionDetails({
             hour: "2-digit",
             minute: "2-digit",
         })
-    }
-
-    // Status badge variant and icon
-    const getStatusDetails = (status: string) => {
-        switch (status.toLowerCase()) {
-            case "pending":
-                return {
-                    variant: "warning",
-                    icon: <Clock className="h-4 w-4 mr-1" />,
-                }
-            case "claimed":
-                return {
-                    variant: "outline",
-                    icon: <AlertCircle className="h-4 w-4 mr-1" />,
-                }
-            case "collected":
-                return {
-                    variant: "success",
-                    icon: <CheckCircle className="h-4 w-4 mr-1" />,
-                }
-            default:
-                return { variant: "secondary", icon: null }
-        }
     }
 
     const statusDetails = getStatusDetails(collection.status)
@@ -217,24 +173,13 @@ export function PlasticCollectionDetails({
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
-                                {collection.notes && (
-                                    <div>
-                                        <h3 className="font-medium mb-1">
-                                            Notes
-                                        </h3>
-                                        <p className="text-sm text-muted-foreground">
-                                            {collection.notes}
-                                        </p>
-                                    </div>
-                                )}
-
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <h3 className="font-medium mb-1">
                                             Created At
                                         </h3>
                                         <p className="text-sm text-muted-foreground">
-                                            {formatDate(collection.createdAt)}
+                                            {formatDate(Date.parse(collection.createdAt)))}
                                         </p>
                                     </div>
 
@@ -343,4 +288,26 @@ export function PlasticCollectionDetails({
             </Tabs>
         </div>
     )
+}
+
+const getStatusDetails = (status: string) => {
+    switch (status.toLowerCase()) {
+        case "pending":
+            return {
+                variant: "warning",
+                icon: <Clock className="h-4 w-4 mr-1" />,
+            }
+        case "claimed":
+            return {
+                variant: "outline",
+                icon: <AlertCircle className="h-4 w-4 mr-1" />,
+            }
+        case "collected":
+            return {
+                variant: "success",
+                icon: <CheckCircle className="h-4 w-4 mr-1" />,
+            }
+        default:
+            return { variant: "secondary", icon: null }
+    }
 }

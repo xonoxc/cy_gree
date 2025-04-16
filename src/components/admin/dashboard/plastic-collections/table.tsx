@@ -43,7 +43,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import Image from "next/image"
+import { IKImage } from "imagekitio-next"
 import dynamic from "next/dynamic"
 import { RoleFilter } from "@/app/api/admin/profiles/route"
 import { ITEMS_PER_PAGE } from "@/constants/pagination"
@@ -101,28 +101,6 @@ export function PlasticCollectionsTable() {
 
     const collections = data?.collections || []
     const totalPages = data?.totalPages || 1
-
-    const getStatusDetails = (status: string) => {
-        switch (status.toLowerCase()) {
-            case "pending":
-                return {
-                    variant: "warning",
-                    icon: <Clock className="h-4 w-4 mr-1" />,
-                }
-            case "claimed":
-                return {
-                    variant: "outline",
-                    icon: <AlertCircle className="h-4 w-4 mr-1" />,
-                }
-            case "collected":
-                return {
-                    variant: "success",
-                    icon: <CheckCircle className="h-4 w-4 mr-1" />,
-                }
-            default:
-                return { variant: "secondary", icon: null }
-        }
-    }
 
     return (
         <div className="space-y-4">
@@ -201,10 +179,10 @@ export function PlasticCollectionsTable() {
                                     <TableRow key={collection.id}>
                                         <TableCell>
                                             <div className="relative h-10 w-10 rounded-md overflow-hidden">
-                                                <Image
-                                                    src={
+                                                <IKImage
+                                                    path={
                                                         collection.imagePath ||
-                                                        "/placeholder.svg"
+                                                        ""
                                                     }
                                                     alt="-"
                                                     fill
@@ -375,4 +353,26 @@ async function fetchCollections({
     )
     if (!response.ok) throw new Error("Failed to fetch collections")
     return response.json()
+}
+
+const getStatusDetails = (status: string) => {
+    switch (status.toLowerCase()) {
+        case "pending":
+            return {
+                variant: "warning",
+                icon: <Clock className="h-4 w-4 mr-1" />,
+            }
+        case "claimed":
+            return {
+                variant: "outline",
+                icon: <AlertCircle className="h-4 w-4 mr-1" />,
+            }
+        case "collected":
+            return {
+                variant: "success",
+                icon: <CheckCircle className="h-4 w-4 mr-1" />,
+            }
+        default:
+            return { variant: "secondary", icon: null }
+    }
 }

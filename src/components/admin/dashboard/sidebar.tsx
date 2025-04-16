@@ -13,10 +13,12 @@ import {
     Bell,
     Home,
     LogOut,
-    Settings,
 } from "lucide-react"
 import { Logo } from "@/components/logo"
 import { signOut } from "next-auth/react"
+import { useState } from "react"
+import { useToast } from "@/hooks/use-toast"
+import { logErrors } from "@/utils/errors/errorLogs"
 
 const routes = [
     {
@@ -62,18 +64,31 @@ const routes = [
 ]
 
 export function Sidebar() {
+    const [isLoggingOut, setLogginOut] = useState<boolean>(false)
     const pathname = usePathname()
+
+    const { toast } = useToast()
 
     const router = useRouter()
 
     const handleLogout = async () => {
-        await signOut()
-        console.log("Logged out")
-        router.push("/sign-in")
+        setLogginOut(true)
+        try {
+            await signOut()
+            router.push("/sign-in")
+        } catch (e) {
+            logErrors(e)
+            toast({
+                title: "Cannot log out!",
+                description: "please try again later..",
+            })
+        } finally {
+            setLogginOut(false)
+        }
     }
 
     return (
-        <div className="flex flex-col h-full space-y-4 py-4 bg-card text-card-foreground border-r w-64">
+        <div className="flex-col h-full space-y-4 py-4 bg-card text-card-foreground border-r w-64 hidden sm:flex">
             <div className="px-3 py-2 flex-1">
                 <Link href="/dashboard" className="flex items-center pl-3 mb-8">
                     <div className="relative w-8 h-8 mr-4">
@@ -105,24 +120,15 @@ export function Sidebar() {
             </div>
             <div className="px-3 py-2 my-4 border-t">
                 <div className="space-y-1 pt-2">
-                    <Link
-                        href="/admin/dashboard/settings"
-                        className="text-sm group flex p-3 w-full justify-start font-medium cursor-pointer hover:bg-primary/10 rounded-lg transition text-muted-foreground"
-                    >
-                        <div className="flex items-center flex-1">
-                            <Settings className="h-5 w-5 mr-3 text-gray-500" />
-                            Settings
-                        </div>
-                    </Link>
                     <Button
                         variant="ghost"
-                        className="text-sm group flex p-3 w-full justify-start font-medium cursor-pointer hover:bg-destructive/10 rounded-lg transition text-muted-foreground"
+                        className="text-sm group flex p-3 w-full justify-center font-medium cursor-pointer  rounded-lg transition text-muted-foreground bg-white items-center hover:bg-white"
                         onClick={handleLogout}
                     >
-                        <div className="flex items-center flex-1">
-                            <LogOut className="h-5 w-5 mr-3 text-gray-500" />
-                            Logout
-                        </div>
+                        <span className="text-black font-bold">
+                            {isLoggingOut ? "Logging out ...." : "Logout"}
+                        </span>
+                        <LogOut className="h-5 w-5 mr-3 text-black font-bold" />
                     </Button>
                 </div>
             </div>

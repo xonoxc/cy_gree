@@ -59,6 +59,8 @@ const ProfileCard = () => {
         }
     }, [editing, avatar, handleProfileUpdate, toast])
 
+    /*conditionals if the current component is no ready*/
+
     if (isProfileDataLoading) return <ProfileCardSkeleton />
 
     if (isfetchProfileDataError) return <div>Error loading profile data.</div>

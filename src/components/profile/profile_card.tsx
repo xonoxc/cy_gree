@@ -25,10 +25,15 @@ import {
     SelectValue,
 } from "../ui/select"
 import React from "react"
+import { IKImage, IKUpload } from "imagekitio-next"
+import { IKUploadResponse } from "imagekitio-next/dist/types/components/IKUpload/props"
 
 const ProfileCard = () => {
     const [editing, setEditing] = useState(false)
-    const [avatar, _] = useState<string | null>(null)
+    const [avatar, setAvatar] = useState<string | null>(null)
+    const [imageUploadError, setImageUploadError] = useState<string>("")
+    const [progress, setProgress] = useState<number | null>(null)
+
     const {
         handleProfileUpdate,
         userData,
@@ -37,6 +42,9 @@ const ProfileCard = () => {
         isfetchProfileDataError,
     } = useClientstats()
     const { toast } = useToast()
+
+    console.log("userData", userData)
+    console.log("avatar", avatar)
 
     const handleEditToggle = useCallback(async () => {
         try {
@@ -60,7 +68,6 @@ const ProfileCard = () => {
     }, [editing, avatar, handleProfileUpdate, toast])
 
     /*conditionals if the current component is no ready*/
-
     if (isProfileDataLoading) return <ProfileCardSkeleton />
 
     if (isfetchProfileDataError) return <div>Error loading profile data.</div>
@@ -77,20 +84,40 @@ const ProfileCard = () => {
             </CardHeader>
             <CardContent>
                 <div className="flex items-center space-x-4 mb-6">
+                    {progress && progress > 0 && (
+                        <div>
+                            <div>progress : {progress} %</div>
+                        </div>
+                    )}
+
+                    {imageUploadError && (
+                        <span>Upload failed : {imageUploadError}</span>
+                    )}
+
                     {editing ? (
                         <div className="space-y-2">
                             <Label htmlFor="avatar">Profile Picture</Label>
-                            <Input
-                                id="avatar"
-                                type="file"
-                                value={userData.profilePic}
+                            <IKUpload
+                                folder={"collections"}
+                                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                onChange={handleInputChange}
+                                onError={(e: any) =>
+                                    setImageUploadError(JSON.stringify(e))
+                                }
+                                onSuccess={(resp: IKUploadResponse) =>
+                                    setAvatar(resp.filePath)
+                                }
+                                onUploadProgress={(
+                                    e: ProgressEvent<XMLHttpRequestEventTarget>
+                                ) => setProgress((e.loaded / e.total) * 100)}
                             />
                         </div>
                     ) : (
                         <Avatar className="h-20 w-20">
-                            <AvatarImage
-                                src={userData.profilePic}
-                                alt={userData.user.name}
+                            <IKImage
+                                className="object-cover"
+                                path={avatar || userData.profilePic}
+                                alt="uploaded image"
                             />
                             <AvatarFallback>
                                 {userData.user.name

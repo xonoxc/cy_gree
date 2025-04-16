@@ -40,6 +40,7 @@ type ClientStatsContextType = {
     handleCollectionCreate: any
     handelClaimReward: (rewardId: string) => Promise<void>
     handleProfileUpdate: any
+    formData: IUserData | null
 }
 
 export type IRequestsData =
@@ -252,8 +253,9 @@ export const ClientStatsProvider = ({
     }
 
     const handleProfileUpdate = useMutation({
-        mutationFn: async () => {
-            console.log("formData", formData)
+        mutationFn: async (avatar?: string) => {
+            if (formData && avatar) formData.profilePic = avatar
+
             await fetch(`/api/profile/${userId}`, {
                 method: "PATCH",
                 body: JSON.stringify({
@@ -344,6 +346,7 @@ export const ClientStatsProvider = ({
         isLoadingClaimedRewards,
         isAvailableRewardsLoading,
         userData,
+        formData,
         requestsData,
         userBadges,
         availableRewards,

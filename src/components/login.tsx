@@ -21,7 +21,7 @@ export function LoginForm() {
         password: "",
     })
     const [isLoading, setLoading] = useState<boolean>(false)
-    const [showPassword, setShowPassword] = useState(false)
+    const [showPassword, setShowPassword] = useState<boolean>(false)
     const { toast } = useToast()
     const router = useRouter()
 
@@ -68,7 +68,7 @@ export function LoginForm() {
                 <h1 className="text-3xl font-bold">
                     <span className="font-bold text-5xl text-green-400">
                         Sign
-                    </span>{" "}
+                    </span>
                     In
                 </h1>
                 <p className="text-gray-500 dark:text-gray-400">
@@ -108,7 +108,7 @@ export function LoginForm() {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="absolute right-0 top-1/2 -translate-y-1/2 h-7 w-7"
+                            className="absolute right-0 top-1/2 -translate-y-1/2 h-7 w-7 hover:bg-black"
                             onClick={() => setShowPassword(prev => !prev)}
                         >
                             {showPassword ? (

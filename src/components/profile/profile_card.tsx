@@ -8,7 +8,7 @@ import {
     CardTitle,
 } from "../ui/card"
 import { Input } from "../ui/input"
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
+import { Avatar, AvatarFallback } from "../ui/avatar"
 import { Badge } from "../ui/badge"
 import { Button } from "../ui/button"
 import { useCallback, useState } from "react"
@@ -42,9 +42,6 @@ const ProfileCard = () => {
         isfetchProfileDataError,
     } = useClientstats()
     const { toast } = useToast()
-
-    console.log("userData", userData)
-    console.log("avatar", avatar)
 
     const handleEditToggle = useCallback(async () => {
         try {
@@ -84,7 +81,7 @@ const ProfileCard = () => {
             </CardHeader>
             <CardContent>
                 <div className="flex items-center space-x-4 mb-6">
-                    {progress && progress > 0 && (
+                    {progress && progress > 0 && progress < 0 && (
                         <div>
                             <div>progress : {progress} %</div>
                         </div>
@@ -114,11 +111,14 @@ const ProfileCard = () => {
                         </div>
                     ) : (
                         <Avatar className="h-20 w-20">
-                            <IKImage
-                                className="object-cover"
-                                path={avatar || userData.profilePic}
-                                alt="uploaded image"
-                            />
+                            <div>
+                                <IKImage
+                                    className="object-cover"
+                                    path={avatar || userData.profilePic}
+                                    alt="uploaded image"
+                                    fill={true}
+                                />
+                            </div>
                             <AvatarFallback>
                                 {userData.user.name
                                     .split(" ")

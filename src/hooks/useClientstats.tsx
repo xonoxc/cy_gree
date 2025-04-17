@@ -1,7 +1,7 @@
 "use client"
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useMemo, useState } from "react"
 
 type ClientStatsContextType = {
     /**
@@ -330,9 +330,11 @@ export const ClientStatsProvider = ({
         },
     })
 
+    const memoizedUserData = useMemo(() => userData, [userData?.user.id])
+
     useEffect(() => {
-        if (userData) setFormData(userData)
-    }, [userData])
+        if (memoizedUserData) setFormData(memoizedUserData)
+    }, [memoizedUserData])
 
     const contextValue: ClientStatsContextType = {
         isfetchProfileDataError,

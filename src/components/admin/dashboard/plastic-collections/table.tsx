@@ -178,14 +178,14 @@ export function PlasticCollectionsTable() {
                                 return (
                                     <TableRow key={collection.id}>
                                         <TableCell>
-                                            <div className="relative h-10 w-10 rounded-md overflow-hidden">
+                                            <div className="relative h-10 w-10 rounded-xl overflow-hidden border border-gray-100/2 ">
                                                 <IKImage
                                                     path={
                                                         collection.imagePath ||
                                                         ""
                                                     }
                                                     alt="-"
-                                                    fill
+                                                    fill={true}
                                                     className="object-cover ml-4"
                                                 />
                                             </div>

@@ -18,17 +18,13 @@ export async function POST(
         ])
         if (!idsValidationRes.success) {
             return NextResponse.json(
-                {
-                    error: idsValidationRes.error.format(),
-                },
+                { error: idsValidationRes.error.format() },
                 { status: 400 }
             )
         }
 
         const userProfile = await prisma.userProfile.findFirst({
-            where: {
-                userId,
-            },
+            where: { userId },
         })
 
         if (!userProfile) {
@@ -38,41 +34,38 @@ export async function POST(
             )
         }
 
-        const targetReward = await prisma.reward.findFirst({
-            where: {
-                rewardId,
-            },
-            select: {
-                reward: {
-                    select: {
-                        pointsRequired: true,
-                    },
-                },
-            },
+        const targetReward = await prisma.listReward.findFirst({
+            where: { id: rewardId },
+            select: { pointsRequired: true },
         })
 
-        const pointsRequired = targetReward?.reward.pointsRequired
+        if (!targetReward) {
+            return NextResponse.json(
+                { error: "No target reward found with the given id" },
+                { status: 404 }
+            )
+        }
+
+        const pointsRequired = parseInt(String(targetReward.pointsRequired))
 
         if (!pointsRequired) {
             return NextResponse.json(
-                { error: "Error retriving required points for reward" },
+                { error: "Error retrieving required points for reward" },
                 { status: 500 }
             )
         }
 
-        if (!(userProfile.earnedPoints >= pointsRequired)) {
+        const currentPoints = parseInt(String(userProfile.earnedPoints))
+
+        if (currentPoints < pointsRequired) {
             return NextResponse.json(
-                {
-                    error: "Not enough points to claim this reward",
-                },
+                { error: "Not enough points to claim this reward" },
                 { status: 400 }
             )
         }
 
         const existingReward = await prisma.reward.findFirst({
-            where: {
-                AND: [{ userId }, { rewardId }],
-            },
+            where: { AND: [{ userId }, { rewardId }] },
         })
 
         if (existingReward) {
@@ -82,12 +75,20 @@ export async function POST(
             )
         }
 
-        const createdReward = await prisma.reward.create({
-            data: {
-                rewardId,
-                userId,
-            },
-        })
+        const remainingPoints = currentPoints - pointsRequired
+
+        const [createdReward] = await prisma.$transaction([
+            prisma.reward.create({
+                data: {
+                    rewardId,
+                    userId: userProfile.id,
+                },
+            }),
+            prisma.userProfile.update({
+                where: { id: userProfile.id },
+                data: { earnedPoints: remainingPoints.toString() },
+            }),
+        ])
 
         if (!createdReward) {
             return NextResponse.json(
@@ -103,7 +104,7 @@ export async function POST(
     } catch (e) {
         logErrors(e)
         return NextResponse.json(
-            { error: "error creating reward" },
+            { error: "Error creating reward" },
             { status: 500 }
         )
     } finally {

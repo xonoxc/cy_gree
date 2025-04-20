@@ -6,76 +6,92 @@ import { idValidationSchema } from "@/utils/validation/user"
 import { NextRequest, NextResponse } from "next/server"
 
 export async function POST(
-    req: NextRequest,
-    props: { params: Promise<{ user_id: string }> }
+	req: NextRequest,
+	props: { params: Promise<{ user_id: string }> }
 ) {
-    try {
-        const [_, params, reqBody] = await Promise.all([
-            checkAuth(),
-            props.params,
-            req.json(),
-        ])
+	try {
+		const [_, params, reqBody] = await Promise.all([
+			checkAuth(),
+			props.params,
+			req.json(),
+		])
+		const { user_id: userId } = params
 
-        const { user_id: userId } = params
-        const { amount_collected, pic } = reqBody as {
-            amount_collected: string
-            pic: string
-        }
 
-        const idValidation = idValidationSchema.safeParse(userId)
-        if (!idValidation.success)
-            return NextResponse.json(
-                {
-                    error: "Invalid user Id",
-                },
-                { status: 400 }
-            )
+		const { amount_collected, pic } = reqBody as {
+			amount_collected: string
+			pic: string
+		}
 
-        const existingUser = await prisma.user.findUnique({
-            where: { id: userId },
-        })
 
-        if (!existingUser) {
-            return NextResponse.json(
-                { error: "User profile not found" },
-                { status: 404 }
-            )
-        }
+		const idValidation = idValidationSchema.safeParse(userId)
+		if (!idValidation.success)
+			return NextResponse.json(
+				{
+					error: "Invalid user Id",
+				},
+				{ status: 400 }
+			)
 
-        const collectionValidation = collectionCreateValidationSchema.safeParse(
-            { amount_collected, pic }
-        )
+		const existingUser = await prisma.userProfile.findUnique({
+			where: { userId },
+		})
 
-        if (!collectionValidation.success)
-            return NextResponse.json(
-                {
-                    error: "Invalid body!",
-                    message: collectionValidation.error.format(),
-                },
-                { status: 400 }
-            )
+		if (!existingUser) {
+			return NextResponse.json(
+				{ error: "User profile not found" },
+				{ status: 404 }
+			)
+		}
 
-        const createdCollection = await prisma.plasticCollection.create({
-            data: {
-                amount: +amount_collected,
-                userId: existingUser.id,
-                imagePath: pic,
-            },
-        })
 
-        if (!createdCollection) throw Error("Error creating collection !")
+		const parsed_collection_amount = +amount_collected
+		const collectionValidation = collectionCreateValidationSchema.safeParse(
+			{ amount_collected: parsed_collection_amount, pic }
+		)
 
-        return NextResponse.json(
-            { message: "Collection created successfully!" },
-            { status: 201 }
-        )
-    } catch (e) {
-        logErrors(e)
-        return NextResponse.json(
-            { error: "error creating collection" },
-            { status: 500 }
-        )
-    } finally {
-        await prisma.$disconnect()
-    }
+		if (!collectionValidation.success)
+			return NextResponse.json(
+				{
+					error: "Invalid body!",
+					message: collectionValidation.error.format(),
+				},
+				{ status: 400 }
+			)
+
+		const [createdCollection] = await prisma.$transaction([
+			prisma.plasticCollection.create({
+				data: {
+					amount: parsed_collection_amount,
+					userId: existingUser.userId,
+					imagePath: pic,
+				},
+			}),
+			prisma.userProfile.update({
+				where: {
+					userId
+				},
+				data: {
+					totalPlasticRecycled: {
+						increment: parsed_collection_amount
+					}
+				}
+			})
+		])
+
+		if (!createdCollection) throw Error("Error creating collection !")
+
+		return NextResponse.json(
+			{ message: "Collection created successfully!" },
+			{ status: 201 }
+		)
+	} catch (e) {
+		logErrors(e)
+		return NextResponse.json(
+			{ error: "error creating collection" },
+			{ status: 500 }
+		)
+	} finally {
+		await prisma.$disconnect()
+	}
 }

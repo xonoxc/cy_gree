@@ -138,8 +138,6 @@ export async function POST(req: NextRequest) {
                 { status: 400 }
             )
 
-        console.log("validation passed")
-
         const { imagePath, amount, status, claimedBy, userId } =
             collectionValidation.data
 

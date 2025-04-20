@@ -23,16 +23,17 @@ export async function GET(
             )
         }
 
-        const user = await prisma.userProfile.findUnique({
+        const userProfile = await prisma.userProfile.findUnique({
             where: {
                 userId: userId,
             },
             select: {
                 earnedPoints: true,
+                id: true,
             },
         })
 
-        if (!user) {
+        if (!userProfile) {
             return NextResponse.json(
                 { error: "User not found" },
                 { status: 404 }
@@ -41,7 +42,7 @@ export async function GET(
 
         const claimedRewards = await prisma.reward.findMany({
             where: {
-                userId: userId,
+                userId: userProfile.id,
             },
             select: {
                 rewardId: true,
@@ -59,7 +60,7 @@ export async function GET(
 
         const claimableRewards = await prisma.listReward.findMany({
             where: {
-                pointsRequired: { lte: user.earnedPoints },
+                pointsRequired: { lte: userProfile.earnedPoints },
                 id: { notIn: claimedRewardsIds },
             },
             select: {

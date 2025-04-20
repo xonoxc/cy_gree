@@ -6,8 +6,8 @@ import { idValidationSchema } from "../user"
  *
  */
 export const collectionCreateValidationSchema = z.object({
-    amount_collected: z.number({ message: "Invalid collection amount" }),
-    pic: z.string({ message: "pic must be a string" }),
+	amount_collected: z.number({ message: "Invalid collection amount" }),
+	pic: z.string({ message: "pic must be a string" }),
 })
 
 /**
@@ -15,17 +15,17 @@ export const collectionCreateValidationSchema = z.object({
  */
 
 export const adminCollcetionCreateSchema = z.object({
-    userId: idValidationSchema,
-    imagePath: z.string().min(1, {
-        message: "Please provide an image URL.",
-    }),
-    amount: z.coerce.number().min(0.1, {
-        message: "Amount must be at least 0.1 kg.",
-    }),
-    status: z.enum(["Pending", "Claimed", "Collected"], {
-        required_error: "Please select a status.",
-    }),
-    claimedBy: z.string().optional(),
+	userId: idValidationSchema,
+	imagePath: z.string().min(1, {
+		message: "Please provide an image URL.",
+	}),
+	amount: z.coerce.number().min(0.1, {
+		message: "Amount must be at least 0.1 kg.",
+	}),
+	status: z.enum(["Pending", "Claimed", "Collected"], {
+		required_error: "Please select a status.",
+	}),
+	claimedBy: z.string().optional(),
 })
 
 /**
@@ -33,9 +33,9 @@ export const adminCollcetionCreateSchema = z.object({
  */
 
 export const updateCollectionSchema = z.object({
-    userId: z.string().optional(),
-    imagePath: z.string().optional(),
-    amount: z.number().optional(),
-    status: z.enum(["Pending", "Claimed", "Collected"]).optional(),
-    claimedBy: z.string().optional(),
+	userId: z.string().optional(),
+	imagePath: z.string().optional(),
+	amount: z.number().optional(),
+	status: z.enum(["Pending", "Claimed", "Collected"]).optional(),
+	claimedBy: z.string().optional(),
 })

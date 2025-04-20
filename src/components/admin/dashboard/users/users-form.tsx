@@ -68,7 +68,6 @@ export function UserForm({ userId }: { userId?: string }) {
     })
 
     const onSubmit = async (creds: z.infer<typeof formSchema>) => {
-        console.log("value of userId: ", userId)
         setIsLoading(true)
         try {
             if (!userId) {
@@ -95,7 +94,6 @@ export function UserForm({ userId }: { userId?: string }) {
                     router.replace("/admin/dashboard/users")
                 }
             } else {
-                console.log("update block executed")
                 const firstName = creds.name.split(" ")[0]
                 const lastName = creds.name.split(" ")[1] || ""
                 const updateUserResp = await fetch(`/api/user/${userId}`, {

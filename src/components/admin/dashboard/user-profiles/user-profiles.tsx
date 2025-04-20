@@ -83,8 +83,6 @@ export function UserProfileForm({ profileId }: { profileId?: string }) {
         setIsLoading(true)
 
         try {
-            console.log(values)
-
             await new Promise(resolve => setTimeout(resolve, 1000))
 
             toast({

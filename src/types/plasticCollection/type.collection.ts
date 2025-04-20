@@ -3,10 +3,11 @@ export interface ICollection {
     userId: string
     userName?: string
     imagePath: string
+    location: string
     amount: number
     status: "Pending" | "Collected" | "Claimed"
     claimedBy?: string
     claimedByName?: string
     createdAt: string
-    updateAt: string
+    updatedAt: string
 }

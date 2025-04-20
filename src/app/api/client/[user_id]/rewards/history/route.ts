@@ -20,9 +20,23 @@ export async function GET(
             )
         }
 
-        const claimedRewards = await prisma.reward.findMany({
+        const userProfile = await prisma.userProfile.findFirst({
             where: {
                 userId,
+            },
+        })
+
+        if (!userProfile)
+            return NextResponse.json(
+                {
+                    error: "User Profile not found!",
+                },
+                { status: 404 }
+            )
+
+        const claimedRewards = await prisma.reward.findMany({
+            where: {
+                userId: userProfile.id,
             },
             select: {
                 id: true,

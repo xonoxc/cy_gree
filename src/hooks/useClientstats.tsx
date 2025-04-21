@@ -38,7 +38,7 @@ type ClientStatsContextType = {
 	) => void
 	handleCollectionCreate: (args: { amount_collected: string, picture: string }) => void
 	handleClaimReward: (rewardId: string) => void
-	handleProfileUpdate: (avatar?: string) => void
+	handleProfileUpdate: (avatar?: string | null) => void
 	formData: IUserData | null
 }
 
@@ -347,7 +347,7 @@ export const ClientStatsProvider = ({
 	}
 
 	const handleProfileUpdate = useMutation({
-		mutationFn: async (avatar?: string) => {
+		mutationFn: async (avatar?: string | null) => {
 			if (formData && avatar) formData.profilePic = avatar
 
 			await fetch(`/api/profile/${userId}`, {

@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { createContext, useContext, ReactNode } from "react"
+
 interface IRequests {
     id: string
     amount: string
@@ -9,14 +10,13 @@ interface IRequests {
 }
 
 interface IRequestsCollection {
-    pendingRequests: IRequests[]
     claimedRequests: IRequests[]
+    collectedRequests: IRequests[]
 }
 
 /**
  *  context type of the agent context hook
  */
-
 interface AgentContextType {
     requests: IRequestsCollection
     updateRequestStatus: any
@@ -32,7 +32,6 @@ const AgentContext = createContext<AgentContextType | null>(null)
 /**
  * Context Provider that will wrap the layout
  */
-
 export const AgentProvider = ({
     children,
     agentId,
@@ -43,7 +42,7 @@ export const AgentProvider = ({
     const queryClient = useQueryClient()
 
     const {
-        data: requests = { pendingRequests: [], claimedRequests: [] },
+        data: requests = { claimedRequests: [], collectedRequests: [] },
         isLoading: isLoadingRequests,
         isError: isErrorRequests,
     } = useQuery<IRequestsCollection>({
@@ -85,36 +84,47 @@ export const AgentProvider = ({
             return response
         },
         onMutate: async collectionId => {
-            await queryClient.cancelQueries({
-                queryKey: ["agentMatches", agentId],
-            })
-            await queryClient.cancelQueries({
-                queryKey: ["agentRequests", agentId],
-            })
+            await Promise.all([
+                queryClient.cancelQueries({
+                    queryKey: ["agentMatches", agentId],
+                }),
+
+                queryClient.cancelQueries({
+                    queryKey: ["agentRequests", agentId],
+                }),
+            ])
+
             const previousMatches = queryClient.getQueryData<IRequests[]>([
                 "agentMatches",
                 agentId,
-            ])
+            ]) as IRequests[]
+
             const previousRequests =
                 queryClient.getQueryData<IRequestsCollection>([
                     "agentRequests",
                     agentId,
-                ])
-            const requestToMove = matches.find(req => req.id === collectionId)
+                ]) as IRequestsCollection
 
-            if (requestToMove) {
-                queryClient.setQueryData(
-                    ["agentMatches", agentId],
-                    matches.filter(req => req.id !== collectionId)
-                )
-                queryClient.setQueryData(["agentRequests", agentId], {
+            const requestToMove = previousMatches.find(
+                req => req.id === collectionId
+            )
+
+            queryClient.setQueryData<IRequests[]>(
+                ["agentMatches", agentId],
+                previousMatches.filter(req => req.id !== collectionId)
+            )
+
+            queryClient.setQueryData<IRequestsCollection>(
+                ["agentRequests", agentId],
+                {
                     ...previousRequests,
-                    pending_requests: [
-                        ...(previousRequests?.pendingRequests || []),
-                        requestToMove,
+                    claimedRequests: [
+                        ...(previousRequests?.claimedRequests || []),
+                        requestToMove as IRequests,
                     ],
-                })
-            }
+                }
+            )
+
             return { previousMatches, previousRequests, requestToMove }
         },
         onError: (_, __, context) => {
@@ -150,26 +160,30 @@ export const AgentProvider = ({
             await queryClient.cancelQueries({
                 queryKey: ["agentRequests", agentId],
             })
+
             const previousRequests =
                 queryClient.getQueryData<IRequestsCollection>([
                     "agentRequests",
                     agentId,
-                ])
-            const requestToComplete = requests.pendingRequests.find(
+                ]) as IRequestsCollection
+
+            const requestToComplete = previousRequests.claimedRequests.find(
                 req => req.id === collectionId
             )
 
-            if (requestToComplete) {
-                queryClient.setQueryData(["agentRequests", agentId], {
-                    pending_requests: requests.pendingRequests.filter(
+            queryClient.setQueryData<IRequestsCollection>(
+                ["agentRequests", agentId],
+                {
+                    claimedRequests: previousRequests.claimedRequests.filter(
                         req => req.id !== collectionId
                     ),
-                    claimed_requests: [
-                        ...requests.claimedRequests,
-                        requestToComplete,
+                    collectedRequests: [
+                        ...previousRequests?.collectedRequests,
+                        requestToComplete as IRequests,
                     ],
-                })
-            }
+                }
+            )
+
             return { previousRequests, requestToComplete }
         },
         onError: (_, __, context) => {
@@ -205,7 +219,6 @@ export const AgentProvider = ({
 /**
  * useAgent hook
  */
-
 export const useAgent = () => {
     const context = useContext(AgentContext)
     if (!context) {

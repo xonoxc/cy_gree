@@ -1,3 +1,5 @@
+"use client"
+
 import {
     Card,
     CardContent,
@@ -5,15 +7,20 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
+import { useSession } from "next-auth/react"
 import { Overview } from "@/components/admin/dashboard/overview"
 import { RecentActivity } from "@/components/admin/dashboard/recent-activity"
 import { DashboardStats } from "@/components/admin/dashboard/dashboard-stats"
 
 export default function DashboardPage() {
+    const { data: session } = useSession()
+
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+                <h1 className="text-3xl font-bold tracking-tight">
+                    Hi {session?.user.name} !
+                </h1>
                 <p className="text-muted-foreground">
                     Welcome to your plastic recycling management dashboard.
                 </p>

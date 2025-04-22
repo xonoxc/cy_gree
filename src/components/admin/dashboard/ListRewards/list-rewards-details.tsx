@@ -74,9 +74,9 @@ export function ListRewardDetails({ rewardId }: { rewardId: string }) {
                 <div className="flex flex-col items-center gap-2 text-center">
                     <Gift className="h-8 w-8 text-destructive" />
                     <h2 className="text-xl font-semibold">Reward Not Found</h2>
-                    <p className="text-sm text-muted-foreground">
+                    <span className="text-sm text-muted-foreground">
                         <p>{error.message}</p>
-                    </p>
+                    </span>
                 </div>
             </Card>
         )

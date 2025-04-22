@@ -53,7 +53,7 @@ export async function GET(
             id: r.id,
             userId: r.userId,
             userName: r.user.user.name,
-            claimedData: r.claimedDate.toISOString(),
+            claimedDate: r.claimedDate.toISOString(),
         }))
 
         return NextResponse.json({

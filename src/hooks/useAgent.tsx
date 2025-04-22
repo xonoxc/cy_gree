@@ -69,7 +69,7 @@ export const AgentProvider = ({
         enabled: !!agentId,
     })
 
-    const totalWasteCollected = requests.claimedRequests.reduce(
+    const totalWasteCollected = requests.collectedRequests.reduce(
         (acc, curr) => acc + Number(curr.amount),
         0
     )

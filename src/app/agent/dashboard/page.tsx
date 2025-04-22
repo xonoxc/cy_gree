@@ -21,7 +21,6 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Award, History, LogOut, Recycle } from "lucide-react"
-import { ModeToggle } from "@/components/mode_toggle"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import { signOut } from "next-auth/react"
@@ -89,19 +88,19 @@ export default function RecyclingAgentDashboard() {
 
     if (isError)
         return <div className="p-4 text-center">Error loading data</div>
+
     if (isLoading)
         return (
             <div className="h-screen w-screen flex items-center justify-center p-4 text-center">
-                Loading...
+                loading...
             </div>
         )
 
     return (
         <div className="flex flex-col min-h-screen bg-[#0f0f12] to-black">
             <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                <h1 className="text-xl font-semibold">Agent Dashboard</h1>
+                <h1 className="text-xl font-semibold px-4">Agent Dashboard</h1>
                 <div className="ml-auto flex items-center gap-4">
-                    <ModeToggle />
                     <Button
                         variant="ghost"
                         size="icon"

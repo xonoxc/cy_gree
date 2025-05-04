@@ -248,9 +248,9 @@ export function UserProfileDetails({ profileId }: { profileId: string }) {
                                                         "Collected"
                                                             ? "default"
                                                             : collection.status ===
-                                                              "Claimed"
-                                                            ? "outline"
-                                                            : "secondary"
+                                                                "Claimed"
+                                                              ? "outline"
+                                                              : "secondary"
                                                     }
                                                 >
                                                     {collection.status}
@@ -298,10 +298,10 @@ export function UserProfileDetails({ profileId }: { profileId: string }) {
                                                     "Gift_Coupon"
                                                         ? "default"
                                                         : reward.reward
-                                                              .rewardType ===
-                                                          "Cash"
-                                                        ? "default"
-                                                        : "secondary"
+                                                                .rewardType ===
+                                                            "Cash"
+                                                          ? "default"
+                                                          : "secondary"
                                                 }
                                             >
                                                 <Gift className="h-3 w-3 mr-1" />

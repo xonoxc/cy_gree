@@ -80,9 +80,8 @@ export default function FloatingChat() {
         }
     }
 
-    const startDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+    const startDrag = (e: React.PointerEvent<HTMLDivElement>) =>
         dragControls.start(e)
-    }
 
     if (!mounted) return null
 

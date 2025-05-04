@@ -1,6 +1,13 @@
 "use client"
 
-import { Bar, BarChart, XAxis, YAxis, Tooltip } from "recharts"
+import {
+    Bar,
+    BarChart,
+    XAxis,
+    YAxis,
+    Tooltip,
+    ResponsiveContainer,
+} from "recharts"
 import { useQuery } from "@tanstack/react-query"
 
 /**
@@ -61,35 +68,43 @@ export function Overview() {
                     </div>
                 </>
             ) : (
-                <BarChart data={data?.monthlyData}>
-                    <XAxis
-                        dataKey="name"
-                        stroke="#888888"
-                        fontSize={12}
-                        tickLine={false}
-                        axisLine={false}
-                    />
-                    <YAxis
-                        stroke="#888888"
-                        fontSize={12}
-                        tickLine={false}
-                        axisLine={false}
-                        tickFormatter={value => `${value} kg`}
-                    />
-                    <Tooltip
-                        formatter={value => [
-                            `${value} kg`,
-                            "Plastic Collected",
-                        ]}
-                        labelFormatter={label => `Month: ${label}`}
-                    />
-                    <Bar
-                        dataKey="total"
-                        fill="currentColor"
-                        radius={[4, 4, 0, 0]}
-                        className="fill-primary"
-                    />
-                </BarChart>
+                <ResponsiveContainer>
+                    <BarChart data={data?.monthlyData} height={600} width={600}>
+                        <XAxis
+                            dataKey="name"
+                            stroke="#888888"
+                            fontSize={12}
+                            tickLine={false}
+                            axisLine={false}
+                        />
+                        <YAxis
+                            stroke="#888888"
+                            fontSize={12}
+                            tickLine={false}
+                            axisLine={false}
+                            tickFormatter={value => `${value} kg`}
+                        />
+                        <Tooltip
+                            formatter={value => [
+                                `${value} kg`,
+                                "Plastic Collected",
+                            ]}
+                            labelFormatter={label => `Month: ${label}`}
+                            cursor={false}
+                            contentStyle={{
+                                color: "black",
+                                borderRadius: 10,
+                                fontSize: 12,
+                            }}
+                        />
+                        <Bar
+                            dataKey="total"
+                            fill="currentColor"
+                            radius={[4, 4, 0, 0]}
+                            className="fill-primary"
+                        />
+                    </BarChart>
+                </ResponsiveContainer>
             )}
         </div>
     )
